@@ -1,0 +1,29 @@
+# Git
+
+.git
+.github
+
+# Node.js, Bun, frontend
+
+target/
+
+# Shuttle deployment
+
+.shuttle/
+Shuttle.toml
+
+# Environment files
+
+# Deployment environment/service should have a way to add env vars
+
+\*.env
+sample.env
+
+# Documentation
+
+README.md
+CONTRIBUTING.md
+
+# Docker files
+
+Dockerfile
