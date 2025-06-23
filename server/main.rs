@@ -26,8 +26,16 @@ async fn main() {
 
     info!("Starting server...");
 
-    let mongodb_uri = std::env::var("MONGODB_URI").unwrap();
-    info!("MONGODB_URI={mongodb_uri}");
+    let mongodb_uri = match std::env::var("MONGODB_URI") {
+        Ok(uri) => {
+            info!("MONGODB_URI is set");
+            uri
+        }
+        Err(_) => {
+            tracing::warn!("MONGODB_URI environment variable is not set");
+            panic!("MONGODB_URI environment variable is required");
+        }
+    };
 
     let env_vars = EnvVars { mongodb_uri };
 
@@ -39,9 +47,46 @@ async fn main() {
         .await
         .unwrap();
     tracing::info!(
-        "Listening on http://127.0.0.1:{}",
+        "Server listening on 0.0.0.0:{} (accessible from any interface)",
         listener.local_addr().unwrap().port()
     );
 
-    axum::serve(listener, app).await.unwrap();
+    // Setup graceful shutdown
+    let server = axum::serve(listener, app);
+
+    // Create shutdown signal handler
+    let shutdown_signal = async {
+        let ctrl_c = async {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to install Ctrl+C handler");
+        };
+
+        #[cfg(unix)]
+        let terminate = async {
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                .expect("failed to install SIGTERM handler")
+                .recv()
+                .await;
+        };
+
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+
+        tokio::select! {
+            _ = ctrl_c => {
+                tracing::info!("Received SIGINT (Ctrl+C), starting graceful shutdown...");
+            },
+            _ = terminate => {
+                tracing::info!("Received SIGTERM, starting graceful shutdown...");
+            },
+        }
+    };
+
+    // Run server with graceful shutdown
+    if let Err(err) = server.with_graceful_shutdown(shutdown_signal).await {
+        tracing::error!("Server error: {}", err);
+    }
+
+    tracing::info!("Server shutdown complete.");
 }

@@ -59,8 +59,16 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         exams: Vec::new(),
     }));
 
-    let cookie_key = std::env::var("COOKIE_KEY").context("COOKIE_KEY env var not set")?;
-    info!("COOKIE_KEY={cookie_key}");
+    let cookie_key = match std::env::var("COOKIE_KEY") {
+        Ok(key) => {
+            info!("COOKIE_KEY is set");
+            key
+        }
+        Err(_) => {
+            tracing::warn!("COOKIE_KEY environment variable is not set");
+            return Err(anyhow::anyhow!("COOKIE_KEY env var not set"));
+        }
+    };
     assert_eq!(cookie_key.len(), 64, "COOKIE_KEY env var must be 64 bytes");
 
     let server_state = ServerState {
@@ -74,47 +82,99 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         std::time::Duration::from_secs(5 * 60),
     ));
 
-    let origin = std::env::var("ORIGIN").context("ORIGIN env var not set")?;
-    info!("ORIGIN={origin}");
-    let origins = [origin
-        .parse()
-        .context("ORIGIN env var not valid HeaderValue")?];
+    // CORS Origins: Support multiple origins separated by commas
+    let cors = match std::env::var("ALLOWED_ORIGINS") {
+        Ok(origins_str) => {
+            info!("ALLOWED_ORIGINS is set");
+            let origins: Result<Vec<_>, _> = origins_str
+                .split(',')
+                .map(|s| s.trim().parse())
+                .collect();
 
-    let cors = CorsLayer::new()
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::PATCH,
-            Method::CONNECT,
-            Method::DELETE,
-        ])
-        .allow_headers([
-            AUTHORIZATION,
-            ACCEPT,
-            ORIGIN,
-            X_CONTENT_TYPE_OPTIONS,
-            ORIGIN,
-            SET_COOKIE,
-        ])
-        .allow_credentials(true)
-        // allow requests from any origin
-        .allow_origin(origins);
+            CorsLayer::new()
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PUT,
+                    Method::PATCH,
+                    Method::CONNECT,
+                    Method::DELETE,
+                ])
+                .allow_headers([
+                    AUTHORIZATION,
+                    ACCEPT,
+                    ORIGIN,
+                    X_CONTENT_TYPE_OPTIONS,
+                    ORIGIN,
+                    SET_COOKIE,
+                ])
+                .allow_credentials(true)
+                .allow_origin(origins.context("Invalid origin in ALLOWED_ORIGINS")?)
+        }
+        Err(_) => {
+            tracing::warn!("ALLOWED_ORIGINS not set, allowing all origins without credentials (⚠️  DEVELOPMENT ONLY)");
+            CorsLayer::new()
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::PUT,
+                    Method::PATCH,
+                    Method::CONNECT,
+                    Method::DELETE,
+                ])
+                .allow_headers([
+                    AUTHORIZATION,
+                    ACCEPT,
+                    ORIGIN,
+                    X_CONTENT_TYPE_OPTIONS,
+                    ORIGIN,
+                    SET_COOKIE,
+                ])
+                // Note: Cannot use allow_credentials(true) with allow_origin(Any)
+                .allow_origin(tower_http::cors::Any)
+        }
+    };
 
-    let github_client_id = std::env::var("GITHUB_CLIENT_ID")
-        .context("Missing the GITHUB_CLIENT_ID environment variable.")?;
-    info!("GITHUB_CLIENT_ID={github_client_id}");
+    let github_client_id = match std::env::var("GITHUB_CLIENT_ID") {
+        Ok(client_id) => {
+            info!("GITHUB_CLIENT_ID is set");
+            client_id
+        }
+        Err(_) => {
+            tracing::warn!("GITHUB_CLIENT_ID environment variable is not set");
+            return Err(anyhow::anyhow!("Missing the GITHUB_CLIENT_ID environment variable."));
+        }
+    };
     let github_client_id = ClientId::new(github_client_id);
 
-    let github_client_secret = std::env::var("GITHUB_CLIENT_SECRET")
-        .context("Missing the GITHUB_CLIENT_SECRET environment variable.")?;
-    info!("GITHUB_CLIENT_SECRET={github_client_secret}");
+    let github_client_secret = match std::env::var("GITHUB_CLIENT_SECRET") {
+        Ok(client_secret) => {
+            info!("GITHUB_CLIENT_SECRET is set");
+            client_secret
+        }
+        Err(_) => {
+            tracing::warn!("GITHUB_CLIENT_SECRET environment variable is not set");
+            return Err(anyhow::anyhow!("Missing the GITHUB_CLIENT_SECRET environment variable."));
+        }
+    };
     let github_client_secret = ClientSecret::new(github_client_secret);
 
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .context("Invalid authorization endpoint URL")?;
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
         .context("Invalid token endpoint URL")?;
+
+    // GitHub OAuth redirect URL: Required for OAuth to work
+    let redirect_base_url = match std::env::var("GITHUB_REDIRECT_URL") {
+        Ok(url) => {
+            info!("GITHUB_REDIRECT_URL is set");
+            url
+        }
+        Err(_) => {
+            tracing::warn!("GITHUB_REDIRECT_URL not set, using localhost default (⚠️  DEVELOPMENT ONLY)");
+            "http://localhost:3001".to_string()
+        }
+    };
 
     // Set up the config for the GitHub OAuth2 process.
     let github_client = BasicClient::new(github_client_id)
@@ -124,7 +184,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         .set_redirect_uri(
             RedirectUrl::new(format!(
                 "{}/auth/callback/github",
-                origin.trim_end_matches('/')
+                redirect_base_url.trim_end_matches('/')
             ))
             .context("Invalid redirect URL")?,
         );

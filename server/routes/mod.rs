@@ -54,6 +54,8 @@ pub async fn discard_exam_state_by_id(
 }
 
 pub async fn get_status_ping() -> Response {
+    info!("Health check ping received");
+
     let mut response = Response::new("pong".into());
     response
         .headers_mut()
