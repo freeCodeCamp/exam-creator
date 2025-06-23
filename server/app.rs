@@ -23,6 +23,7 @@ use tower_http::{
     services::{ServeDir, ServeFile},
 };
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
+use tracing::info;
 
 use crate::{
     database, extractor, routes,
@@ -32,6 +33,7 @@ use crate::{
 use crate::config::EnvVars;
 
 pub async fn app(env_vars: EnvVars) -> Result<Router> {
+    info!("Creating app...");
     let mut client_options = ClientOptions::parse(env_vars.mongodb_uri).await.unwrap();
     client_options.app_name = Some("Exam Creator".to_string());
 
@@ -189,5 +191,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         )
         .with_state(server_state);
 
+    info!("Successfully created app.");
     Ok(app)
 }

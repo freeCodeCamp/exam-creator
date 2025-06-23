@@ -9,6 +9,7 @@ mod state;
 #[cfg(feature = "docker")]
 #[tokio::main]
 async fn main() {
+    use tracing::info;
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
     use crate::{app::app, config::EnvVars};
@@ -22,6 +23,8 @@ async fn main() {
         // Log to stdout
         .with(tracing_subscriber::fmt::layer().pretty())
         .init();
+
+    info!("Starting server...");
 
     let mongodb_uri = std::env::var("MONGODB_URI").unwrap();
 
