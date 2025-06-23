@@ -27,6 +27,7 @@ async fn main() {
     info!("Starting server...");
 
     let mongodb_uri = std::env::var("MONGODB_URI").unwrap();
+    info!("MONGODB_URI={mongodb_uri}");
 
     let env_vars = EnvVars { mongodb_uri };
 

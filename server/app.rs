@@ -60,6 +60,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
     }));
 
     let cookie_key = std::env::var("COOKIE_KEY").context("COOKIE_KEY env var not set")?;
+    info!("COOKIE_KEY={cookie_key}");
     assert_eq!(cookie_key.len(), 64, "COOKIE_KEY env var must be 64 bytes");
 
     let server_state = ServerState {
@@ -74,6 +75,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
     ));
 
     let origin = std::env::var("ORIGIN").context("ORIGIN env var not set")?;
+    info!("ORIGIN={origin}");
     let origins = [origin
         .parse()
         .context("ORIGIN env var not valid HeaderValue")?];
@@ -99,14 +101,16 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         // allow requests from any origin
         .allow_origin(origins);
 
-    let github_client_id = ClientId::new(
-        std::env::var("GITHUB_CLIENT_ID")
-            .context("Missing the GITHUB_CLIENT_ID environment variable.")?,
-    );
-    let github_client_secret = ClientSecret::new(
-        std::env::var("GITHUB_CLIENT_SECRET")
-            .context("Missing the GITHUB_CLIENT_SECRET environment variable.")?,
-    );
+    let github_client_id = std::env::var("GITHUB_CLIENT_ID")
+        .context("Missing the GITHUB_CLIENT_ID environment variable.")?;
+    info!("GITHUB_CLIENT_ID={github_client_id}");
+    let github_client_id = ClientId::new(github_client_id);
+
+    let github_client_secret = std::env::var("GITHUB_CLIENT_SECRET")
+        .context("Missing the GITHUB_CLIENT_SECRET environment variable.")?;
+    info!("GITHUB_CLIENT_SECRET={github_client_secret}");
+    let github_client_secret = ClientSecret::new(github_client_secret);
+
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .context("Invalid authorization endpoint URL")?;
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
