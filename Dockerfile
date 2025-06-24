@@ -52,7 +52,8 @@ COPY --from=frontend_builder /app/dist /app/dist
 # Build application
 RUN cargo build --release
 
-FROM gcr.io/distroless/cc-debian12 AS runtime
+FROM ubuntu:24.04 AS runtime
+RUN apt-get update && apt-get upgrade -y
 # Copy the compiled application from the builder stage
 COPY --from=builder /app/target/release/server /server
 # Copy static assets from the 'dist' directory
