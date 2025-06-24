@@ -70,25 +70,25 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         std::time::Duration::from_secs(5 * 60),
     ));
 
-    let cors = CorsLayer::new()
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::PATCH,
-            Method::CONNECT,
-            Method::DELETE,
-        ])
-        .allow_headers([
-            AUTHORIZATION,
-            ACCEPT,
-            ORIGIN,
-            X_CONTENT_TYPE_OPTIONS,
-            ORIGIN,
-            SET_COOKIE,
-        ])
-        .allow_credentials(true)
-        .allow_origin(env_vars.allowed_origins);
+    // let cors = CorsLayer::new()
+    //     .allow_methods([
+    //         Method::GET,
+    //         Method::POST,
+    //         Method::PUT,
+    //         Method::PATCH,
+    //         Method::CONNECT,
+    //         Method::DELETE,
+    //     ])
+    //     .allow_headers([
+    //         AUTHORIZATION,
+    //         ACCEPT,
+    //         ORIGIN,
+    //         X_CONTENT_TYPE_OPTIONS,
+    //         ORIGIN,
+    //         SET_COOKIE,
+    //     ])
+    //     .allow_credentials(true)
+    //     .allow_origin(env_vars.allowed_origins);
 
     let github_client_id = ClientId::new(env_vars.github_client_id);
 
@@ -138,7 +138,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         .route("/ws/exam/{exam_id}", any(extractor::ws_handler_exam))
         .route("/ws/users", any(extractor::ws_handler_users))
         .fallback_service(ServeDir::new("dist").fallback(ServeFile::new("dist/index.html")))
-        .layer(cors)
+        // .layer(cors)
         .layer(session_layer)
         .layer(Extension(github_client))
         .layer(Extension(http_client))
