@@ -26,30 +26,20 @@ async fn main() {
 
     info!("Starting server...");
 
-    let mongodb_uri = match std::env::var("MONGODB_URI") {
-        Ok(uri) => {
-            info!("MONGODB_URI is set");
-            uri
-        }
-        Err(_) => {
-            tracing::warn!("MONGODB_URI environment variable is not set");
-            panic!("MONGODB_URI environment variable is required");
-        }
-    };
+    let env_vars = EnvVars::new();
 
-    let env_vars = EnvVars { mongodb_uri };
+    let port = env_vars.port;
 
     let app = app(env_vars).await.unwrap();
-
-    let port = std::env::var("PORT").unwrap_or("3001".to_string());
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
         .unwrap();
-    tracing::info!(
+    info!(
         "Server listening on 0.0.0.0:{} (accessible from any interface)",
         listener.local_addr().unwrap().port()
     );
+    info!("Application: http://127.0.0.1:{port}");
 
     // Setup graceful shutdown
     let server = axum::serve(listener, app);
@@ -75,10 +65,10 @@ async fn main() {
 
         tokio::select! {
             _ = ctrl_c => {
-                tracing::info!("Received SIGINT (Ctrl+C), starting graceful shutdown...");
+                info!("Received SIGINT (Ctrl+C), starting graceful shutdown...");
             },
             _ = terminate => {
-                tracing::info!("Received SIGTERM, starting graceful shutdown...");
+                info!("Received SIGTERM, starting graceful shutdown...");
             },
         }
     };
@@ -88,5 +78,5 @@ async fn main() {
         tracing::error!("Server error: {}", err);
     }
 
-    tracing::info!("Server shutdown complete.");
+    info!("Server shutdown complete.");
 }
