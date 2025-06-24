@@ -54,9 +54,9 @@ RUN cargo build --release
 
 FROM gcr.io/distroless/cc-debian12 AS runtime
 # Copy the compiled application from the builder stage
-COPY --from=builder /app/target/release/server /usr/local/bin/
+COPY --from=builder /app/target/release/server /server
 # Copy static assets from the 'dist' directory
 COPY --from=builder /app/dist /dist
 
 # Set the entrypoint for the container
-CMD ["server"]
+ENTRYPOINT ["/server"]
