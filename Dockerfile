@@ -35,7 +35,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM chef AS builder
 # Copy files needed for dependency compilation
 COPY Cargo.toml Cargo.lock ./
-COPY prisma/ prisma/ 
+COPY prisma/ prisma/
 
 # Copy the recipe from the planner stage for dependency cooking
 COPY --from=planner /app/recipe.json recipe.json
@@ -54,9 +54,9 @@ RUN cargo build --release
 
 FROM gcr.io/distroless/cc-debian12 AS runtime
 # Copy the compiled application from the builder stage
-COPY --from=builder /app/target/release/server /server
+COPY --from=builder /app/target/release/server /usr/local/bin/
 # Copy static assets from the 'dist' directory
 COPY --from=builder /app/dist /dist
 
 # Set the entrypoint for the container
-ENTRYPOINT ["/server"]
+CMD ["server"]
