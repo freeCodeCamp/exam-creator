@@ -26,22 +26,57 @@ async fn main() {
 
     info!("Starting server...");
 
-    let mongodb_uri = std::env::var("MONGODB_URI").unwrap();
-    info!("MONGODB_URI={mongodb_uri}");
+    let env_vars = EnvVars::new();
 
-    let env_vars = EnvVars { mongodb_uri };
+    let port = env_vars.port;
 
     let app = app(env_vars).await.unwrap();
-
-    let port = std::env::var("PORT").unwrap_or("3001".to_string());
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
         .unwrap();
-    tracing::info!(
-        "Listening on http://127.0.0.1:{}",
+    info!(
+        "Server listening on 0.0.0.0:{} (accessible from any interface)",
         listener.local_addr().unwrap().port()
     );
+    info!("Application: http://127.0.0.1:{port}");
 
-    axum::serve(listener, app).await.unwrap();
+    // Setup graceful shutdown
+    let server = axum::serve(listener, app);
+
+    // Create shutdown signal handler
+    let shutdown_signal = async {
+        let ctrl_c = async {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to install Ctrl+C handler");
+        };
+
+        #[cfg(unix)]
+        let terminate = async {
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                .expect("failed to install SIGTERM handler")
+                .recv()
+                .await;
+        };
+
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+
+        tokio::select! {
+            _ = ctrl_c => {
+                info!("Received SIGINT (Ctrl+C), starting graceful shutdown...");
+            },
+            _ = terminate => {
+                info!("Received SIGTERM, starting graceful shutdown...");
+            },
+        }
+    };
+
+    // Run server with graceful shutdown
+    if let Err(err) = server.with_graceful_shutdown(shutdown_signal).await {
+        tracing::error!("Server error: {}", err);
+    }
+
+    info!("Server shutdown complete.");
 }

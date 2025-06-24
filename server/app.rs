@@ -59,26 +59,16 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         exams: Vec::new(),
     }));
 
-    let cookie_key = std::env::var("COOKIE_KEY").context("COOKIE_KEY env var not set")?;
-    info!("COOKIE_KEY={cookie_key}");
-    assert_eq!(cookie_key.len(), 64, "COOKIE_KEY env var must be 64 bytes");
-
     let server_state = ServerState {
         database,
         client_sync,
-        key: Key::from(cookie_key.as_bytes()),
+        key: Key::from(env_vars.cookie_key.as_bytes()),
     };
 
     tokio::spawn(state::cleanup_online_users(
         Arc::clone(&server_state.client_sync),
         std::time::Duration::from_secs(5 * 60),
     ));
-
-    let origin = std::env::var("ORIGIN").context("ORIGIN env var not set")?;
-    info!("ORIGIN={origin}");
-    let origins = [origin
-        .parse()
-        .context("ORIGIN env var not valid HeaderValue")?];
 
     let cors = CorsLayer::new()
         .allow_methods([
@@ -98,18 +88,11 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
             SET_COOKIE,
         ])
         .allow_credentials(true)
-        // allow requests from any origin
-        .allow_origin(origins);
+        .allow_origin(env_vars.allowed_origins);
 
-    let github_client_id = std::env::var("GITHUB_CLIENT_ID")
-        .context("Missing the GITHUB_CLIENT_ID environment variable.")?;
-    info!("GITHUB_CLIENT_ID={github_client_id}");
-    let github_client_id = ClientId::new(github_client_id);
+    let github_client_id = ClientId::new(env_vars.github_client_id);
 
-    let github_client_secret = std::env::var("GITHUB_CLIENT_SECRET")
-        .context("Missing the GITHUB_CLIENT_SECRET environment variable.")?;
-    info!("GITHUB_CLIENT_SECRET={github_client_secret}");
-    let github_client_secret = ClientSecret::new(github_client_secret);
+    let github_client_secret = ClientSecret::new(env_vars.github_client_secret);
 
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
         .context("Invalid authorization endpoint URL")?;
@@ -122,11 +105,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         .set_auth_uri(auth_url)
         .set_token_uri(token_url)
         .set_redirect_uri(
-            RedirectUrl::new(format!(
-                "{}/auth/callback/github",
-                origin.trim_end_matches('/')
-            ))
-            .context("Invalid redirect URL")?,
+            RedirectUrl::new(env_vars.github_redirect_url).context("Invalid redirect URL")?,
         );
 
     let http_client = reqwest::ClientBuilder::new()
@@ -163,17 +142,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         .layer(session_layer)
         .layer(Extension(github_client))
         .layer(Extension(http_client))
-        // Add tracing for all requests
-        // .layer(axum::middleware::from_fn(
-        //     |req: axum::http::Request<axum::body::Body>, next: axum::middleware::Next| async move {
-        //         let uri = req.uri().to_string();
-        //         let reduced_uri = uri.split("access_token=").collect::<Vec<_>>();
-        //         debug!("{} {}", req.method(), reduced_uri.get(0).unwrap());
-        //         let response = next.run(req).await;
-        //         debug!("Status: {}", response.status());
-        //         response
-        //     },
-        // ))
         .layer(
             TraceLayer::new_for_http()
                 // Create span for the request and include the matched path. The matched
