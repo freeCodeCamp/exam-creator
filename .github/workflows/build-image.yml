@@ -37,8 +37,7 @@ jobs:
           docker build . \
             --tag registry.digitalocean.com/${{ secrets.DOCR_NAME }}/${{ matrix.site_tlds }}/exam-creator:${{ env.tagname }} \
             --tag registry.digitalocean.com/${{ secrets.DOCR_NAME }}/${{ matrix.site_tlds }}/exam-creator:latest \
-            --file Dockerfile \
-            --platform=linux/amd64
+            --file Dockerfile
 
       - name: Push image to DigitalOcean Container Registry
         run: |
