@@ -3,12 +3,14 @@ use std::env::var;
 use http::HeaderValue;
 use tracing::{error, warn};
 
+#[derive(Clone, Debug)]
 pub struct EnvVars {
     pub allowed_origins: Vec<HeaderValue>,
     pub cookie_key: String,
     pub github_client_id: String,
     pub github_client_secret: String,
     pub github_redirect_url: String,
+    pub mock_auth: bool,
     pub mongodb_uri: String,
     pub port: u16,
 }
@@ -69,6 +71,19 @@ impl EnvVars {
             }
         };
 
+        let mock_auth = match var("MOCK_AUTH") {
+            Ok(v) => {
+                let mock_auth = v.parse().unwrap_or(false);
+                if cfg!(not(debug_assertions)) && mock_auth {
+                    panic!("MOCK_AUTH is not allowed to be set to 'true' outside of a debug build");
+                }
+
+                warn!("MOCK_AUTH explicitly set to {mock_auth}");
+                mock_auth
+            }
+            Err(_e) => false,
+        };
+
         let Ok(mongodb_uri) = var("MONGODB_URI") else {
             error!("MONGODB_URI not set");
             panic!("MONGODB_URI required");
@@ -80,6 +95,7 @@ impl EnvVars {
             github_client_id,
             github_client_secret,
             github_redirect_url,
+            mock_auth,
             mongodb_uri,
             port,
         };

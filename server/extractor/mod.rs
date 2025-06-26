@@ -4,7 +4,7 @@ use axum::{
     http::request::Parts,
 };
 use axum_extra::extract::PrivateCookieJar;
-use bson::doc;
+use bson::{doc, oid::ObjectId};
 
 use axum::extract::ws::WebSocketUpgrade;
 use axum::response::IntoResponse;
@@ -32,7 +32,40 @@ where
         state: &S,
     ) -> anyhow::Result<Self, Self::Rejection> {
         let state = ServerState::from_ref(state);
-        // let state = state.to_owned();
+
+        if state.env_vars.mock_auth {
+            let mock_user = ExamCreatorUser {
+                id: ObjectId::new(),
+                name: "Camperbot".to_string(),
+                github_id: None,
+                picture: None,
+                email: "camperbot@freecodecamp.org".to_string(),
+            };
+            let client_sync = &mut state.client_sync.lock().unwrap();
+            if let Some(user) = client_sync
+                .users
+                .iter_mut()
+                .find(|u| u.email == mock_user.email)
+            {
+                user.activity.last_active = chrono::Utc::now().timestamp_millis() as usize;
+            } else {
+                let name = mock_user.name.clone();
+                let email = mock_user.email.clone();
+                let picture = mock_user.picture.clone().unwrap_or_default();
+                let activity = Activity {
+                    exam: None,
+                    last_active: chrono::Utc::now().timestamp_millis() as usize,
+                };
+                client_sync.users.push(User {
+                    name,
+                    email,
+                    picture,
+                    activity,
+                });
+            }
+
+            return Ok(mock_user);
+        }
 
         let cookiejar: PrivateCookieJar = PrivateCookieJar::from_request_parts(parts, &state)
             .await

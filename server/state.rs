@@ -6,13 +6,17 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
-use crate::database::{Database, prisma};
+use crate::{
+    config::EnvVars,
+    database::{Database, prisma},
+};
 
 #[derive(Clone)]
 pub struct ServerState {
     pub database: Database,
     pub client_sync: Arc<Mutex<ClientSync>>,
     pub key: Key,
+    pub env_vars: EnvVars,
 }
 
 impl FromRef<ServerState> for Key {
