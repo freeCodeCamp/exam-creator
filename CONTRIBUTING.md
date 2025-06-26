@@ -1,20 +1,20 @@
 # Contributing
 
-## Prerequisites
+## Development
 
-### Rust
+### Prerequisites
+
+#### Rust
 
 https://www.rust-lang.org/tools/install
 
-### Bun
+#### Bun
 
 https://bun.sh/
 
-### Nodejs LTS
+#### Nodejs LTS
 
 https://nodejs.org/en
-
-## Development
 
 ### Quick Start
 
@@ -36,20 +36,54 @@ bun run build
 bun run develop:server
 ```
 
-### Information
+## Flight Manual
 
-The client can be developed without the backend by setting `VITE_MOCK_DATA="true"`, then using:
+### Config
+
+Required environment variables:
+
+- `MONGODB_URI`
+  - Cluster with `freecodecamp` database, and `EnvExamTemp` and `ExamCreatorUser` collections
+- `GITHUB_CLIENT_ID`
+  - GitHub OAuth app id
+- `GITHUB_CLIENT_SECRET`
+  - GitHub OAuth app secret
+- `COOKIE_KEY`
+  - 64+ utf-8 character string
+
+Optional environment variables:
+
+- `PORT`
+  - Default: `8080`
+- `ALLOWED_ORIGINS`
+  - Default: `http://127.0.0.1:<PORT>`
+- `GITHUB_REDIRECT_URL`
+  - Default: `http://127.0.0.1:<PORT>/auth/callback/github`
+- `VITE_MOCK_DATA`
+  - Default: `undefined`
+  - Only used by the client, and only used when developing the client in isolation
+- `MOCK_AUTH`
+  - Default: `false`
+  - Not allowed unless running a debug build
+
+### Build
 
 ```bash
-bun run dev
+# Minimal
+docker build .
+# Suggested
+docker build -t exam-creator:latest -f Dockerfile .
 ```
 
-Build the Docker image:
+### Run
 
 ```bash
-docker build -t exam-creator -f Dockerfile .
+# Minimal
+docker run --env-file .env -p 8080:8080 <IMAGE_ID>
+# Suggested
+docker run --env-file .env -p 8080:8080 --name exam-creator-instance exam-creator:latest
 ```
 
-```bash
-docker run --env-file .env -d -p 3001:3001 --name exam-creator-instance exam-creator
-```
+### Logging
+
+Filter requests by `RUST_LOG="server=<LEVEL>"`.
