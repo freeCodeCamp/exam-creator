@@ -83,6 +83,9 @@ export async function putState(state: ClientSync): Promise<ClientSync> {
   return authorizedFetch<ClientSync>("/state", {
     method: "PUT",
     body: JSON.stringify(serializeFromPrisma(state)),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }
 
@@ -130,6 +133,9 @@ export async function putExamById(exam: EnvExam): Promise<EnvExam> {
   return authorizedFetch<EnvExam>(`/exams/${exam.id}`, {
     method: "PUT",
     body: JSON.stringify(serializeFromPrisma(exam)),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }
 
