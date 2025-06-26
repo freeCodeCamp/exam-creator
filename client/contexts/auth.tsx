@@ -41,10 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await deleteLogout();
-      setUser(null);
     } catch (e) {
       console.error(e);
     } finally {
+      setUser(null);
       setIsLoading(false);
     }
   };
