@@ -1,7 +1,7 @@
 use std::env::var;
 
 use http::HeaderValue;
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 #[derive(Clone, Debug)]
 pub struct EnvVars {
@@ -52,25 +52,6 @@ impl EnvVars {
         };
         assert_eq!(cookie_key.len(), 64, "COOKIE_KEY env var must be 64 bytes");
 
-        let Ok(github_client_id) = var("GITHUB_CLIENT_ID") else {
-            error!("GITHUB_CLIENT_ID not set");
-            panic!("GITHUB_CLIENT_ID required");
-        };
-
-        let Ok(github_client_secret) = var("GITHUB_CLIENT_SECRET") else {
-            error!("GITHUB_CLIENT_SECRET not set");
-            panic!("GITHUB_CLIENT_SECRET required");
-        };
-
-        let github_redirect_url = match var("GITHUB_REDIRECT_URL") {
-            Ok(u) => u,
-            Err(_e) => {
-                let url = format!("http://127.0.0.1:{port}");
-                warn!("GITHUB_REDIRECT_URL not set. Defaulting to {url}");
-                url
-            }
-        };
-
         let mock_auth = match var("MOCK_AUTH") {
             Ok(v) => {
                 let mock_auth = v.parse().unwrap_or(false);
@@ -82,6 +63,41 @@ impl EnvVars {
                 mock_auth
             }
             Err(_e) => false,
+        };
+
+        let github_client_id = match var("GITHUB_CLIENT_ID") {
+            Ok(v) => v,
+            Err(_e) => {
+                // If no value provided, but MOCK_AUTH=true, then default, otherwise panic
+                if !mock_auth {
+                    error!("GITHUB_CLIENT_ID not set");
+                    panic!("GITHUB_CLIENT_ID required");
+                }
+                "test-dev-string".to_string()
+            }
+        };
+
+        info!("GITHUB_CLIENT_ID set to {github_client_id}");
+
+        let github_client_secret = match var("GITHUB_CLIENT_SECRET") {
+            Ok(v) => v,
+            Err(_e) => {
+                // If no value provided, but MOCK_AUTH=true, then default, otherwise panic
+                if !mock_auth {
+                    error!("GITHUB_CLIENT_SECRET not set");
+                    panic!("GITHUB_CLIENT_SECRET required");
+                }
+                "test-dev-string".to_string()
+            }
+        };
+
+        let github_redirect_url = match var("GITHUB_REDIRECT_URL") {
+            Ok(u) => u,
+            Err(_e) => {
+                let url = format!("http://127.0.0.1:{port}");
+                warn!("GITHUB_REDIRECT_URL not set. Defaulting to {url}");
+                url
+            }
         };
 
         let Ok(mongodb_uri) = var("MONGODB_URI") else {

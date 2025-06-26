@@ -162,13 +162,13 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
                 .on_request(|request: &Request, _span: &tracing::Span| {
                     let method = request.method();
                     let uri = request.uri();
-                    tracing::info!("--> {} {}", method, uri);
+                    tracing::debug!("--> {} {}", method, uri);
                 })
                 .on_response(
                     |response: &axum::http::Response<_>,
                      latency: std::time::Duration,
                      _span: &tracing::Span| {
-                        tracing::info!("<-- {} ({} ms)", response.status(), latency.as_millis());
+                        tracing::debug!("<-- {} ({} ms)", response.status(), latency.as_millis());
                     },
                 )
                 // By default `TraceLayer` will log 5xx

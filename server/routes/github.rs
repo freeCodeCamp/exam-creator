@@ -19,7 +19,11 @@ use tower_sessions::Session;
 use tracing::info;
 use url::Url;
 
-use crate::{database::ExamCreatorSession, errors::AppError, state::ServerState};
+use crate::{
+    database::{ExamCreatorSession, ExamCreatorUser},
+    errors::AppError,
+    state::ServerState,
+};
 
 type GitHubClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
@@ -106,6 +110,32 @@ pub async fn github_callback_handler(
     } else {
         github_user_info.email.unwrap()
     };
+
+    // If mocking auth, add camperbot user to database
+    if server_state.env_vars.mock_auth {
+        let mock_user = ExamCreatorUser {
+            id: ObjectId::parse_str("685d2e1c178564e7b9045589")
+                .expect("Unreachable. development static string"),
+            name: "Camperbot".to_string(),
+            github_id: None,
+            picture: None,
+            email: "camperbot@freecodecamp.org".to_string(),
+        };
+        let res = server_state
+            .database
+            .exam_creator_user
+            .insert_one(mock_user)
+            .await;
+
+        match res {
+            Ok(_insert_result) => {
+                info!("Camperbot user inserted into database");
+            }
+            Err(_e) => {
+                info!("Camperbot user already found in database");
+            }
+        }
+    }
 
     // TEMP: User email must be in database
     let user = server_state
