@@ -34,7 +34,7 @@ use crate::config::EnvVars;
 
 pub async fn app(env_vars: EnvVars) -> Result<Router> {
     info!("Creating app...");
-    let mut client_options = ClientOptions::parse(env_vars.mongodb_uri).await.unwrap();
+    let mut client_options = ClientOptions::parse(&env_vars.mongodb_uri).await.unwrap();
     client_options.app_name = Some("Exam Creator".to_string());
 
     let client = mongodb::Client::with_options(client_options).unwrap();
@@ -63,6 +63,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         database,
         client_sync,
         key: Key::from(env_vars.cookie_key.as_bytes()),
+        env_vars: env_vars.clone(),
     };
 
     tokio::spawn(state::cleanup_online_users(
@@ -70,25 +71,25 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         std::time::Duration::from_secs(5 * 60),
     ));
 
-    // let cors = CorsLayer::new()
-    //     .allow_methods([
-    //         Method::GET,
-    //         Method::POST,
-    //         Method::PUT,
-    //         Method::PATCH,
-    //         Method::CONNECT,
-    //         Method::DELETE,
-    //     ])
-    //     .allow_headers([
-    //         AUTHORIZATION,
-    //         ACCEPT,
-    //         ORIGIN,
-    //         X_CONTENT_TYPE_OPTIONS,
-    //         ORIGIN,
-    //         SET_COOKIE,
-    //     ])
-    //     .allow_credentials(true)
-    //     .allow_origin(env_vars.allowed_origins);
+    let cors = CorsLayer::new()
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::CONNECT,
+            Method::DELETE,
+        ])
+        .allow_headers([
+            AUTHORIZATION,
+            ACCEPT,
+            ORIGIN,
+            X_CONTENT_TYPE_OPTIONS,
+            ORIGIN,
+            SET_COOKIE,
+        ])
+        .allow_credentials(true)
+        .allow_origin(env_vars.allowed_origins);
 
     let github_client_id = ClientId::new(env_vars.github_client_id);
 
@@ -112,7 +113,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
         .build()
-        .context("Client should build")?;
+        .context("http client should build")?;
 
     let app = Router::new()
         .route("/exams", get(routes::get_exams))
@@ -138,7 +139,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         .route("/ws/exam/{exam_id}", any(extractor::ws_handler_exam))
         .route("/ws/users", any(extractor::ws_handler_users))
         .fallback_service(ServeDir::new("dist").fallback(ServeFile::new("dist/index.html")))
-        // .layer(cors)
+        .layer(cors)
         .layer(session_layer)
         .layer(Extension(github_client))
         .layer(Extension(http_client))
@@ -158,6 +159,18 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
 
                     tracing::debug_span!("request", %method, %uri, matched_path)
                 })
+                .on_request(|request: &Request, _span: &tracing::Span| {
+                    let method = request.method();
+                    let uri = request.uri();
+                    tracing::info!("--> {} {}", method, uri);
+                })
+                .on_response(
+                    |response: &axum::http::Response<_>,
+                     latency: std::time::Duration,
+                     _span: &tracing::Span| {
+                        tracing::info!("<-- {} ({} ms)", response.status(), latency.as_millis());
+                    },
+                )
                 // By default `TraceLayer` will log 5xx
                 .on_failure(()),
         )

@@ -24,3 +24,5 @@ dist-ssr
 target/
 .env
 /target
+
+.do
