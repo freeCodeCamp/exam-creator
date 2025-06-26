@@ -46,8 +46,10 @@ Required environment variables:
   - Cluster with `freecodecamp` database, and `EnvExamTemp` and `ExamCreatorUser` collections
 - `GITHUB_CLIENT_ID`
   - GitHub OAuth app id
+  - NOTE: Not required if `MOCK_AUTH=true`
 - `GITHUB_CLIENT_SECRET`
   - GitHub OAuth app secret
+  - NOTE: Not required if `MOCK_AUTH=true`
 - `COOKIE_KEY`
   - 64+ utf-8 character string
 

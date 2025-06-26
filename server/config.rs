@@ -1,7 +1,7 @@
 use std::env::var;
 
 use http::HeaderValue;
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 
 #[derive(Clone, Debug)]
 pub struct EnvVars {
@@ -76,8 +76,10 @@ impl EnvVars {
                 "test-dev-string".to_string()
             }
         };
-
-        info!("GITHUB_CLIENT_ID set to {github_client_id}");
+        assert!(
+            !github_client_id.is_empty(),
+            "GITHUB_CLIENT_ID must not be empty"
+        );
 
         let github_client_secret = match var("GITHUB_CLIENT_SECRET") {
             Ok(v) => v,
@@ -90,6 +92,10 @@ impl EnvVars {
                 "test-dev-string".to_string()
             }
         };
+        assert!(
+            !github_client_secret.is_empty(),
+            "GITHUB_CLIENT_SECRET must not be empty"
+        );
 
         let github_redirect_url = match var("GITHUB_REDIRECT_URL") {
             Ok(u) => u,
@@ -104,6 +110,7 @@ impl EnvVars {
             error!("MONGODB_URI not set");
             panic!("MONGODB_URI required");
         };
+        assert!(!mongodb_uri.is_empty(), "MONGODB_URI must not be empty");
 
         let env_vars = Self {
             allowed_origins,
