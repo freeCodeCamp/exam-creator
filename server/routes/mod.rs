@@ -1,4 +1,3 @@
-use anyhow::Context;
 use axum::{
     Json,
     extract::{
@@ -12,6 +11,7 @@ use axum_extra::extract::PrivateCookieJar;
 use bson::doc;
 use futures_util::TryStreamExt;
 use futures_util::{SinkExt, StreamExt};
+use http::StatusCode;
 use mongodb::bson::oid::ObjectId;
 use oauth2::CsrfToken;
 use once_cell::sync::Lazy;
@@ -23,7 +23,7 @@ use tracing::info;
 
 use crate::{
     database::{ExamCreatorUser, prisma},
-    errors::AppError,
+    errors::Error,
     state::{ServerState, SessionUser, SocketEvents, User, remove_user, set_user_activity},
 };
 
@@ -33,7 +33,7 @@ pub async fn discard_exam_state_by_id(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
-) -> Result<Json<prisma::EnvExam>, AppError> {
+) -> Result<Json<prisma::EnvExam>, Error> {
     let original_exam = state
         .database
         .temp_env_exam
@@ -41,7 +41,10 @@ pub async fn discard_exam_state_by_id(
             "_id": &exam_id
         })
         .await?
-        .context(format!("No exam {} found", exam_id))?;
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("No exam {exam_id} found"),
+        ))?;
 
     let client_sync = &mut state.client_sync.lock().unwrap();
     if let Some(exam) = client_sync.exams.iter_mut().find(|e| e.id == exam_id) {
@@ -76,7 +79,7 @@ pub async fn get_status_ping() -> Response {
 pub async fn get_exams(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<Vec<prisma::EnvExam>>, AppError> {
+) -> Result<Json<Vec<prisma::EnvExam>>, Error> {
     let mut exams_cursor = state.database.temp_env_exam.find(doc! {}).await?;
 
     let mut exams: Vec<prisma::EnvExam> = vec![];
@@ -92,7 +95,7 @@ pub async fn get_exam_by_id(
     auth_user: ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
-) -> Result<Json<prisma::EnvExam>, AppError> {
+) -> Result<Json<prisma::EnvExam>, Error> {
     // TODO: Check if exam is in server state first:
     // {
     //     let client_sync = &mut state.client_sync.lock().unwrap();
@@ -110,7 +113,10 @@ pub async fn get_exam_by_id(
         .temp_env_exam
         .find_one(doc! { "_id": exam_id })
         .await?
-        .with_context(|| "Failed to find exam")?;
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("exam non-existant: {exam_id}"),
+        ))?;
     info!("Found exam {exam_id} in database");
 
     // Update state to reflect user is editing this exam
@@ -124,7 +130,7 @@ pub async fn get_exam_by_id(
 pub async fn post_exam(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<prisma::EnvExam>, AppError> {
+) -> Result<Json<prisma::EnvExam>, Error> {
     info!("post_exam");
     let exam = prisma::EnvExam::default();
 
@@ -139,12 +145,14 @@ pub async fn put_exam(
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
     Json(exam): Json<prisma::EnvExam>,
-) -> Result<Json<prisma::EnvExam>, AppError> {
+) -> Result<Json<prisma::EnvExam>, Error> {
     if exam.id != exam_id {
-        return Err(anyhow::anyhow!(
-            "Given exam id {} does not match requested id to edit {}",
-            exam.id,
-            exam_id
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!(
+                "Given exam id {} does not match requested id to edit {}",
+                exam.id, exam_id
+            ),
         )
         .into());
     }
@@ -165,7 +173,7 @@ static _EXAM_ROOMS: Lazy<Mutex<HashMap<String, broadcast::Sender<String>>>> =
 pub async fn get_users(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<Vec<User>>, AppError> {
+) -> Result<Json<Vec<User>>, Error> {
     let users = &state.client_sync.lock().unwrap().users;
 
     Ok(Json(users.clone()))
@@ -178,13 +186,16 @@ pub async fn get_session_user(
     session: Session,
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
-) -> Result<Json<SessionUser>, AppError> {
+) -> Result<Json<SessionUser>, Error> {
     let web_socket_token = CsrfToken::new_random().into_secret();
 
     let cookie = jar
         .get("sid")
         .map(|cookie| cookie.value().to_owned())
-        .context("Unreachable. Protected endpoint.")?;
+        .ok_or(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            format!("invalid sid in cookie jar"),
+        ))?;
 
     session.insert(&web_socket_token, &cookie).await?;
 
@@ -218,18 +229,20 @@ pub async fn delete_logout(
     user: ExamCreatorUser,
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
-) -> Result<PrivateCookieJar, AppError> {
+) -> Result<PrivateCookieJar, Error> {
     let cookie = jar
         .get("sid")
         .map(|cookie| cookie.value().to_owned())
-        .context("Invalid sid")?;
+        .ok_or(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            format!("invalid sid in cookie jar"),
+        ))?;
 
     server_state
         .database
         .exam_creator_session
         .delete_many(doc! {"user_id": &user.id})
-        .await
-        .context("unable to delete sessions")?;
+        .await?;
 
     Ok(jar.remove(cookie))
 }

@@ -1,4 +1,3 @@
-use anyhow::{Context, Result};
 use axum::{
     extract::{FromRef, FromRequestParts, Path, Query, State},
     http::request::Parts,
@@ -15,7 +14,7 @@ use tracing::{info, warn};
 
 use crate::{
     database::ExamCreatorUser,
-    errors::AppError,
+    errors::Error,
     routes::handle_users_ws,
     state::{Activity, ServerState, User, set_user_activity},
 };
@@ -27,16 +26,12 @@ where
 {
     type Rejection = (StatusCode, &'static str);
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &S,
-    ) -> anyhow::Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let state = ServerState::from_ref(state);
 
         let cookiejar: PrivateCookieJar = PrivateCookieJar::from_request_parts(parts, &state)
             .await
-            .context("unable to create cookie jar")
-            .unwrap();
+            .expect("cookie jar to be constructed");
 
         let Some(cookie) = cookiejar.get("sid").map(|cookie| cookie.value().to_owned()) else {
             warn!("no sid in jar");
@@ -108,27 +103,36 @@ pub async fn ws_handler_users(
     session: Session,
     State(state): State<ServerState>,
     Query(QueryAuth { token }): Query<QueryAuth>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<impl IntoResponse, Error> {
     info!("WebSocket connection request for users");
 
     let cookie = session
         .remove::<String>(&token)
         .await?
-        .context("session cookie not behind token")?;
+        .ok_or(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            format!("session cookie not behind token"),
+        ))?;
 
     let session = state
         .database
         .exam_creator_session
         .find_one(doc! { "session_id": cookie})
         .await?
-        .context("user session not found")?;
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("user session not found"),
+        ))?;
 
     let user = state
         .database
         .exam_creator_user
         .find_one(doc! {"_id": session.user_id})
         .await?
-        .context("user not found")?;
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("user not found: {}", session.user_id),
+        ))?;
 
     // Scoped to release lock
     {

@@ -13,6 +13,8 @@ pub struct EnvVars {
     pub mock_auth: bool,
     pub mongodb_uri: String,
     pub port: u16,
+    pub request_body_size_limit: usize,
+    pub request_timeout_in_ms: u64,
 }
 
 impl EnvVars {
@@ -112,6 +114,32 @@ impl EnvVars {
         };
         assert!(!mongodb_uri.is_empty(), "MONGODB_URI must not be empty");
 
+        let request_body_size_limit = match std::env::var("REQUEST_BODY_SIZE_LIMIT") {
+            Ok(s) => s
+                .parse()
+                .expect("REQUEST_BODY_SIZE_LIMIT to be valid unsigned integer"),
+            Err(_e) => {
+                let base: usize = 2;
+                let exp = 20;
+                let default_request_body_size_limit = 5 * base.pow(exp);
+                warn!(
+                    "REQUEST_BODY_SIZE_LIMIT not set. Defaulting to {default_request_body_size_limit}"
+                );
+                default_request_body_size_limit
+            }
+        };
+
+        let request_timeout_in_ms = match std::env::var("REQUEST_TIMEOUT_IN_MS") {
+            Ok(s) => s
+                .parse()
+                .expect("REQUEST_TIMEOUT_IN_MS to be valid unsigned integer"),
+            Err(_e) => {
+                let default_request_timeout = 5_000;
+                warn!("REQUEST_TIMEOUT_IN_MS not set. Defaulting to {default_request_timeout}");
+                default_request_timeout
+            }
+        };
+
         let env_vars = Self {
             allowed_origins,
             cookie_key,
@@ -121,6 +149,8 @@ impl EnvVars {
             mock_auth,
             mongodb_uri,
             port,
+            request_body_size_limit,
+            request_timeout_in_ms,
         };
 
         env_vars

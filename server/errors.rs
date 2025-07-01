@@ -2,28 +2,37 @@ use axum::response::{IntoResponse, Response};
 use http::StatusCode;
 use tracing::error;
 
-// Make our own error that wraps `anyhow::Error`.
-pub struct AppError(anyhow::Error);
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("{0}")]
+    Server(StatusCode, String),
+    // Froms
+    #[error("{0}")]
+    MongoDB(#[from] mongodb::error::Error),
+    #[error("{0}")]
+    ParseError(#[from] url::ParseError),
+    #[error("{0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("{0}")]
+    SystemTimeError(#[from] std::time::SystemTimeError),
+    #[error("{0}")]
+    TowerSessions(#[from] tower_sessions::session::Error),
+}
 
-// Tell axum how to convert `AppError` into a response.
-impl IntoResponse for AppError {
+impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        error!("Application error: {:#}", self.0);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", self.0),
-        )
-            .into_response()
+        let msg = format!("{}", self.to_string());
+        let status: StatusCode = self.into();
+
+        (status, msg).into_response()
     }
 }
 
-// This enables using `?` on functions that return `Result<_, anyhow::Error>` to turn them into
-// `Result<_, AppError>`. That way you don't need to do that manually.
-impl<E> From<E> for AppError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(err: E) -> Self {
-        Self(err.into())
+impl From<Error> for StatusCode {
+    fn from(error: Error) -> Self {
+        match error {
+            Error::Server(c, _) => c,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
     }
 }

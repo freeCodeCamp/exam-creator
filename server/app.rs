@@ -1,5 +1,3 @@
-use anyhow::Context;
-use anyhow::Result;
 use axum::extract::MatchedPath;
 use axum::extract::Request;
 use axum::routing::delete;
@@ -17,6 +15,8 @@ use mongodb::options::ClientOptions;
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
 use reqwest::Method;
 use std::sync::{Arc, Mutex};
+use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tower_http::{
     cors::CorsLayer,
@@ -25,6 +25,7 @@ use tower_http::{
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::info;
 
+use crate::errors::Error;
 use crate::{
     database, extractor, routes,
     state::{self, ClientSync, ServerState},
@@ -32,7 +33,7 @@ use crate::{
 
 use crate::config::EnvVars;
 
-pub async fn app(env_vars: EnvVars) -> Result<Router> {
+pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     info!("Creating app...");
     let mut client_options = ClientOptions::parse(&env_vars.mongodb_uri).await.unwrap();
     client_options.app_name = Some("Exam Creator".to_string());
@@ -95,25 +96,20 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
 
     let github_client_secret = ClientSecret::new(env_vars.github_client_secret);
 
-    let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
-        .context("Invalid authorization endpoint URL")?;
-    let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
-        .context("Invalid token endpoint URL")?;
+    let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())?;
+    let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())?;
 
     // Set up the config for the GitHub OAuth2 process.
     let github_client = BasicClient::new(github_client_id)
         .set_client_secret(github_client_secret)
         .set_auth_uri(auth_url)
         .set_token_uri(token_url)
-        .set_redirect_uri(
-            RedirectUrl::new(env_vars.github_redirect_url).context("Invalid redirect URL")?,
-        );
+        .set_redirect_uri(RedirectUrl::new(env_vars.github_redirect_url)?);
 
     let http_client = reqwest::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .context("http client should build")?;
+        .build()?;
 
     let app = Router::new()
         .route("/exams", get(routes::get_exams))
@@ -141,6 +137,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router> {
         .fallback_service(ServeDir::new("dist").fallback(ServeFile::new("dist/index.html")))
         .layer(cors)
         .layer(session_layer)
+        .layer(TimeoutLayer::new(std::time::Duration::from_secs(
+            env_vars.request_timeout_in_ms,
+        )))
+        .layer(RequestBodyLimitLayer::new(env_vars.request_body_size_limit))
         .layer(Extension(github_client))
         .layer(Extension(http_client))
         .layer(

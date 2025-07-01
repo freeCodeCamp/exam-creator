@@ -61,6 +61,10 @@ Optional environment variables:
   - Default: `http://127.0.0.1:<PORT>`
 - `GITHUB_REDIRECT_URL`
   - Default: `http://127.0.0.1:<PORT>/auth/callback/github`
+- `REQUEST_BODY_SIZE_LIMIT`
+  - Default: `5242880` (5MB)
+- `REQUEST_TIMEOUT_IN_MS`
+  - Default: `5000`
 - `VITE_MOCK_DATA`
   - Default: `undefined`
   - Only used by the client, and only used when developing the client in isolation

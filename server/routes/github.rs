@@ -1,6 +1,5 @@
 use std::time::{Duration, UNIX_EPOCH};
 
-use anyhow::{Context, anyhow};
 use axum::{
     Extension,
     extract::{Query, State},
@@ -8,7 +7,10 @@ use axum::{
 };
 use axum_extra::extract::{PrivateCookieJar, cookie::Cookie};
 use bson::{doc, oid::ObjectId};
-use http::header::{ACCEPT, USER_AGENT};
+use http::{
+    StatusCode,
+    header::{ACCEPT, USER_AGENT},
+};
 use oauth2::{
     AccessToken, AuthorizationCode, CsrfToken, EmptyExtraTokenFields, EndpointNotSet, EndpointSet,
     Scope, StandardTokenResponse, TokenResponse,
@@ -21,7 +23,7 @@ use url::Url;
 
 use crate::{
     database::{ExamCreatorSession, ExamCreatorUser},
-    errors::AppError,
+    errors::Error,
     state::ServerState,
 };
 
@@ -81,7 +83,7 @@ pub async fn github_callback_handler(
     Extension(http_client): Extension<Client>,
     State(server_state): State<ServerState>,
     Query(params): Query<AuthCallbackQueryParams>,
-) -> Result<impl IntoResponse, AppError> {
+) -> Result<impl IntoResponse, Error> {
     let AuthCallbackQueryParams {
         code,
         state: _state,
@@ -143,7 +145,10 @@ pub async fn github_callback_handler(
         .exam_creator_user
         .find_one(doc! {"email": &email})
         .await?
-        .context("no user found")?;
+        .ok_or(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            format!("user non-existant: {email}"),
+        ))?;
 
     // Update user picture
     server_state
@@ -170,8 +175,7 @@ pub async fn github_callback_handler(
         .database
         .exam_creator_session
         .insert_one(&session)
-        .await
-        .context("unable to insert session into db")?;
+        .await?;
 
     let cookie = Cookie::build(("sid", session.session_id))
         // .domain("http://127.0.0.1:3001")
@@ -189,7 +193,7 @@ async fn get_github_user_info(
     access_token: &str,
     http_client: &Client,
     mock_auth: bool,
-) -> Result<GitHubUserInfo, AppError> {
+) -> Result<GitHubUserInfo, Error> {
     if mock_auth {
         let github_user_info = GitHubUserInfo {
             id: 0,
@@ -227,7 +231,7 @@ async fn get_github_user_emails(
     access_token: &str,
     http_client: &Client,
     mock_auth: bool,
-) -> Result<Vec<GitHubUserEmail>, AppError> {
+) -> Result<Vec<GitHubUserEmail>, Error> {
     if mock_auth {
         let github_user_email = GitHubUserEmail {
             email: "camperbot@freecodecamp.org".to_string(),
@@ -263,7 +267,7 @@ async fn get_access_token(
         StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>,
         String,
     ),
-    AppError,
+    Error,
 > {
     if mock_auth {
         let access_token = String::from("camperbot-access-token");
@@ -279,11 +283,15 @@ async fn get_access_token(
     let token = github_client
         .exchange_code(code)
         .request_async(http_client)
-        .await?;
+        .await
+        .map_err(|e| Error::Server(StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")))?;
     // TODO: Compare session csrf with state
     // Check granted scopes includes necessary information:
     // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authenticating-to-the-rest-api-with-an-oauth-app#checking-granted-scopes
-    let scopes = token.scopes().context("No scopes provided")?;
+    let scopes = token.scopes().ok_or(Error::Server(
+        StatusCode::UNAUTHORIZED,
+        format!("No scopes provided in GitHub auth"),
+    ))?;
 
     let scopes = scopes
         .iter()
@@ -292,7 +300,10 @@ async fn get_access_token(
     // if !scopes.contains(&"user") {
     if !scopes.contains(&"read:user") || !scopes.contains(&"user:email") {
         info!("Bad scopes: {:?}", scopes);
-        return Err(anyhow!("Insufficient scopes: {scopes:?}").into());
+        return Err(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            format!("Insufficient scopes: {scopes:?}"),
+        ));
     }
 
     let access_token = token.access_token().secret().to_owned();
