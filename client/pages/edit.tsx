@@ -23,6 +23,7 @@ import {
   IconButton,
   Spinner,
 } from "@chakra-ui/react";
+import { ObjectId } from "bson";
 import { Save } from "lucide-react";
 import type { EnvExam } from "@prisma/client";
 
@@ -144,6 +145,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
   const { updateActivity } = useContext(UsersWebSocketContext)!;
   const [exam, setExam] = useReducer(examReducer, examData);
   const [searchIds, setSearchIds] = useState<string[]>([]);
+  const [prereqInput, setPrereqInput] = useState("");
 
   const putExamMutation = useMutation({
     mutationFn: (exam: EnvExam) => {
@@ -305,6 +307,82 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
                 >
                   <NumberInputField bg="gray.700" color="gray.100" />
                 </NumberInput>
+              </FormControl>
+              <FormControl>
+                <FormLabel color="gray.300">Prerequisites</FormLabel>
+                <Input
+                  type="text"
+                  placeholder="Add ObjectID and press Enter"
+                  bg="gray.700"
+                  color="gray.100"
+                  value={prereqInput || ""}
+                  onChange={(e) => setPrereqInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const value = prereqInput?.trim();
+                      if (
+                        value &&
+                        ObjectId.isValid(value) &&
+                        !exam.prerequisites.includes(value)
+                      ) {
+                        setExam({
+                          prerequisites: [...exam.prerequisites, value],
+                        });
+                        setPrereqInput("");
+                      }
+                    }
+                  }}
+                  mb={2}
+                />
+                <Box
+                  bg="gray.700"
+                  borderRadius="md"
+                  px={2}
+                  py={1}
+                  minH="40px"
+                  maxH="120px"
+                  overflowY="auto"
+                  display="flex"
+                  flexWrap="wrap"
+                  alignItems="flex-start"
+                >
+                  {exam.prerequisites?.map((id, idx) => (
+                    <Badge
+                      key={id}
+                      colorScheme="teal"
+                      variant="solid"
+                      mr={2}
+                      mb={1}
+                      px={2}
+                      py={1}
+                      borderRadius="md"
+                      display="flex"
+                      alignItems="center"
+                    >
+                      <span style={{ marginRight: 6 }}>{id}</span>
+                      <IconButton
+                        aria-label="Remove prerequisite"
+                        icon={<span>✕</span>}
+                        size="xs"
+                        colorScheme="red"
+                        variant="ghost"
+                        ml={1}
+                        onClick={() => {
+                          setExam({
+                            prerequisites: exam.prerequisites.filter(
+                              (_, i) => i !== idx
+                            ),
+                          });
+                        }}
+                      />
+                    </Badge>
+                  ))}
+                </Box>
+                <Text color="gray.400" fontSize="xs" mt={1}>
+                  Enter a 24-character hex ObjectID and press Enter to add.
+                  Click ✕ to remove.
+                </Text>
               </FormControl>
             </SimpleGrid>
             <Divider my={4} borderColor="gray.600" />
