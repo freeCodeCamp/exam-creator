@@ -223,8 +223,6 @@ pub async fn get_session_user(
 }
 
 /// Logs the user out by deleting the db session(s), and unsetting the sid
-///
-/// This is not behind auth, but, in practice, requires it.
 pub async fn delete_logout(
     user: ExamCreatorUser,
     jar: PrivateCookieJar,

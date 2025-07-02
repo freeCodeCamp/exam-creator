@@ -39,6 +39,7 @@ export function Landing() {
     queryKey: ["exams"],
     enabled: !!user,
     queryFn: () => getExams(),
+    retry: false,
   });
   const createExamMutation = useMutation({
     mutationFn: () => postExam(),

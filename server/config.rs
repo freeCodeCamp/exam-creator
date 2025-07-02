@@ -15,6 +15,7 @@ pub struct EnvVars {
     pub port: u16,
     pub request_body_size_limit: usize,
     pub request_timeout_in_ms: u64,
+    pub session_ttl_in_s: u64,
 }
 
 impl EnvVars {
@@ -140,6 +141,17 @@ impl EnvVars {
             }
         };
 
+        let session_ttl_in_s = match std::env::var("SESSION_TTL_IN_S") {
+            Ok(s) => s
+                .parse()
+                .expect("SESSION_TTL_IN_S to be valid unsigned integer"),
+            Err(_e) => {
+                let default_session_ttl_in_s = 3600 * 2;
+                warn!("SESSION_TTL_IN_S not set. Defaulting to {default_session_ttl_in_s}");
+                default_session_ttl_in_s
+            }
+        };
+
         let env_vars = Self {
             allowed_origins,
             cookie_key,
@@ -151,6 +163,7 @@ impl EnvVars {
             port,
             request_body_size_limit,
             request_timeout_in_ms,
+            session_ttl_in_s,
         };
 
         env_vars

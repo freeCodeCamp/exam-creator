@@ -1,4 +1,4 @@
-import { createRoute, useNavigate } from "@tanstack/react-router";
+import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import {
   Box,
   Button,
@@ -8,16 +8,22 @@ import {
   useColorModeValue,
   Text,
   Spinner,
+  Alert,
+  AlertIcon,
+  CloseButton,
 } from "@chakra-ui/react";
 
 import { rootRoute } from "./root";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 
 export function Login() {
   const navigate = useNavigate();
+  const search = useSearch({ from: loginRoute.fullPath });
   const { login, user, isLoading } = useContext(AuthContext)!;
+
+  const [error, setError] = useState<string | null>(search.error);
 
   useEffect(() => {
     if (user) {
@@ -42,6 +48,18 @@ export function Login() {
           p={8}
           align="center"
         >
+          {error && (
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              <Text flex="1">{error}</Text>
+              <CloseButton
+                onClick={() => setError(null)}
+                position="absolute"
+                right="8px"
+                top="8px"
+              />
+            </Alert>
+          )}
           {isLoading ? (
             <>
               <Text color={accent} fontWeight="bold" fontSize="xl">

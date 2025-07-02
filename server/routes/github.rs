@@ -1,4 +1,4 @@
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::Duration;
 
 use axum::{
     Extension,
@@ -76,7 +76,7 @@ pub struct GitHubUserEmail {
     verified: bool,
 }
 
-pub async fn github_callback_handler(
+pub async fn github_handler(
     _session: Session,
     jar: PrivateCookieJar,
     Extension(github_client): Extension<GitHubClient>,
@@ -163,15 +163,18 @@ pub async fn github_callback_handler(
         )
         .await?;
 
-    let expires_in = token.expires_in().unwrap_or(Duration::from_secs(3600));
-    let expires_at = std::time::SystemTime::now().duration_since(UNIX_EPOCH)? + expires_in;
+    let expires_in = token
+        .expires_in()
+        .unwrap_or(Duration::from_secs(server_state.env_vars.session_ttl_in_s))
+        .as_secs();
+    let expires_at = chrono::Utc::now().timestamp() as u64 + expires_in;
     let session_id = access_token;
     // Create session
     let session = ExamCreatorSession {
         id: ObjectId::new(),
         user_id: user.id,
         session_id,
-        expires_at: expires_at.as_secs(),
+        expires_at,
     };
 
     server_state
@@ -185,11 +188,9 @@ pub async fn github_callback_handler(
         .path("/")
         .secure(true)
         .http_only(true)
-        .max_age(time::Duration::seconds(
-            expires_in.as_secs().try_into().unwrap(),
-        ));
+        .max_age(time::Duration::seconds(expires_in as i64));
 
-    return Ok((jar.add(cookie), Redirect::to("/")));
+    return Ok(jar.add(cookie));
 }
 
 async fn get_github_user_info(

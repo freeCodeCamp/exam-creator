@@ -4,7 +4,7 @@ use tracing::error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("{0}")]
+    #[error("{1}")]
     Server(StatusCode, String),
     // Froms
     #[error("{0}")]

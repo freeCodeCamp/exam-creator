@@ -2,10 +2,10 @@ import type { EnvExam } from "@prisma/client";
 import type { ClientSync, SessionUser, User } from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
-async function authorizedFetch<T>(
-  url: string,
+async function authorizedFetch(
+  url: string | URL,
   options?: RequestInit
-): Promise<T> {
+): Promise<Response> {
   const headers = {
     ...options?.headers,
   };
@@ -17,15 +17,15 @@ async function authorizedFetch<T>(
 
   if (!res.ok) {
     const errorData = await res.text();
-    throw new Error(
-      `API Error: ${res.status} - ${errorData || res.statusText}`
-    );
+    console.debug(res.status, url, errorData);
+    if (res.status === 401) {
+      throw new Error(`${errorData}: Log out, then try again.`);
+    }
+
+    throw new Error(`${res.status} - ${errorData || res.statusText}`);
   }
 
-  const json = await res.json();
-  const deserialized = deserializeToPrisma<T>(json);
-  console.log(deserialized);
-  return deserialized;
+  return res;
 }
 
 export async function discardExamStateById(
@@ -44,9 +44,12 @@ export async function discardExamStateById(
     return exams[0];
   }
 
-  return authorizedFetch<EnvExam>(`/state/exams/${examId}`, {
+  const res = await authorizedFetch(`/state/exams/${examId}`, {
     method: "PUT",
   });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<EnvExam>(json);
+  return deserialized;
 }
 
 export async function getState(): Promise<ClientSync> {
@@ -71,7 +74,10 @@ export async function getState(): Promise<ClientSync> {
     return clientSync;
   }
 
-  return authorizedFetch<ClientSync>("/state");
+  const res = await authorizedFetch("/state");
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<ClientSync>(json);
+  return deserialized;
 }
 
 // Update the state on the server
@@ -82,13 +88,16 @@ export async function putState(state: ClientSync): Promise<ClientSync> {
     return state;
   }
 
-  return authorizedFetch<ClientSync>("/state", {
+  const res = await authorizedFetch("/state", {
     method: "PUT",
     body: JSON.stringify(serializeFromPrisma(state)),
     headers: {
       "Content-Type": "application/json",
     },
   });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<ClientSync>(json);
+  return deserialized;
 }
 
 export async function getExams(): Promise<EnvExam[]> {
@@ -104,7 +113,10 @@ export async function getExams(): Promise<EnvExam[]> {
     return exams.map((e) => deserializeToPrisma(e));
   }
 
-  return authorizedFetch<EnvExam[]>("/exams");
+  const res = await authorizedFetch("/exams");
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<EnvExam[]>(json);
+  return deserialized;
 }
 
 export async function getExamById(examId: string): Promise<EnvExam> {
@@ -117,7 +129,10 @@ export async function getExamById(examId: string): Promise<EnvExam> {
     return exam;
   }
 
-  return authorizedFetch<EnvExam>(`/exams/${examId}`);
+  const res = await authorizedFetch(`/exams/${examId}`);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<EnvExam>(json);
+  return deserialized;
 }
 
 /**
@@ -132,13 +147,16 @@ export async function putExamById(exam: EnvExam): Promise<EnvExam> {
     return exam;
   }
 
-  return authorizedFetch<EnvExam>(`/exams/${exam.id}`, {
+  const res = await authorizedFetch(`/exams/${exam.id}`, {
     method: "PUT",
     body: JSON.stringify(serializeFromPrisma(exam)),
     headers: {
       "Content-Type": "application/json",
     },
   });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<EnvExam>(json);
+  return deserialized;
 }
 
 /**
@@ -161,9 +179,12 @@ export async function postExam(): Promise<EnvExam> {
     return deserializeToPrisma(examData);
   }
 
-  return authorizedFetch<EnvExam>("/exams", {
+  const res = await authorizedFetch("/exams", {
     method: "POST",
   });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<EnvExam>(json);
+  return deserialized;
 }
 
 export async function getUsers(): Promise<User[]> {
@@ -181,7 +202,10 @@ export async function getUsers(): Promise<User[]> {
     return res.json();
   }
 
-  return authorizedFetch<User[]>("/users");
+  const res = await authorizedFetch("/users");
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<User[]>(json);
+  return deserialized;
 }
 
 export async function getSessionUser(): Promise<SessionUser> {
@@ -198,7 +222,10 @@ export async function getSessionUser(): Promise<SessionUser> {
     return res.json();
   }
 
-  return authorizedFetch<SessionUser>("/users/session");
+  const res = await authorizedFetch("/users/session");
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<SessionUser>(json);
+  return deserialized;
 }
 
 export async function loginWithGitHub() {
@@ -206,6 +233,7 @@ export async function loginWithGitHub() {
     await delayForTesting(300);
 
     window.location.href = `${window.location.origin}/`;
+    return;
   }
 
   window.location.href = `${window.location.origin}/auth/login/github`;
@@ -226,6 +254,20 @@ export async function loginWithGitHub() {
   // );
   // // @ts-expect-error This is recommended by MDN
   // window.location = githubLoginUrl;
+}
+
+export async function getAuthCallbackGithub({
+  code,
+  state,
+}: {
+  code: string;
+  state: string;
+}) {
+  const url = new URL("/auth/github", window.location.href);
+  url.searchParams.set("code", code);
+  url.searchParams.set("state", state);
+  const res = await authorizedFetch(url);
+  return res;
 }
 
 export async function logout() {

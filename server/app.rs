@@ -126,10 +126,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             "/auth/login/github",
             get(routes::github::github_login_handler),
         )
-        .route(
-            "/auth/callback/github",
-            get(routes::github::github_callback_handler),
-        )
+        .route("/auth/github", get(routes::github::github_handler))
         .route("/auth/logout", delete(routes::delete_logout))
         .route("/status/ping", get(routes::get_status_ping))
         .route("/ws/exam/{exam_id}", any(extractor::ws_handler_exam))

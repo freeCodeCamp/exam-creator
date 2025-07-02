@@ -11,6 +11,7 @@ export const AuthContext = createContext<{
   isLoading: boolean;
   login: () => Promise<void>;
   logout: () => void;
+  checkLoginUser: () => Promise<void>;
 } | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const sessionUser = await getSessionUser();
       setUser(sessionUser);
     } catch (e) {
-      console.error(e);
+      console.debug(e);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       login,
       logout,
+      checkLoginUser,
     }),
     [user, isLoading]
   );

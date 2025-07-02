@@ -48,6 +48,7 @@ export function Edit() {
     queryKey: ["exam", id],
     enabled: !!user,
     queryFn: () => getExamById(id!),
+    retry: false,
     // TODO: This does not work, because it overwrites the current edit before a save
     //       Somehow, the client must always PUT before GET
     //       Potentially, a PATCH request must be used with only the changed data to prevent unwanted overwrites
