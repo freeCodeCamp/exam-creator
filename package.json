@@ -1,7 +1,7 @@
 {
   "name": "exam-creator",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,8 +18,8 @@
     "bson": "^6.10.3",
     "framer-motion": "^12.12.1",
     "immer": "^10.1.1",
-    "lucide-react": "^0.511.0",
-    "marked": "^15.0.12",
+    "lucide-react": "0.525.0",
+    "marked": "16.0.0",
     "marked-highlight": "^2.2.1",
     "prismjs": "^1.30.0",
     "react": "^19.1.0",
@@ -35,6 +35,6 @@
     "@vitejs/plugin-react": "^4.4.1",
     "prisma": "6.8.2",
     "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "vite": "7.0.0"
   }
 }

@@ -253,7 +253,11 @@
         ]
       }
     ],
-    "prerequisites": [],
+    "prerequisites": [
+      {
+        "$oid": "67481800ad3aacfd878c22b4"
+      }
+    ],
     "deprecated": false
   }
 ]

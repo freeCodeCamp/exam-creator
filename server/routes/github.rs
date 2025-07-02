@@ -107,7 +107,10 @@ pub async fn github_callback_handler(
         let email = emails
             .into_iter()
             .find(|e| e.verified && e.primary)
-            .expect("verified primary email to exist");
+            .ok_or(Error::Server(
+                StatusCode::UNAUTHORIZED,
+                format!("no verified and primary emails associated with GitHub"),
+            ))?;
         email.email
     } else {
         github_user_info.email.unwrap()

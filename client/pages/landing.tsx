@@ -164,7 +164,7 @@ export function Landing() {
             ) : examsQuery.isError ? (
               <Center>
                 <Text color="red.400" fontSize="lg">
-                  {JSON.stringify(examsQuery.error)}
+                  {examsQuery.error.message}
                 </Text>
               </Center>
             ) : (

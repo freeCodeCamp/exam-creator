@@ -10,7 +10,7 @@ use axum::response::IntoResponse;
 use http::StatusCode;
 use serde::Deserialize;
 use tower_sessions::Session;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 use crate::{
     database::ExamCreatorUser,
@@ -31,7 +31,13 @@ where
 
         let cookiejar: PrivateCookieJar = PrivateCookieJar::from_request_parts(parts, &state)
             .await
-            .expect("cookie jar to be constructed");
+            .map_err(|e| {
+                error!("cookie jar could not be constructed: {e:?}");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "unable to handle cookies",
+                )
+            })?;
 
         let Some(cookie) = cookiejar.get("sid").map(|cookie| cookie.value().to_owned()) else {
             warn!("no sid in jar");
@@ -43,7 +49,13 @@ where
             .exam_creator_session
             .find_one(doc! {"session_id": cookie})
             .await
-            .unwrap()
+            .map_err(|e| {
+                error!("db session find op failed: {e:?}");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "db session find op failed",
+                )
+            })?
             .ok_or((StatusCode::UNAUTHORIZED, "no existing session"))?;
 
         let user = state
@@ -51,7 +63,10 @@ where
             .exam_creator_user
             .find_one(doc! {"_id": user_session.user_id})
             .await
-            .unwrap()
+            .map_err(|e| {
+                error!("db user find op failed: {e:?}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "db user find op failed")
+            })?
             .ok_or((StatusCode::UNAUTHORIZED, "no user account"))?;
 
         let client_sync = &mut state.client_sync.lock().unwrap();

@@ -98,7 +98,7 @@ export function Edit() {
         <HStack spacing={-2}>
           {usersError ? (
             <Text color="red.400" fontSize="sm">
-              {JSON.stringify(usersError.message)}
+              {usersError.message}
             </Text>
           ) : (
             users
@@ -126,7 +126,7 @@ export function Edit() {
           <Spinner color={spinnerColor} size="xl" />
         ) : examQuery.isError ? (
           <Text color="red.400" fontSize="lg">
-            Error loading exam: {JSON.stringify(examQuery.error)}
+            Error loading exam: {examQuery.error.message}
           </Text>
         ) : (
           <EditExam exam={examQuery.data} />
@@ -152,6 +152,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
       return putExamById(exam);
     },
     onSuccess(data, _variables, _context) {
+      console.log(data);
       setExam(data);
     },
   });
@@ -199,12 +200,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
           px={4}
           fontWeight="bold"
           isLoading={putExamMutation.isPending}
-          onClick={() =>
-            putExamMutation.mutate({
-              ...exam,
-              prerequisites: [],
-            })
-          }
+          onClick={() => putExamMutation.mutate(exam)}
         >
           Save to Database
         </Button>

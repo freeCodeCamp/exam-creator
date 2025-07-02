@@ -22,7 +22,7 @@ function _recursiveDeserialize(value: JsonValue): JsonValue {
   }
 
   // If it's an object, process its properties.
-  const newObj: JsonObject = {};
+  let newObj: JsonObject = {};
   for (const key in value) {
     if (Object.prototype.hasOwnProperty.call(value, key)) {
       // SAFETY: hasOwnProperty ensures key exists in value, and `undefined` is not serializable.
@@ -36,6 +36,8 @@ function _recursiveDeserialize(value: JsonValue): JsonValue {
         (propValue as { $oid?: string })["$oid"] !== undefined // Assert to check for $oid
       ) {
         newObj[key] = (propValue as { $oid: string })["$oid"]; // Assert to access $oid
+      } else if (key === "$oid") {
+        newObj = propValue as JsonObject;
       } else {
         // Recursively transform nested objects/arrays
         newObj[key] = _recursiveDeserialize(propValue);

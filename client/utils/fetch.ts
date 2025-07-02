@@ -16,14 +16,16 @@ async function authorizedFetch<T>(
   });
 
   if (!res.ok) {
-    const errorData = await res.json();
+    const errorData = await res.text();
     throw new Error(
-      `API Error: ${res.status} - ${errorData.message || res.statusText}`
+      `API Error: ${res.status} - ${errorData || res.statusText}`
     );
   }
 
   const json = await res.json();
-  return deserializeToPrisma(json);
+  const deserialized = deserializeToPrisma<T>(json);
+  console.log(deserialized);
+  return deserialized;
 }
 
 export async function discardExamStateById(
