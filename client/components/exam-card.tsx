@@ -18,7 +18,7 @@ import { useContext } from "react";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 
 interface ExamCardProps {
-  exam: EnvExam;
+  exam: Omit<EnvExam, "questionSets">;
 }
 
 export function ExamCard({ exam }: ExamCardProps) {

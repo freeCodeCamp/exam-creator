@@ -19,16 +19,20 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use tokio::sync::broadcast;
 use tower_sessions::Session;
-use tracing::info;
+use tracing::{info, instrument};
 
 use crate::{
-    database::{ExamCreatorUser, prisma},
+    database::{
+        ExamCreatorUser,
+        prisma::{self, EnvExam},
+    },
     errors::Error,
     state::{ServerState, SessionUser, SocketEvents, User, remove_user, set_user_activity},
 };
 
 pub mod github;
 
+#[instrument(skip_all, err(Debug))]
 pub async fn discard_exam_state_by_id(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
@@ -76,21 +80,32 @@ pub async fn get_status_ping() -> Response {
 }
 
 /// Get all exams
+///
+/// The `questionSets` field is removed as not needed, but added in the typing for serialization
+#[instrument(skip_all, err(Debug))]
 pub async fn get_exams(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<Vec<prisma::EnvExam>>, Error> {
-    let mut exams_cursor = state.database.temp_env_exam.find(doc! {}).await?;
+) -> Result<Json<Vec<EnvExam>>, Error> {
+    let mut exams_cursor = state
+        .database
+        .temp_env_exam
+        .clone_with_type::<mongodb::bson::Document>()
+        .find(doc! {})
+        .projection(doc! {"questionSets": false})
+        .await?;
 
-    let mut exams: Vec<prisma::EnvExam> = vec![];
+    let mut exams: Vec<EnvExam> = vec![];
 
     while let Some(exam) = exams_cursor.try_next().await? {
-        exams.push(exam);
+        let env_exam: EnvExam = exam.try_into()?;
+        exams.push(env_exam);
     }
 
     Ok(Json(exams))
 }
 
+#[instrument(skip_all, err(Debug))]
 pub async fn get_exam_by_id(
     auth_user: ExamCreatorUser,
     State(state): State<ServerState>,
@@ -127,6 +142,7 @@ pub async fn get_exam_by_id(
 }
 
 /// Create an exam
+#[instrument(skip_all, err(Debug))]
 pub async fn post_exam(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
@@ -140,6 +156,7 @@ pub async fn post_exam(
 }
 
 /// Update an exam
+#[instrument(skip_all, err(Debug))]
 pub async fn put_exam(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
@@ -170,6 +187,7 @@ static _EXAM_ROOMS: Lazy<Mutex<HashMap<String, broadcast::Sender<String>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Get all users online (in state)
+#[instrument(skip_all, err(Debug))]
 pub async fn get_users(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
@@ -180,7 +198,7 @@ pub async fn get_users(
 }
 
 /// Get current session user
-#[axum::debug_handler]
+#[instrument(skip_all, err(Debug))]
 pub async fn get_session_user(
     exam_creator_user: ExamCreatorUser,
     session: Session,
@@ -223,6 +241,7 @@ pub async fn get_session_user(
 }
 
 /// Logs the user out by deleting the db session(s), and unsetting the sid
+#[instrument(skip_all, err(Debug))]
 pub async fn delete_logout(
     user: ExamCreatorUser,
     jar: PrivateCookieJar,

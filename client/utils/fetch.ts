@@ -100,7 +100,7 @@ export async function putState(state: ClientSync): Promise<ClientSync> {
   return deserialized;
 }
 
-export async function getExams(): Promise<EnvExam[]> {
+export async function getExams(): Promise<Omit<EnvExam, "questionSets">[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/exams.json");
@@ -110,12 +110,13 @@ export async function getExams(): Promise<EnvExam[]> {
       );
     }
     const exams: EnvExam[] = await res.json();
-    return exams.map((e) => deserializeToPrisma(e));
+    return exams.map(({ questionSets, ...rest }) => deserializeToPrisma(rest));
   }
 
   const res = await authorizedFetch("/exams");
   const json = await res.json();
-  const deserialized = deserializeToPrisma<EnvExam[]>(json);
+  const deserialized =
+    deserializeToPrisma<Omit<EnvExam, "questionSets">[]>(json);
   return deserialized;
 }
 

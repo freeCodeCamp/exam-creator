@@ -1,6 +1,5 @@
 use axum::response::{IntoResponse, Response};
 use http::StatusCode;
-use tracing::error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -17,6 +16,10 @@ pub enum Error {
     SystemTimeError(#[from] std::time::SystemTimeError),
     #[error("{0}")]
     TowerSessions(#[from] tower_sessions::session::Error),
+    #[error("{0}")]
+    BsonAccess(#[from] bson::document::ValueAccessError),
+    #[error("{0}")]
+    BsonDeserialization(#[from] bson::de::Error),
 }
 
 impl IntoResponse for Error {

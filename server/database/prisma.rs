@@ -20,21 +20,25 @@ prisma_rust_schema::import_types!(
 
 impl Default for EnvExam {
     fn default() -> Self {
-        let config = EnvConfig {
+        EnvExam {
+            id: ObjectId::new(),
+            question_sets: vec![],
+            config: Default::default(),
+            prerequisites: vec![],
+            deprecated: false,
+        }
+    }
+}
+
+impl Default for EnvConfig {
+    fn default() -> Self {
+        EnvConfig {
             name: String::new(),
             note: String::new(),
             tags: vec![],
             total_time_in_m_s: 2 * 60 * 60 * 1000,
             question_sets: vec![],
             retake_time_in_m_s: 24 * 60 * 60 * 1000,
-        };
-
-        EnvExam {
-            id: ObjectId::new(),
-            question_sets: vec![],
-            config,
-            prerequisites: vec![],
-            deprecated: false,
         }
     }
 }

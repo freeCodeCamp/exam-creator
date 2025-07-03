@@ -2,7 +2,10 @@ use bson::oid::ObjectId;
 use mongodb::Collection;
 use serde::{Deserialize, Serialize};
 
-use crate::state::{Activity, User};
+use crate::{
+    database::prisma::EnvExam,
+    state::{Activity, User},
+};
 
 pub mod prisma;
 
@@ -47,5 +50,39 @@ impl ExamCreatorUser {
                 },
             }
         }
+    }
+}
+
+// Needed for projections to work
+// TODO: Once prisma_rust_schema allows for `serde(default)` to be configured for struct, this is not needed.
+impl TryFrom<bson::Document> for EnvExam {
+    type Error = crate::errors::Error;
+    fn try_from(value: bson::Document) -> Result<Self, Self::Error> {
+        let id = value.get_object_id("_id")?;
+        let question_sets = bson::from_bson(
+            value
+                .get("questionSets")
+                .unwrap_or(&bson::Bson::Array(vec![]))
+                .clone(),
+        )
+        .unwrap_or_default();
+        let config = bson::from_document(value.get_document("config")?.clone())?;
+        let prerequisites = bson::from_bson(
+            value
+                .get("prerequisites")
+                .unwrap_or(&bson::Bson::Array(vec![]))
+                .clone(),
+        )?;
+        let deprecated = value.get_bool("deprecated")?;
+
+        let env_exam = EnvExam {
+            id,
+            question_sets,
+            config,
+            prerequisites,
+            deprecated,
+        };
+
+        Ok(env_exam)
     }
 }
