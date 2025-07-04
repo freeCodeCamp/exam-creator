@@ -41,7 +41,7 @@ import { AuthContext } from "../contexts/auth";
 export function Edit() {
   const { id } = useParams({ from: "/exam/$id" });
   const { user, logout } = useContext(AuthContext)!;
-  const { users, error: usersError } = useContext(UsersWebSocketContext)!;
+
   const navigate = useNavigate();
 
   const examQuery = useQuery({
@@ -56,8 +56,6 @@ export function Edit() {
   });
 
   const bg = useColorModeValue("gray.900", "gray.900");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const avatarTextColor = useColorModeValue("gray.100", "gray.200");
   const spinnerColor = useColorModeValue("teal.400", "teal.300");
 
   return (
@@ -82,46 +80,7 @@ export function Edit() {
         </Button>
       </HStack>
       {/* Floating widget: top right */}
-      <Box
-        position="fixed"
-        top={4}
-        right="16rem"
-        zIndex={100}
-        bg={cardBg}
-        borderRadius="xl"
-        boxShadow="lg"
-        px={2}
-        py={2}
-        display="flex"
-        alignItems="center"
-        gap={4}
-      >
-        <HStack spacing={-2}>
-          {usersError ? (
-            <Text color="red.400" fontSize="sm">
-              {usersError.message}
-            </Text>
-          ) : (
-            users
-              .filter((u) => u.activity?.exam === id)
-              .map((user, idx) => (
-                <Tooltip label={user.name} key={user.email}>
-                  <Avatar
-                    src={user.picture}
-                    name={user.name}
-                    textColor={avatarTextColor}
-                    size="sm"
-                    border="2px solid"
-                    borderColor={cardBg}
-                    zIndex={5 - idx}
-                    ml={idx === 0 ? 0 : -2}
-                    boxShadow="md"
-                  />
-                </Tooltip>
-              ))
-          )}
-        </HStack>
-      </Box>
+      <UsersEditing id={id} />
       <Center>
         {examQuery.isPending ? (
           <Spinner color={spinnerColor} size="xl" />
@@ -133,6 +92,55 @@ export function Edit() {
           <EditExam exam={examQuery.data} />
         )}
       </Center>
+    </Box>
+  );
+}
+
+function UsersEditing({ id }: { id: string }) {
+  const { users, error: usersError } = useContext(UsersWebSocketContext)!;
+
+  const cardBg = useColorModeValue("gray.800", "gray.800");
+  const avatarTextColor = useColorModeValue("gray.100", "gray.200");
+  return (
+    <Box
+      position="fixed"
+      top={4}
+      right="16rem"
+      zIndex={100}
+      bg={cardBg}
+      borderRadius="xl"
+      boxShadow="lg"
+      px={2}
+      py={2}
+      display="flex"
+      alignItems="center"
+      gap={4}
+    >
+      <HStack spacing={-2}>
+        {usersError ? (
+          <Text color="red.400" fontSize="sm">
+            {usersError.message}
+          </Text>
+        ) : (
+          users
+            .filter((u) => u.activity?.exam === id)
+            .map((user, idx) => (
+              <Tooltip label={user.name} key={user.email}>
+                <Avatar
+                  src={user.picture}
+                  name={user.name}
+                  textColor={avatarTextColor}
+                  size="sm"
+                  border="2px solid"
+                  borderColor={cardBg}
+                  zIndex={5 - idx}
+                  ml={idx === 0 ? 0 : -2}
+                  boxShadow="md"
+                />
+              </Tooltip>
+            ))
+        )}
+      </HStack>
     </Box>
   );
 }
