@@ -43,14 +43,15 @@ export function QuestionAccordion({
         _hover={{ bg: "gray.700" }}
       >
         <Flex align="center" justify="space-between">
-          <Box>
-            <Heading size="md" color="teal.300">
+          <Box maxW="100%" overflowX="auto">
+            <Heading size="md" color="teal.300" maxW="100%">
               {title}
             </Heading>
             <Box
               color="gray.300"
               fontSize="sm"
               dangerouslySetInnerHTML={{ __html: parseMarkdown(subtitle) }}
+              whiteSpace="pre-line"
             />
           </Box>
           <IconButton

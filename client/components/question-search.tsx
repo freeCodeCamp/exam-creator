@@ -129,7 +129,7 @@ export function QuestionSearch({
               ml={2}
               onClick={handleSearchToggle}
             />
-            {searchIds.length > 0 && (
+            {(searchIds.length > 0 || searchTerm.length !== 0) && (
               <Badge colorScheme="teal" ml={2}>
                 {searchIds.length} found
               </Badge>
