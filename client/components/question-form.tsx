@@ -80,6 +80,24 @@ export function MultipleChoiceForm({
         Multiple Choice Form
       </Text>
       <Stack spacing={3}>
+        <Checkbox
+          isChecked={question.deprecated}
+          onChange={(e) => {
+            change_question(
+              {
+                ...question,
+                deprecated: e.target.checked,
+              },
+              questionSets,
+              setExam
+            );
+          }}
+          color="gray.300"
+          alignSelf="flex-end"
+          colorScheme="red"
+        >
+          Deprecated
+        </Checkbox>
         <FormLabel color="gray.300">Context</FormLabel>
         <Textarea
           placeholder=""

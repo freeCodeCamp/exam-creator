@@ -22,6 +22,7 @@ import {
   FormControl,
   IconButton,
   Spinner,
+  Checkbox,
 } from "@chakra-ui/react";
 import { ObjectId } from "bson";
 import { Save } from "lucide-react";
@@ -313,6 +314,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
                   <NumberInputField bg="gray.700" color="gray.100" />
                 </NumberInput>
               </FormControl>
+
               <FormControl>
                 <FormLabel color="gray.300">Prerequisites</FormLabel>
                 <Input
@@ -388,6 +390,22 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
                   Enter a 24-character hex ObjectID and press Enter to add.
                   Click ✕ to remove.
                 </Text>
+              </FormControl>
+              <FormControl>
+                <FormLabel color="gray.300">Deprecated</FormLabel>
+                <Checkbox
+                  isChecked={exam.deprecated}
+                  onChange={(e) =>
+                    setExam({
+                      deprecated: e.target.checked,
+                    })
+                  }
+                  bg="gray.700"
+                  color="gray.100"
+                  colorScheme="red"
+                >
+                  Deprecated
+                </Checkbox>
               </FormControl>
             </SimpleGrid>
             <Divider my={4} borderColor="gray.600" />
