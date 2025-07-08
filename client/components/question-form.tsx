@@ -47,15 +47,24 @@ export function MultipleChoiceForm({
 }: MultipleChoiceFormProps) {
   const audioInputRef = useRef<HTMLInputElement>(null);
   const [isAudioVisible, setIsAudioVisible] = useState(false);
+  const audioDebounceRef = useRef<number | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsAudioVisible(true);
-        } else {
-          setIsAudioVisible(false);
+        // Without the audio observer debouncing,
+        // it is possible to get stuck unable to scroll beyond the element,
+        // because it pops in and out of existance - adjusting the page's frame
+        if (audioDebounceRef.current) {
+          clearTimeout(audioDebounceRef.current);
         }
+        audioDebounceRef.current = setTimeout(() => {
+          if (entry.isIntersecting) {
+            setIsAudioVisible(true);
+          } else {
+            setIsAudioVisible(false);
+          }
+        }, 250);
       },
       { threshold: 0.1 }
     );
@@ -176,11 +185,13 @@ export function MultipleChoiceForm({
           color="gray.100"
         />
         {question.audio?.url && isAudioVisible && (
-          <audio
-            controls
-            src={question.audio.url}
-            style={{ marginTop: "0.5em" }}
-          />
+          <Box bg="gray.700" borderRadius="md" p={2} mt={2}>
+            <audio
+              controls
+              src={question.audio.url}
+              style={{ width: "100%" }}
+            />
+          </Box>
         )}
         <Input
           type="text"
