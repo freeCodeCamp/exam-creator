@@ -107,7 +107,7 @@ pub async fn get_exams(
 
 #[instrument(skip_all, err(Debug))]
 pub async fn get_exam_by_id(
-    auth_user: ExamCreatorUser,
+    _auth_user: ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<prisma::EnvExam>, Error> {
@@ -133,10 +133,6 @@ pub async fn get_exam_by_id(
             format!("exam non-existant: {exam_id}"),
         ))?;
     info!("Found exam {exam_id} in database");
-
-    // Update state to reflect user is editing this exam
-    let client_sync = &mut state.client_sync.lock().unwrap();
-    set_user_activity(client_sync, &auth_user.email, Some(exam_id));
 
     Ok(Json(exam))
 }
@@ -294,7 +290,6 @@ pub async fn _handle_exam_ws(
 
     let client_sync = state.client_sync.clone();
     let id = exam_id.clone();
-    let user = auth_user.clone();
     // Receives messages from current client, and sends it to all other client in the same exam room.
     let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(Message::Text(text))) = receiver.next().await {
@@ -313,9 +308,6 @@ pub async fn _handle_exam_ws(
                 } else {
                     client_sync.exams.push(new_exam.clone());
                 }
-
-                let exam_id = ObjectId::parse_str(&id).expect("Unreachable. Invalid exam id.");
-                set_user_activity(client_sync, &user.email, Some(exam_id));
             }
 
             let _ = tx.send(msg);
@@ -332,8 +324,6 @@ pub async fn _handle_exam_ws(
         "Exam WebSocket connection closed: {}, {}",
         auth_user.email, exam_id
     );
-    let client_sync = &mut state.client_sync.lock().unwrap();
-    set_user_activity(client_sync, &auth_user.email, None);
 }
 
 pub async fn handle_users_ws(socket: WebSocket, auth_user: ExamCreatorUser, state: ServerState) {
@@ -375,7 +365,7 @@ pub async fn handle_users_ws(socket: WebSocket, auth_user: ExamCreatorUser, stat
             {
                 let client_sync = &mut client_sync.lock().unwrap();
 
-                set_user_activity(client_sync, &user.email, activity.exam);
+                set_user_activity(client_sync, &user.email, activity.page);
             }
         }
     });

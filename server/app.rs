@@ -112,14 +112,14 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .build()?;
 
     let app = Router::new()
-        .route("/exams", get(routes::get_exams))
-        .route("/exams/{exam_id}", get(routes::get_exam_by_id))
-        .route("/exams", post(routes::post_exam))
-        .route("/exams/{exam_id}", put(routes::put_exam))
-        .route("/users", get(routes::get_users))
-        .route("/users/session", get(routes::get_session_user))
+        .route("/api/exams", get(routes::get_exams))
+        .route("/api/exams/{exam_id}", get(routes::get_exam_by_id))
+        .route("/api/exams", post(routes::post_exam))
+        .route("/api/exams/{exam_id}", put(routes::put_exam))
+        .route("/api/users", get(routes::get_users))
+        .route("/api/users/session", get(routes::get_session_user))
         .route(
-            "/state/exams/{exam_id}",
+            "/api/state/exams/{exam_id}",
             put(routes::discard_exam_state_by_id),
         )
         .route(

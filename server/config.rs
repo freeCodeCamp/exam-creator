@@ -103,7 +103,7 @@ impl EnvVars {
         let github_redirect_url = match var("GITHUB_REDIRECT_URL") {
             Ok(u) => u,
             Err(_e) => {
-                let url = format!("http://127.0.0.1:{port}");
+                let url = format!("http://127.0.0.1:{port}/auth/callback/github");
                 warn!("GITHUB_REDIRECT_URL not set. Defaulting to {url}");
                 url
             }

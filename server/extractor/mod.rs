@@ -16,7 +16,7 @@ use crate::{
     database::ExamCreatorUser,
     errors::Error,
     routes::handle_users_ws,
-    state::{Activity, ServerState, User, set_user_activity},
+    state::{Activity, ServerState, User},
 };
 
 impl<S> FromRequestParts<S> for ExamCreatorUser
@@ -77,7 +77,7 @@ where
             let email = user.email.clone();
             let picture = user.picture.clone().unwrap_or_default();
             let activity = Activity {
-                exam: None,
+                page: "/".to_string(),
                 last_active: chrono::Utc::now().timestamp_millis() as usize,
             };
             client_sync.users.push(User {
@@ -148,13 +148,6 @@ pub async fn ws_handler_users(
             StatusCode::BAD_REQUEST,
             format!("user not found: {}", session.user_id),
         ))?;
-
-    // Scoped to release lock
-    {
-        let client_sync = &mut state.client_sync.lock().unwrap();
-        // TODO: Might want 3 states for exam activity, because there is no reason to change it here.
-        set_user_activity(client_sync, &user.email, None);
-    }
 
     let upgrade_res = ws.on_upgrade(move |socket| handle_users_ws(socket, user, state));
     Ok(upgrade_res)

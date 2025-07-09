@@ -35,11 +35,11 @@ import { TagConfigForm } from "../components/tag-config-form";
 import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
 import { QuestionTypeConfigForm } from "../components/question-type-config-form";
-import { landingRoute } from "./landing";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
+import { examsRoute } from "./exams";
 
-export function Edit() {
+function Edit() {
   const { id } = useParams({ from: "/exam/$id" });
   const { user, logout } = useContext(AuthContext)!;
 
@@ -67,9 +67,9 @@ export function Edit() {
           colorScheme="teal"
           variant="outline"
           size="sm"
-          onClick={() => navigate({ to: landingRoute.to })}
+          onClick={() => navigate({ to: examsRoute.to })}
         >
-          Back to Dashboard
+          Back to Exams
         </Button>
         <Button
           colorScheme="red"
@@ -81,7 +81,7 @@ export function Edit() {
         </Button>
       </HStack>
       {/* Floating widget: top right */}
-      <UsersEditing id={id} />
+      <UsersEditing />
       <Center>
         {examQuery.isPending ? (
           <Spinner color={spinnerColor} size="xl" />
@@ -97,8 +97,13 @@ export function Edit() {
   );
 }
 
-function UsersEditing({ id }: { id: string }) {
+function UsersEditing() {
   const { users, error: usersError } = useContext(UsersWebSocketContext)!;
+
+  const filteredUsers = users.filter((u) => {
+    const usersPath = u.activity.page.pathname;
+    return usersPath === window.location.pathname;
+  });
 
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const avatarTextColor = useColorModeValue("gray.100", "gray.200");
@@ -123,23 +128,21 @@ function UsersEditing({ id }: { id: string }) {
             {usersError.message}
           </Text>
         ) : (
-          users
-            .filter((u) => u.activity?.exam === id)
-            .map((user, idx) => (
-              <Tooltip label={user.name} key={user.email}>
-                <Avatar
-                  src={user.picture}
-                  name={user.name}
-                  textColor={avatarTextColor}
-                  size="sm"
-                  border="2px solid"
-                  borderColor={cardBg}
-                  zIndex={5 - idx}
-                  ml={idx === 0 ? 0 : -2}
-                  boxShadow="md"
-                />
-              </Tooltip>
-            ))
+          filteredUsers.map((user, idx) => (
+            <Tooltip label={user.name} key={user.email}>
+              <Avatar
+                src={user.picture}
+                name={user.name}
+                textColor={avatarTextColor}
+                size="sm"
+                border="2px solid"
+                borderColor={cardBg}
+                zIndex={5 - idx}
+                ml={idx === 0 ? 0 : -2}
+                boxShadow="md"
+              />
+            </Tooltip>
+          ))
         )}
       </HStack>
     </Box>
@@ -168,10 +171,16 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
   });
 
   useEffect(() => {
-    updateActivity(exam.id);
+    updateActivity({
+      page: new URL(window.location.href),
+      lastActive: Date.now(),
+    });
 
     return () => {
-      updateActivity(null);
+      updateActivity({
+        page: new URL(window.location.href),
+        lastActive: Date.now(),
+      });
     };
   }, [exam]);
 
@@ -526,7 +535,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
   );
 }
 
-export const editRoute = createRoute({
+export const editExamRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/exam/$id",
   component: () => (

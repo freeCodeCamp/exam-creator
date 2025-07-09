@@ -258,6 +258,8 @@ type EnvConfig {
   questionSets   EnvQuestionSetConfig[]
   /// Duration after exam completion before a retake is allowed in milliseconds
   retakeTimeInMS Int
+  /// Passing percent for the exam
+  passingPercent Float
 }
 
 /// Configuration for a set of questions in the Exam Environment App
@@ -300,9 +302,10 @@ model EnvExamAttempt {
   needsRetake   Boolean
 
   // Relations
-  user          user             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam          EnvExam          @relation(fields: [examId], references: [id])
-  generatedExam EnvGeneratedExam @relation(fields: [generatedExamId], references: [id])
+  user                          user                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam                          EnvExam                        @relation(fields: [examId], references: [id])
+  generatedExam                 EnvGeneratedExam               @relation(fields: [generatedExamId], references: [id])
+  ExamEnvironmentExamModeration ExamEnvironmentExamModeration?
 }
 
 type EnvQuestionSetAttempt {
@@ -487,4 +490,35 @@ model Survey {
 type SurveyResponse {
   question String
   response String
+}
+
+// ----------------------
+
+model ExamEnvironmentExamModeration {
+  id             String                              @id @default(auto()) @map("_id") @db.ObjectId
+  /// Whether or not the item is approved
+  status         ExamEnvironmentExamModerationStatus
+  /// Foreign key to exam attempt
+  examAttemptId  String                              @unique @db.ObjectId
+  /// Optional feedback/note about the moderation decision
+  feedback       String?
+  /// Date the exam attempt was moderated
+  moderationDate DateTime?
+  /// Foreign key to moderator. This is `null` until the item is moderated.
+  moderatorId    String?                             @db.ObjectId
+
+  /// Date the exam attempt was added to the moderation queue
+  submissionDate DateTime @default(now()) @db.Date
+
+  // Relations
+  examAttempt EnvExamAttempt @relation(fields: [examAttemptId], references: [id], onDelete: Cascade)
+}
+
+enum ExamEnvironmentExamModerationStatus {
+  /// Attempt is determined to be valid
+  Approved
+  /// Attempt is determined to be invalid
+  Denied
+  /// Attempt has yet to be moderated
+  Pending
 }

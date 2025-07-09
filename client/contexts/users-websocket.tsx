@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { deserializeToPrisma } from "../utils/serde";
 import { Activity, User } from "../types";
-import { EnvExam } from "@prisma/client";
 import { AuthContext } from "./auth";
 
 export const UsersWebSocketContext = createContext<{
   users: User[];
   error: Error | null;
-  updateActivity: (examId: string | null) => void;
+  updateActivity: (activity: Activity) => void;
 } | null>(null);
 
 export function UsersWebSocketProvider({
@@ -33,7 +32,15 @@ export function UsersWebSocketProvider({
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       if (msg.type === "users-update" && Array.isArray(msg.data)) {
-        setUsers(deserializeToPrisma(msg.data));
+        const prismaData = deserializeToPrisma<User[]>(msg.data);
+        const userData = prismaData.map((p) => ({
+          ...p,
+          activity: {
+            ...p.activity,
+            page: new URL(p.activity.page, window.location.origin),
+          },
+        }));
+        setUsers(userData);
       }
     };
 
@@ -62,17 +69,16 @@ export function UsersWebSocketProvider({
     };
   }, [user]);
 
-  function updateActivity(examId: EnvExam["id"] | null) {
+  function updateActivity(activity: Activity) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const activity: Activity = {
-        exam: examId,
-        lastActive: Date.now(),
+      const jsonActivity = {
+        ...activity,
+        page: activity.page.pathname,
       };
-
       const msg = {
         type: "activity-update",
-        data: activity,
+        data: jsonActivity,
       };
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current?.send(JSON.stringify(msg));

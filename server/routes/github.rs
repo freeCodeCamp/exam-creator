@@ -38,7 +38,7 @@ pub async fn github_login_handler(
     if server_state.env_vars.mock_auth {
         let redirect_url = Url::parse_with_params(
             &server_state.env_vars.github_redirect_url,
-            &[("code", ""), ("state", "")],
+            &[("code", "anything"), ("state", "anything")],
         )
         .expect("Unreachable. Development static string parsing.");
         return Redirect::to(redirect_url.as_str());

@@ -2,7 +2,6 @@ use std::sync::{Arc, Mutex};
 
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
-use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -68,9 +67,8 @@ pub struct SessionUser {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Activity {
-    /// Which exam is being edited
-    /// None, when on the landing page
-    pub exam: Option<ObjectId>,
+    /// The pathname of the user's current page
+    pub page: String,
     /// The last time the user was active in milliseconds since epoch
     pub last_active: usize,
 }
@@ -107,10 +105,10 @@ pub enum SocketEvents {
 
 /// Sets the user's activity
 /// If the user is not found, does nothing but logs an error
-pub fn set_user_activity(client_sync: &mut ClientSync, email: &str, exam_id: Option<ObjectId>) {
+pub fn set_user_activity(client_sync: &mut ClientSync, email: &str, page: String) {
     match client_sync.users.iter_mut().find(|u| u.email == email) {
         Some(user) => {
-            user.activity.exam = exam_id;
+            user.activity.page = page;
             user.activity.last_active = chrono::Utc::now().timestamp_millis() as usize;
         }
         None => {
