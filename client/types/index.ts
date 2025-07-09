@@ -12,7 +12,7 @@ export interface SessionUser extends User {
 }
 
 export interface Activity {
-  exam: null | EnvExam["id"];
+  page: URL;
   lastActive: number; // Timestamp in milliseconds
 }
 

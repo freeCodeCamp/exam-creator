@@ -5,30 +5,28 @@ import {
   HStack,
   Avatar,
   Tooltip,
-  Badge,
   Text,
   useColorModeValue,
   Button,
-  Flex,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
-import { editExamRoute } from "../pages/edit-exam";
-import type { EnvExam } from "@prisma/client";
+import type { ExamEnvironmentExamModeration } from "@prisma/client";
 import { useContext } from "react";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
+import { editAttemptRoute } from "../pages/edit-attempt";
 
-interface ExamCardProps {
-  exam: Omit<EnvExam, "questionSets">;
+interface AttemptCardProps {
+  attempt: ExamEnvironmentExamModeration;
 }
 
-export function ExamCard({ exam }: ExamCardProps) {
+export function AttemptCard({ attempt }: AttemptCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  // Find users currently editing/viewing this exam
-  const examPath = new URL(exam.id, window.location.href).pathname;
+  // Find users currently editing/viewing this attempt
+  const examPath = new URL(attempt.id, window.location.href).pathname;
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
     return usersPath === examPath;
@@ -41,7 +39,7 @@ export function ExamCard({ exam }: ExamCardProps) {
       h="auto"
       p={0}
       onClick={() =>
-        navigate({ to: editExamRoute.to, params: { id: exam.id } })
+        navigate({ to: editAttemptRoute.to, params: { id: attempt.id } })
       }
       _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
       borderRadius="xl"
@@ -62,7 +60,7 @@ export function ExamCard({ exam }: ExamCardProps) {
         transition="all 0.15s"
       >
         <CardHeader pb={2}>
-          <Flex align="center" justify="space-between">
+          {/* <Flex align="center" justify="space-between">
             <Text
               fontSize="xl"
               fontWeight="bold"
@@ -77,7 +75,7 @@ export function ExamCard({ exam }: ExamCardProps) {
                 Deprecated
               </Badge>
             )}
-          </Flex>
+          </Flex> */}
         </CardHeader>
         <CardBody pt={2}>
           <HStack spacing={-2}>

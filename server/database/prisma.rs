@@ -15,6 +15,8 @@ prisma_rust_schema::import_types!(
         "EnvQuestionSetConfig",
         "EnvTagConfig",
         "EnvAnswer",
+        "ExamEnvironmentExamModeration",
+        "ExamEnvironmentExamModerationStatus",
     ]
 );
 
@@ -39,6 +41,7 @@ impl Default for EnvConfig {
             total_time_in_m_s: 2 * 60 * 60 * 1000,
             question_sets: vec![],
             retake_time_in_m_s: 24 * 60 * 60 * 1000,
+            passing_percent: 80.0,
         }
     }
 }

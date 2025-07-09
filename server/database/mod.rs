@@ -45,7 +45,7 @@ impl ExamCreatorUser {
                 email: self.email.clone(),
                 picture: self.picture.clone().unwrap_or_default(),
                 activity: Activity {
-                    exam: None,
+                    page: "/".to_string(),
                     last_active: chrono::Utc::now().timestamp_millis() as usize,
                 },
             }

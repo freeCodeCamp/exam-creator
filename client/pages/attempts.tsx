@@ -4,6 +4,7 @@ import {
   Center,
   Heading,
   HStack,
+  Spinner,
   Stack,
   Text,
   useColorModeValue,
@@ -11,19 +12,24 @@ import {
   Tooltip,
   SimpleGrid,
   Flex,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
+import { useQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { useContext, useEffect } from "react";
 
 import { rootRoute } from "./root";
+import { AttemptCard } from "../components/attempt-card";
+import { getAttempts } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
-import { examsRoute } from "./exams";
-import { attemptsRoute } from "./attempts";
-import { LandingCard } from "../components/landing-card";
+import { landingRoute } from "./landing";
 
-export function Landing() {
+export function Attempts() {
   const { user, logout } = useContext(AuthContext)!;
   const {
     users,
@@ -32,9 +38,12 @@ export function Landing() {
   } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
 
-  const bg = useColorModeValue("gray.900", "gray.900");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const attemptsQuery = useQuery({
+    queryKey: ["attempts"],
+    enabled: !!user,
+    queryFn: () => getAttempts(),
+    retry: false,
+  });
 
   useEffect(() => {
     updateActivity({
@@ -43,26 +52,30 @@ export function Landing() {
     });
   }, []);
 
-  const usersOnAttempts =
-    users.filter((u) => u.activity.page.pathname.startsWith("/attempt")) ?? [];
-  const usersOnExams =
-    users.filter((u) => u.activity.page.pathname.startsWith("/exam")) ?? [];
+  const bg = useColorModeValue("gray.900", "gray.900");
+  const cardBg = useColorModeValue("gray.800", "gray.800");
+  const accent = useColorModeValue("teal.400", "teal.300");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
-      {/* Logout button top right */}
-      <Button
-        position="fixed"
-        top={6}
-        right={8}
-        zIndex={101}
-        colorScheme="red"
-        variant="outline"
-        size="sm"
-        onClick={() => logout()}
-      >
-        Logout
-      </Button>
+      <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+        <Button
+          colorScheme="teal"
+          variant="outline"
+          size="sm"
+          onClick={() => navigate({ to: landingRoute.to })}
+        >
+          Back to Dashboard
+        </Button>
+        <Button
+          colorScheme="red"
+          variant="outline"
+          size="sm"
+          onClick={() => logout()}
+        >
+          Logout
+        </Button>
+      </HStack>
       <Center>
         <Stack spacing={8} w="full" maxW="5xl">
           <Flex
@@ -76,10 +89,10 @@ export function Landing() {
           >
             <Stack spacing={1}>
               <Heading color={accent} fontWeight="extrabold" fontSize="3xl">
-                Exam Creator
+                Exam Moderator
               </Heading>
               <Text color="gray.300" fontSize="lg">
-                Create and moderate exams and attempts.
+                Moderate exam attempts.
               </Text>
             </Stack>
             <HStack spacing={-2} ml={4}>
@@ -118,39 +131,23 @@ export function Landing() {
             </HStack>
           </Flex>
           <Box>
-            <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} spacing={8}>
-              <Button
-                onClick={() => navigate({ to: examsRoute.to })}
-                _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
-                borderRadius="xl"
-                transition="all 0.15s"
-                display="block"
-                textAlign="left"
-                variant="unstyled"
-                w="full"
-                h="auto"
-                p={0}
-              >
-                <LandingCard filteredUsers={usersOnExams}>Exams</LandingCard>
-              </Button>
-              <Button
-                onClick={() => navigate({ to: attemptsRoute.to })}
-                _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
-                borderRadius="xl"
-                transition="all 0.15s"
-                display="block"
-                textAlign="left"
-                variant="unstyled"
-                w="full"
-                h="auto"
-                p={0}
-                disabled={true}
-              >
-                <LandingCard filteredUsers={usersOnAttempts}>
-                  Attempts (Coming soon)
-                </LandingCard>
-              </Button>
-            </SimpleGrid>
+            {attemptsQuery.isPending ? (
+              <Center py={12}>
+                <Spinner color={accent} size="xl" />
+              </Center>
+            ) : attemptsQuery.isError ? (
+              <Center>
+                <Text color="red.400" fontSize="lg">
+                  {attemptsQuery.error.message}
+                </Text>
+              </Center>
+            ) : (
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
+                {attemptsQuery.data.map((attempt) => (
+                  <AttemptCard key={attempt.id} attempt={attempt} />
+                ))}
+              </SimpleGrid>
+            )}
           </Box>
         </Stack>
       </Center>
@@ -158,12 +155,12 @@ export function Landing() {
   );
 }
 
-export const landingRoute = createRoute({
+export const attemptsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: "/attempts",
   component: () => (
     <ProtectedRoute>
-      <Landing />
+      <Attempts />
     </ProtectedRoute>
   ),
 });
