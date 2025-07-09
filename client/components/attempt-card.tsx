@@ -26,10 +26,9 @@ export function AttemptCard({ attempt }: AttemptCardProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
 
   // Find users currently editing/viewing this attempt
-  const examPath = new URL(attempt.id, window.location.href).pathname;
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === examPath;
+    return usersPath === `/attempt/${attempt.id}`;
   });
 
   return (

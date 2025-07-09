@@ -28,10 +28,9 @@ export function ExamCard({ exam }: ExamCardProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
 
   // Find users currently editing/viewing this exam
-  const examPath = new URL(exam.id, window.location.href).pathname;
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === examPath;
+    return usersPath === `/exam/${exam.id}`;
   });
 
   return (

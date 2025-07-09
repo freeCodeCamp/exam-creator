@@ -12,10 +12,6 @@ import {
   Tooltip,
   SimpleGrid,
   Flex,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
@@ -55,6 +51,11 @@ export function Attempts() {
   const bg = useColorModeValue("gray.900", "gray.900");
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
+
+  const usersOnPage = users.filter((u) => {
+    const usersPath = u.activity.page.pathname;
+    return usersPath.startsWith("/attempt");
+  });
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
@@ -101,7 +102,7 @@ export function Attempts() {
                   {usersError.message}
                 </Text>
               ) : (
-                users.slice(0, 5).map((user, idx) => (
+                usersOnPage.slice(0, 5).map((user, idx) => (
                   <Tooltip label={user.name} key={user.email}>
                     <Avatar
                       src={user.picture}
@@ -116,16 +117,16 @@ export function Attempts() {
                   </Tooltip>
                 ))
               )}
-              {users.length > 5 && (
+              {usersOnPage.length > 5 && (
                 <Avatar
                   size="md"
                   bg="gray.700"
                   color="gray.200"
                   ml={-3}
                   zIndex={0}
-                  name={`+${users.length - 5} more`}
+                  name={`+${usersOnPage.length - 5} more`}
                 >
-                  +{users.length - 5}
+                  +{usersOnPage.length - 5}
                 </Avatar>
               )}
             </HStack>

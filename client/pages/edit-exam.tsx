@@ -35,7 +35,6 @@ import { TagConfigForm } from "../components/tag-config-form";
 import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
 import { QuestionTypeConfigForm } from "../components/question-type-config-form";
-import { landingRoute } from "./landing";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
@@ -82,7 +81,7 @@ function Edit() {
         </Button>
       </HStack>
       {/* Floating widget: top right */}
-      <UsersEditing id={id} />
+      <UsersEditing />
       <Center>
         {examQuery.isPending ? (
           <Spinner color={spinnerColor} size="xl" />
@@ -98,13 +97,12 @@ function Edit() {
   );
 }
 
-function UsersEditing({ id }: { id: string }) {
+function UsersEditing() {
   const { users, error: usersError } = useContext(UsersWebSocketContext)!;
 
-  const examPath = new URL(id, window.location.href).pathname;
   const filteredUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === examPath;
+    return usersPath === window.location.pathname;
   });
 
   const cardBg = useColorModeValue("gray.800", "gray.800");

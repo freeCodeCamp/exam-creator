@@ -24,7 +24,7 @@ import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
 
 export function Landing() {
-  const { user, logout } = useContext(AuthContext)!;
+  const { logout } = useContext(AuthContext)!;
   const {
     users,
     error: usersError,

@@ -67,10 +67,9 @@ export function Exams() {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  const examsPath = window.location.pathname;
   const usersOnPage = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === examsPath;
+    return usersPath.startsWith("/exam");
   });
 
   return (

@@ -15,7 +15,6 @@ import {
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
-import { landingRoute } from "./landing";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { getAttemptById } from "../utils/fetch";
@@ -62,7 +61,7 @@ function Edit() {
         </Button>
       </HStack>
       {/* Floating widget: top right */}
-      <UsersEditing id={id} />
+      <UsersEditing />
       <Center>
         {attemptQuery.isPending ? (
           <Spinner color={spinnerColor} size="xl" />
@@ -78,7 +77,7 @@ function Edit() {
   );
 }
 
-function UsersEditing({ id }: { id: string }) {
+function UsersEditing() {
   const {
     users,
     error: usersError,
@@ -92,10 +91,9 @@ function UsersEditing({ id }: { id: string }) {
     });
   }, []);
 
-  const attemptPath = new URL(id, window.location.href).pathname;
   const filteredUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === attemptPath;
+    return usersPath === window.location.pathname;
   });
 
   const cardBg = useColorModeValue("gray.800", "gray.800");
@@ -142,7 +140,7 @@ function UsersEditing({ id }: { id: string }) {
   );
 }
 
-function EditAttempt({ attempt }: { attempt: unknown }) {
+function EditAttempt({ attempt: _attempt }: { attempt: unknown }) {
   return <h1>Edit Attempt</h1>;
 }
 
