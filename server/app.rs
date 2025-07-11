@@ -47,12 +47,20 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
 
     let database = database::Database {
         temp_env_exam: client.database("freecodecamp").collection("EnvExamTemp"),
+        env_exam: client.database("freecodecamp").collection("EnvExam"),
+        env_exam_attempt: client.database("freecodecamp").collection("EnvExamAttempt"),
+        env_generated_exam: client
+            .database("freecodecamp")
+            .collection("EnvGeneratedExam"),
         exam_creator_user: client
             .database("freecodecamp")
             .collection("ExamCreatorUser"),
         exam_creator_session: client
             .database("freecodecamp")
             .collection("ExamCreatorSession"),
+        exam_environment_exam_moderation: client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentExamModeration"),
     };
 
     let client_sync = Arc::new(Mutex::new(ClientSync {
@@ -113,9 +121,12 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
 
     let app = Router::new()
         .route("/api/exams", get(routes::get_exams))
-        .route("/api/exams/{exam_id}", get(routes::get_exam_by_id))
         .route("/api/exams", post(routes::post_exam))
+        .route("/api/exams/{exam_id}", get(routes::get_exam_by_id))
         .route("/api/exams/{exam_id}", put(routes::put_exam))
+        .route("/api/attempts", get(routes::get_attempts))
+        .route("/api/attempts/{attempt_id}", get(routes::get_attempt_by_id))
+        .route("/api/moderations", get(routes::get_moderations))
         .route("/api/users", get(routes::get_users))
         .route("/api/users/session", get(routes::get_session_user))
         .route(

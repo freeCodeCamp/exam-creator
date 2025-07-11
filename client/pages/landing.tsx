@@ -20,7 +20,7 @@ import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
-import { attemptsRoute } from "./attempts";
+import { moderationsRoute } from "./moderations";
 import { LandingCard } from "../components/landing-card";
 
 export function Landing() {
@@ -134,7 +134,7 @@ export function Landing() {
                 <LandingCard filteredUsers={usersOnExams}>Exams</LandingCard>
               </Button>
               <Button
-                onClick={() => navigate({ to: attemptsRoute.to })}
+                onClick={() => navigate({ to: moderationsRoute.to })}
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
                 borderRadius="xl"
                 transition="all 0.15s"
@@ -144,7 +144,7 @@ export function Landing() {
                 w="full"
                 h="auto"
                 p={0}
-                disabled={true}
+                // disabled={true}
               >
                 <LandingCard filteredUsers={usersOnAttempts}>
                   Attempts (Coming soon)

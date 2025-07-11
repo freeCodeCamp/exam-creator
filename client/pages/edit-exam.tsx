@@ -40,7 +40,7 @@ import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
 
 function Edit() {
-  const { id } = useParams({ from: "/exam/$id" });
+  const { id } = useParams({ from: "/exams/$id" });
   const { user, logout } = useContext(AuthContext)!;
 
   const navigate = useNavigate();
@@ -537,7 +537,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
 
 export const editExamRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/exam/$id",
+  path: "/exams/$id",
   component: () => (
     <ProtectedRoute>
       <Edit />

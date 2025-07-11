@@ -1,0 +1,30 @@
+[
+  {
+    "_id": {
+      "$oid": "674819431ed2e8ac8d170f5e"
+    },
+    "status": "Pending",
+    "examAttemptId": {
+      "$oid": "674819431ed2e8ac8d170f5f"
+    },
+    "feedback": null,
+    "moderationDate": null,
+    "moderatorId": null,
+    "submissionDate": "2025-07-11T16:13:34.930Z"
+  },
+  {
+    "_id": {
+      "$oid": "674819430ed2e8ac8d170f5e"
+    },
+    "status": "Denied",
+    "examAttemptId": {
+      "$oid": "674819431ed2e8ac8d170f5f"
+    },
+    "feedback": "User appears to have completed exam too quickly",
+    "moderationDate": "2025-07-11T19:13:34.930Z",
+    "moderatorId": {
+      "$oid": "674819431ed2e8ac8d170f5f"
+    },
+    "submissionDate": "2025-07-11T16:13:34.930Z"
+  }
+]

@@ -15,6 +15,12 @@ prisma_rust_schema::import_types!(
         "EnvQuestionSetConfig",
         "EnvTagConfig",
         "EnvAnswer",
+        "EnvExamAttempt",
+        "EnvQuestionSetAttempt",
+        "EnvMultipleChoiceQuestionAttempt",
+        "EnvGeneratedExam",
+        "EnvGeneratedQuestionSet",
+        "EnvGeneratedMultipleChoiceQuestion",
         "ExamEnvironmentExamModeration",
         "ExamEnvironmentExamModerationStatus",
     ]
