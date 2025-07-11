@@ -3,7 +3,7 @@ use mongodb::Collection;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    database::prisma::EnvExam,
+    database::prisma::{EnvExam, ExamEnvironmentExamModeration},
     state::{Activity, User},
 };
 
@@ -31,8 +31,12 @@ pub struct ExamCreatorSession {
 #[derive(Clone, Debug)]
 pub struct Database {
     pub temp_env_exam: Collection<prisma::EnvExam>,
+    pub env_exam: Collection<prisma::EnvExam>,
+    pub env_exam_attempt: Collection<prisma::EnvExamAttempt>,
+    pub env_generated_exam: Collection<prisma::EnvGeneratedExam>,
     pub exam_creator_user: Collection<ExamCreatorUser>,
     pub exam_creator_session: Collection<ExamCreatorSession>,
+    pub exam_environment_exam_moderation: Collection<ExamEnvironmentExamModeration>,
 }
 
 impl ExamCreatorUser {

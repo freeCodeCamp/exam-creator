@@ -1,7 +1,11 @@
 use std::env::var;
 
+use bson::oid::ObjectId;
 use http::HeaderValue;
+use serde::{Deserialize, Serialize};
 use tracing::{error, warn};
+
+use crate::database::prisma;
 
 #[derive(Clone, Debug)]
 pub struct EnvVars {
@@ -168,4 +172,126 @@ impl EnvVars {
 
         env_vars
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Attempt {
+    id: ObjectId,
+    prerequisites: Vec<ObjectId>,
+    deprecated: bool,
+    question_sets: Vec<AttemptQuestionSet>,
+    config: prisma::EnvConfig,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AttemptQuestionSet {
+    id: ObjectId,
+    _type: prisma::EnvQuestionType,
+    context: Option<String>,
+    questions: Vec<AttemptQuestionSetQuestion>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AttemptQuestionSetQuestion {
+    id: ObjectId,
+    text: String,
+    tags: Vec<String>,
+    deprecated: bool,
+    audio: Option<prisma::EnvAudio>,
+    answers: Vec<prisma::EnvAnswer>,
+    selected: Vec<ObjectId>,
+    submission_time: i64,
+}
+
+/// Constructs an `Attempt`:
+/// - Filters questions from exam based on generated exam
+/// - Adds submission time from attempt questions
+/// - Adds selected answers from attempt
+///
+/// NOTE: Generated exam is assumed to not be needed,
+/// because API ensures attempt only includes answers from assigned generation.
+pub fn construct_attempt(exam: &prisma::EnvExam, exam_attempt: &prisma::EnvExamAttempt) -> Attempt {
+    let prisma::EnvExam {
+        id,
+        question_sets,
+        config,
+        prerequisites,
+        deprecated,
+    } = exam;
+    // TODO: Can caluclate allocation size from exam
+    let mut attempt_question_sets = vec![];
+
+    for question_set in question_sets {
+        let prisma::EnvQuestionSet {
+            id,
+            _type,
+            context,
+            questions,
+        } = question_set;
+
+        // Attempt might not have question set, if related question(s) not answered
+        let attempt_question_set = match exam_attempt
+            .question_sets
+            .iter()
+            .find(|qs| qs.id == question_set.id)
+        {
+            Some(a) => a,
+            None => continue,
+        };
+
+        let mut attempt_questions = vec![];
+
+        for question in questions {
+            let prisma::EnvMultipleChoiceQuestion {
+                id,
+                text,
+                tags,
+                audio,
+                answers,
+                deprecated,
+            } = question;
+
+            // Attempt question might not exist if not answered
+            let attempt_question = match attempt_question_set.questions.iter().find(|q| q.id == *id)
+            {
+                Some(a) => a,
+                None => continue,
+            };
+
+            let selected = attempt_question.answers.clone();
+            let submission_time = attempt_question.submission_time_in_m_s;
+
+            let attempt_question_set_question = AttemptQuestionSetQuestion {
+                id: id.clone(),
+                text: text.clone(),
+                tags: tags.clone(),
+                deprecated: deprecated.clone(),
+                audio: audio.clone(),
+                answers: answers.clone(),
+                selected,
+                submission_time,
+            };
+
+            attempt_questions.push(attempt_question_set_question);
+        }
+
+        let attempt_question_set = AttemptQuestionSet {
+            id: id.clone(),
+            _type: _type.clone(),
+            context: context.clone(),
+            questions: attempt_questions,
+        };
+
+        attempt_question_sets.push(attempt_question_set);
+    }
+
+    let attempt = Attempt {
+        id: *id,
+        prerequisites: prerequisites.clone(),
+        deprecated: *deprecated,
+        question_sets: attempt_question_sets,
+        config: config.clone(),
+    };
+
+    attempt
 }

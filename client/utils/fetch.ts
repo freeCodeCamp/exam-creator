@@ -1,5 +1,5 @@
 import type { EnvExam, ExamEnvironmentExamModeration } from "@prisma/client";
-import type { ClientSync, SessionUser, User } from "../types";
+import type { Attempt, ClientSync, SessionUser, User } from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
 async function authorizedFetch(
@@ -283,7 +283,9 @@ export async function logout() {
   });
 }
 
-export async function getAttempts(): Promise<ExamEnvironmentExamModeration[]> {
+export async function getModerations(): Promise<
+  ExamEnvironmentExamModeration[]
+> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/exam-moderations.json");
@@ -296,26 +298,101 @@ export async function getAttempts(): Promise<ExamEnvironmentExamModeration[]> {
     return deserializeToPrisma(moderations);
   }
 
-  const res = await authorizedFetch("/api/moderation");
+  const res = await authorizedFetch("/api/moderations");
   const json = await res.json();
   const deserialized =
     deserializeToPrisma<ExamEnvironmentExamModeration[]>(json);
   return deserialized;
 }
 
-export async function getAttemptById(examId: string): Promise<EnvExam> {
+export async function getModerationById(
+  moderationId: string
+): Promise<ExamEnvironmentExamModeration> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    const res = await fetch("/mocks/exam-moderations.json");
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
+      );
+    }
+    const moderations = await res.json();
+    return deserializeToPrisma(moderations[0]);
+  }
+
+  const res = await authorizedFetch(`/api/moderations/${moderationId}`);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<ExamEnvironmentExamModeration>(json);
+  return deserialized;
+}
+
+export async function getAttempts(): Promise<Attempt[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    const res = await fetch("/mocks/exam-moderations.json");
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
+      );
+    }
+    const moderations = await res.json();
+    return deserializeToPrisma(moderations);
+  }
+
+  const res = await authorizedFetch("/api/attempts");
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<Attempt[]>(json);
+  return deserialized;
+}
+
+export async function getAttemptById(attemptId: string): Promise<Attempt> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
     const res = await fetch(`/mocks/exams.json`);
     const exams: EnvExam[] = deserializeToPrisma(await res.json());
-    const exam = exams.find((exam) => exam.id === examId)!;
-    return exam;
+    const exam = exams[0];
+
+    const startTimeInMS = Date.now() - 10 * 60 * 60 * 1000;
+
+    // @ts-expect-error Properties are added after instantiation
+    const questionSets: Attempt["questionSets"] = exam.questionSets;
+    questionSets[0].questions[0].selected = ["674818271ff8b2a575a57251"];
+    questionSets[0].questions[0].submissionTimeInMS = startTimeInMS + 25_000;
+
+    questionSets[1].questions[0].selected = ["674818446784013ac9152ec1"];
+    questionSets[1].questions[0].submissionTimeInMS =
+      startTimeInMS + 25_000 * 2;
+
+    questionSets[2].questions[0].selected = ["67481867cfb879a9f90a1298"];
+    questionSets[2].questions[0].submissionTimeInMS =
+      startTimeInMS + 25_000 * 4;
+
+    questionSets[2].questions[1].selected = ["6748188f09398c3c40fccc63"];
+    questionSets[2].questions[1].submissionTimeInMS =
+      startTimeInMS + 25_000 * 4.5;
+
+    questionSets[2].questions[2].selected = ["674818a83f795ef97e3ba99e"];
+    questionSets[2].questions[2].submissionTimeInMS =
+      startTimeInMS + 25_000 * 7;
+
+    const attempt: Attempt = {
+      ...exam,
+      id: "674819431ed2e8ac8d170f5f",
+      examId: exam.id,
+      generatedExamId: "674819431ed2e8ac8d170f6e",
+      needsRetake: false,
+      questionSets,
+      startTimeInMS,
+      userId: "674819431ed2e8ac8d170f6f",
+    };
+
+    return attempt;
   }
 
-  const res = await authorizedFetch(`/api/attempts/${examId}`);
+  const res = await authorizedFetch(`/api/attempts/${attemptId}`);
   const json = await res.json();
-  const deserialized = deserializeToPrisma<EnvExam>(json);
+  const deserialized = deserializeToPrisma<Attempt>(json);
   return deserialized;
 }
 

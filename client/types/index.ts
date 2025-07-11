@@ -1,4 +1,10 @@
-import type { EnvExam } from "@prisma/client";
+import type {
+  EnvExam,
+  EnvExamAttempt,
+  EnvMultipleChoiceQuestion,
+  EnvMultipleChoiceQuestionAttempt,
+  EnvQuestionSet,
+} from "@prisma/client";
 
 export interface User {
   name: string;
@@ -20,6 +26,18 @@ export interface ClientSync {
   users: User[];
   exams: EnvExam[];
 }
+
+type AttemptQuestion = EnvMultipleChoiceQuestion & {
+  selected: EnvMultipleChoiceQuestionAttempt["answers"];
+  submissionTime: EnvMultipleChoiceQuestionAttempt["submissionTimeInMS"];
+};
+type AttemptQuestionSet = EnvQuestionSet & {
+  questions: Array<AttemptQuestion>;
+};
+export type Attempt = EnvExam &
+  EnvExamAttempt & {
+    questionSets: Array<AttemptQuestionSet>;
+  };
 
 // Replace all levels of `id` with _id: { $oid: string }
 // type OmitId<T> = {
