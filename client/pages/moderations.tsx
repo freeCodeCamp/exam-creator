@@ -18,14 +18,14 @@ import { createRoute, useNavigate } from "@tanstack/react-router";
 import { useContext, useEffect } from "react";
 
 import { rootRoute } from "./root";
-import { AttemptCard } from "../components/attempt-card";
-import { getAttempts } from "../utils/fetch";
+import { ModerationCard } from "../components/moderation-card";
+import { getModerations } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 
-export function Attempts() {
+export function Moderations() {
   const { user, logout } = useContext(AuthContext)!;
   const {
     users,
@@ -34,10 +34,10 @@ export function Attempts() {
   } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
 
-  const attemptsQuery = useQuery({
-    queryKey: ["attempts"],
+  const moderationsQuery = useQuery({
+    queryKey: ["moderations"],
     enabled: !!user,
-    queryFn: () => getAttempts(),
+    queryFn: () => getModerations(),
     retry: false,
   });
 
@@ -54,7 +54,8 @@ export function Attempts() {
 
   const usersOnPage = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath.startsWith("/attempt");
+    // TODO: This might need to be `/attempts | /moderations`
+    return usersPath.startsWith("/moderations");
   });
 
   return (
@@ -132,20 +133,20 @@ export function Attempts() {
             </HStack>
           </Flex>
           <Box>
-            {attemptsQuery.isPending ? (
+            {moderationsQuery.isPending ? (
               <Center py={12}>
                 <Spinner color={accent} size="xl" />
               </Center>
-            ) : attemptsQuery.isError ? (
+            ) : moderationsQuery.isError ? (
               <Center>
                 <Text color="red.400" fontSize="lg">
-                  {attemptsQuery.error.message}
+                  {moderationsQuery.error.message}
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
-                {attemptsQuery.data.map((attempt) => (
-                  <AttemptCard key={attempt.id} attempt={attempt} />
+              <SimpleGrid columns={{ base: 1, md: 1, lg: 1 }} spacing={8}>
+                {moderationsQuery.data.map((moderation) => (
+                  <ModerationCard key={moderation.id} moderation={moderation} />
                 ))}
               </SimpleGrid>
             )}
@@ -156,12 +157,12 @@ export function Attempts() {
   );
 }
 
-export const attemptsRoute = createRoute({
+export const moderationsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/attempts",
+  path: "/moderations",
   component: () => (
     <ProtectedRoute>
-      <Attempts />
+      <Moderations />
     </ProtectedRoute>
   ),
 });

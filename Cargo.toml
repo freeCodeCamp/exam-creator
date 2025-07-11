@@ -46,3 +46,7 @@ uuid = { version = "1.17.0", features = ["v4", "serde"] }
 [features]
 default = ["docker"]
 docker = []
+
+[dev-dependencies]
+proptest = "1.7.0"
+proptest-derive = "0.6.0"

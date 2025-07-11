@@ -288,7 +288,7 @@ export async function getModerations(): Promise<
 > {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
-    const res = await fetch("/mocks/exam-moderations.json");
+    const res = await fetch("/mocks/moderations.json");
     if (!res.ok) {
       throw new Error(
         `Failed to load mock moderations: ${res.status} - ${res.statusText}`
@@ -310,14 +310,19 @@ export async function getModerationById(
 ): Promise<ExamEnvironmentExamModeration> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
-    const res = await fetch("/mocks/exam-moderations.json");
+    const res = await fetch("/mocks/moderations.json");
     if (!res.ok) {
       throw new Error(
         `Failed to load mock moderations: ${res.status} - ${res.statusText}`
       );
     }
     const moderations = await res.json();
-    return deserializeToPrisma(moderations[0]);
+    const moderation = moderations[0];
+    // NOTE: This is an RFC 3339 date string
+    moderation.submissionDate = new Date(
+      Date.now() - 10 * 60 * 60 * 1000
+    ).toISOString();
+    return deserializeToPrisma(moderation);
   }
 
   const res = await authorizedFetch(`/api/moderations/${moderationId}`);
@@ -329,14 +334,14 @@ export async function getModerationById(
 export async function getAttempts(): Promise<Attempt[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
-    const res = await fetch("/mocks/exam-moderations.json");
+    const res = await fetch("/mocks/attempts.json");
     if (!res.ok) {
       throw new Error(
-        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
+        `Failed to load mock attempts: ${res.status} - ${res.statusText}`
       );
     }
-    const moderations = await res.json();
-    return deserializeToPrisma(moderations);
+    const attempts = await res.json();
+    return deserializeToPrisma(attempts);
   }
 
   const res = await authorizedFetch("/api/attempts");
@@ -349,43 +354,23 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const res = await fetch(`/mocks/exams.json`);
-    const exams: EnvExam[] = deserializeToPrisma(await res.json());
-    const exam = exams[0];
+    const res = await fetch(`/mocks/attempts.json`);
+    const attempts: Attempt[] = deserializeToPrisma(await res.json());
+    const attempt = attempts[0];
 
     const startTimeInMS = Date.now() - 10 * 60 * 60 * 1000;
+    attempt.startTimeInMS = startTimeInMS;
 
-    // @ts-expect-error Properties are added after instantiation
-    const questionSets: Attempt["questionSets"] = exam.questionSets;
-    questionSets[0].questions[0].selected = ["674818271ff8b2a575a57251"];
-    questionSets[0].questions[0].submissionTimeInMS = startTimeInMS + 25_000;
-
-    questionSets[1].questions[0].selected = ["674818446784013ac9152ec1"];
-    questionSets[1].questions[0].submissionTimeInMS =
+    attempt.questionSets[0].questions[0].submissionTimeInMS =
+      startTimeInMS + 25_000;
+    attempt.questionSets[1].questions[0].submissionTimeInMS =
       startTimeInMS + 25_000 * 2;
-
-    questionSets[2].questions[0].selected = ["67481867cfb879a9f90a1298"];
-    questionSets[2].questions[0].submissionTimeInMS =
+    attempt.questionSets[2].questions[0].submissionTimeInMS =
       startTimeInMS + 25_000 * 4;
-
-    questionSets[2].questions[1].selected = ["6748188f09398c3c40fccc63"];
-    questionSets[2].questions[1].submissionTimeInMS =
+    attempt.questionSets[2].questions[1].submissionTimeInMS =
       startTimeInMS + 25_000 * 4.5;
-
-    questionSets[2].questions[2].selected = ["674818a83f795ef97e3ba99e"];
-    questionSets[2].questions[2].submissionTimeInMS =
+    attempt.questionSets[2].questions[2].submissionTimeInMS =
       startTimeInMS + 25_000 * 7;
-
-    const attempt: Attempt = {
-      ...exam,
-      id: "674819431ed2e8ac8d170f5f",
-      examId: exam.id,
-      generatedExamId: "674819431ed2e8ac8d170f6e",
-      needsRetake: false,
-      questionSets,
-      startTimeInMS,
-      userId: "674819431ed2e8ac8d170f6f",
-    };
 
     return attempt;
   }
