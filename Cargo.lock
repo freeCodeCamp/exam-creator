@@ -580,7 +580,7 @@ dependencies = [
 [[package]]
 name = "diagnostics"
 version = "0.1.0"
-source = "git+https://github.com/prisma/prisma-engines?tag=6.8.2#2060c79ba17c6bb9f5823312b6f6b7f4a845738e"
+source = "git+https://github.com/prisma/prisma-engines?tag=6.11.1#f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 dependencies = [
  "colored",
  "indoc",
@@ -1103,18 +1103,23 @@ version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf9f1e950e0d9d1d3c47184416723cf29c0d1f93bd8cccf37e4beb6b44f31710"
 dependencies = [
+ "base64 0.22.1",
  "bytes",
  "futures-channel",
  "futures-util",
  "http",
  "http-body",
  "hyper",
+ "ipnet",
  "libc",
+ "percent-encoding",
  "pin-project-lite",
  "socket2",
+ "system-configuration",
  "tokio",
  "tower-service",
  "tracing",
+ "windows-registry",
 ]
 
 [[package]]
@@ -1308,6 +1313,16 @@ name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "469fb0b9cefa57e3ef31275ee7cacb78f2fdca44e4765491884a2b119d4eb130"
+
+[[package]]
+name = "iri-string"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbc5ebe9c3a1a7a5127f920a418f7585e9e758e911d0466ed004f393b0e380b2"
+dependencies = [
+ "memchr",
+ "serde",
+]
 
 [[package]]
 name = "itertools"
@@ -1554,7 +1569,7 @@ dependencies = [
  "rand 0.8.5",
  "rustc_version_runtime",
  "rustls 0.21.12",
- "rustls-pemfile 1.0.4",
+ "rustls-pemfile",
  "serde",
  "serde_bytes",
  "serde_with",
@@ -1763,7 +1778,7 @@ dependencies = [
 [[package]]
 name = "parser-database"
 version = "0.1.0"
-source = "git+https://github.com/prisma/prisma-engines?tag=6.8.2#2060c79ba17c6bb9f5823312b6f6b7f4a845738e"
+source = "git+https://github.com/prisma/prisma-engines?tag=6.11.1#f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 dependencies = [
  "diagnostics",
  "either",
@@ -1890,12 +1905,13 @@ dependencies = [
 
 [[package]]
 name = "prisma-rust-schema"
-version = "0.6.0"
-source = "git+https://github.com/ShaunSHamilton/prisma-rust-schema.git#88b326501580d292daa3c2adcdbf320088b15a97"
+version = "1.0.1"
+source = "git+https://github.com/ShaunSHamilton/prisma-rust-schema.git#38cff551f435555574fbc711394c851a235bcd2e"
 dependencies = [
  "proc-macro2",
  "psl",
  "quote",
+ "reqwest",
  "serde",
  "serde_json",
  "serde_tokenstream",
@@ -1905,7 +1921,7 @@ dependencies = [
 [[package]]
 name = "prisma-value"
 version = "0.1.0"
-source = "git+https://github.com/prisma/prisma-engines?tag=6.8.2#2060c79ba17c6bb9f5823312b6f6b7f4a845738e"
+source = "git+https://github.com/prisma/prisma-engines?tag=6.11.1#f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 dependencies = [
  "base64 0.22.1",
  "bigdecimal",
@@ -1959,7 +1975,7 @@ dependencies = [
 [[package]]
 name = "psl"
 version = "0.1.0"
-source = "git+https://github.com/prisma/prisma-engines?tag=6.8.2#2060c79ba17c6bb9f5823312b6f6b7f4a845738e"
+source = "git+https://github.com/prisma/prisma-engines?tag=6.11.1#f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 dependencies = [
  "psl-core",
 ]
@@ -1967,7 +1983,7 @@ dependencies = [
 [[package]]
 name = "psl-core"
 version = "0.1.0"
-source = "git+https://github.com/prisma/prisma-engines?tag=6.8.2#2060c79ba17c6bb9f5823312b6f6b7f4a845738e"
+source = "git+https://github.com/prisma/prisma-engines?tag=6.11.1#f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 dependencies = [
  "bigdecimal",
  "cfg-if",
@@ -2194,13 +2210,14 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "reqwest"
-version = "0.12.15"
+version = "0.12.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d19c46a6fdd48bc4dab94b6103fccc55d34c67cc0ad04653aad4ea2a07cd7bbb"
+checksum = "cbc931937e6ca3a06e3b6c0aa7841849b160a90351d6ab467a8b9b9959767531"
 dependencies = [
  "base64 0.22.1",
  "bytes",
  "encoding_rs",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "h2",
@@ -2211,34 +2228,30 @@ dependencies = [
  "hyper-rustls",
  "hyper-tls",
  "hyper-util",
- "ipnet",
  "js-sys",
  "log",
  "mime",
  "native-tls",
- "once_cell",
  "percent-encoding",
  "pin-project-lite",
  "quinn",
  "rustls 0.23.27",
- "rustls-pemfile 2.2.0",
  "rustls-pki-types",
  "serde",
  "serde_json",
  "serde_urlencoded",
  "sync_wrapper",
- "system-configuration",
  "tokio",
  "tokio-native-tls",
  "tokio-rustls 0.26.2",
  "tower",
+ "tower-http",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "webpki-roots 0.26.11",
- "windows-registry",
+ "webpki-roots 1.0.0",
 ]
 
 [[package]]
@@ -2347,15 +2360,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustls-pemfile"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dce314e5fee3f39953d46bb63bb8a46d40c2f8fb7cc5a3b6cab2bde9721d6e50"
-dependencies = [
- "rustls-pki-types",
-]
-
-[[package]]
 name = "rustls-pki-types"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2422,7 +2426,7 @@ dependencies = [
 [[package]]
 name = "schema-ast"
 version = "0.1.0"
-source = "git+https://github.com/prisma/prisma-engines?tag=6.8.2#2060c79ba17c6bb9f5823312b6f6b7f4a845738e"
+source = "git+https://github.com/prisma/prisma-engines?tag=6.11.1#f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 dependencies = [
  "diagnostics",
  "pest",
@@ -3062,24 +3066,27 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.4"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fdb0c213ca27a9f57ab69ddb290fd80d970922355b83ae380b395d3986b8a2e"
+checksum = "adc82fd73de2a9722ac5da747f12383d2bfdb93591ee6c58486e0097890f05f2"
 dependencies = [
  "bitflags 2.9.1",
  "bytes",
+ "futures-core",
  "futures-util",
  "http",
  "http-body",
  "http-body-util",
  "http-range-header",
  "httpdate",
+ "iri-string",
  "mime",
  "mime_guess",
  "percent-encoding",
  "pin-project-lite",
  "tokio",
  "tokio-util",
+ "tower",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -3494,15 +3501,6 @@ name = "webpki-roots"
 version = "0.25.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
-
-[[package]]
-name = "webpki-roots"
-version = "0.26.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
-dependencies = [
- "webpki-roots 1.0.0",
-]
 
 [[package]]
 name = "webpki-roots"
