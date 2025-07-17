@@ -17,10 +17,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useContext } from "react";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
-import {
-  ExamEnvironmentExamModeration,
-  ExamEnvironmentExamModerationStatus,
-} from "@prisma/client";
+import { ExamEnvironmentExamModeration } from "@prisma/client";
 
 interface ModerationCardProps {
   moderation: ExamEnvironmentExamModeration;
@@ -82,11 +79,9 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
             <Badge
               fontSize={"1em"}
               colorScheme={
-                moderation.status ===
-                ExamEnvironmentExamModerationStatus.Pending
+                moderation.status === "Pending"
                   ? "blue"
-                  : moderation.status ===
-                    ExamEnvironmentExamModerationStatus.Approved
+                  : moderation.status === "Approved"
                   ? "green"
                   : "red"
               }
