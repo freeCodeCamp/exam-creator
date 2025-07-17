@@ -21,8 +21,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   Tooltip as ReChartsTooltip,
   XAxis,
   YAxis,
@@ -232,40 +230,6 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
             mb={4}
             ref={simpleGridRef}
           >
-            <LineChart
-              width={simpleGridRef.current?.offsetWidth ?? 500}
-              height={document.body.clientHeight * 0.3}
-              data={timeToAnswers}
-              margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-            >
-              <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="purple"
-                strokeWidth={2}
-                name="time to answer"
-              />
-              <XAxis
-                dataKey="name"
-                label={{
-                  value: "question number",
-
-                  position: "insideBottom",
-                  offset: 0,
-                }}
-              />
-              <YAxis
-                width="auto"
-                label={{
-                  value: "seconds since exam start",
-                  position: "insideBottomLeft",
-                  offset: 20,
-                  angle: -90,
-                }}
-              />
-              <ReChartsTooltip />
-            </LineChart>
             <BarChart
               width={simpleGridRef.current?.offsetWidth ?? 500}
               height={document.body.clientHeight * 0.3}
