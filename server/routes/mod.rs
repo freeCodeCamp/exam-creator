@@ -22,10 +22,8 @@ use tower_sessions::Session;
 use tracing::{info, instrument};
 
 use crate::{
-    database::{
-        ExamCreatorUser,
-        prisma::{self, EnvExam},
-    },
+    config,
+    database::{ExamCreatorUser, prisma},
     errors::Error,
     state::{ServerState, SessionUser, SocketEvents, User, remove_user, set_user_activity},
 };
@@ -86,7 +84,7 @@ pub async fn get_status_ping() -> Response {
 pub async fn get_exams(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<Vec<EnvExam>>, Error> {
+) -> Result<Json<Vec<prisma::EnvExam>>, Error> {
     let mut exams_cursor = state
         .database
         .temp_env_exam
@@ -95,10 +93,10 @@ pub async fn get_exams(
         .projection(doc! {"questionSets": false})
         .await?;
 
-    let mut exams: Vec<EnvExam> = vec![];
+    let mut exams: Vec<prisma::EnvExam> = vec![];
 
     while let Some(exam) = exams_cursor.try_next().await? {
-        let env_exam: EnvExam = exam.try_into()?;
+        let env_exam: prisma::EnvExam = exam.try_into()?;
         exams.push(env_exam);
     }
 
@@ -258,6 +256,90 @@ pub async fn delete_logout(
         .await?;
 
     Ok(jar.remove(cookie))
+}
+
+/// Get all attempts
+///
+/// TODO: Return only what is needed
+///       Could be smarter with fetching exams and attempts as needed
+#[instrument(skip_all, err(Debug))]
+pub async fn get_attempts(
+    _: ExamCreatorUser,
+    State(server_state): State<ServerState>,
+) -> Result<Json<Vec<config::Attempt>>, Error> {
+    let mut exam_attempts = server_state.database.env_exam_attempt.find(doc! {}).await?;
+
+    let exams: Vec<prisma::EnvExam> = server_state
+        .database
+        .env_exam
+        .find(doc! {})
+        .await?
+        .try_collect()
+        .await?;
+
+    let mut attempts = vec![];
+
+    while let Some(exam_attempt) = exam_attempts.try_next().await? {
+        let exam = exams
+            .iter()
+            .find(|e| e.id == exam_attempt.exam_id)
+            .ok_or(Error::Server(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("exam non-existant: {}", exam_attempt.exam_id),
+            ))?;
+
+        let attempt = config::construct_attempt(&exam, &exam_attempt);
+        attempts.push(attempt);
+    }
+
+    Ok(Json(attempts))
+}
+
+#[instrument(skip_all, err(Debug))]
+pub async fn get_attempt_by_id(
+    _: ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(attempt_id): Path<ObjectId>,
+) -> Result<Json<config::Attempt>, Error> {
+    let exam_attempt = server_state
+        .database
+        .env_exam_attempt
+        .find_one(doc! {"_id": attempt_id})
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("attempt non-existant: {attempt_id}"),
+        ))?;
+
+    let exam = server_state
+        .database
+        .env_exam
+        .find_one(doc! {"_id": exam_attempt.exam_id})
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("exam non-existant: {}", exam_attempt.exam_id),
+        ))?;
+
+    let attempt = config::construct_attempt(&exam, &exam_attempt);
+
+    Ok(Json(attempt))
+}
+
+#[instrument(skip_all, err(Debug))]
+pub async fn get_moderations(
+    _: ExamCreatorUser,
+    State(server_state): State<ServerState>,
+) -> Result<Json<Vec<prisma::ExamEnvironmentExamModeration>>, Error> {
+    let exam_moderations = server_state
+        .database
+        .exam_environment_exam_moderation
+        .find(doc! {})
+        .await?
+        .try_collect()
+        .await?;
+
+    Ok(Json(exam_moderations))
 }
 
 pub async fn _handle_exam_ws(

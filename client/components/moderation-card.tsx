@@ -8,18 +8,22 @@ import {
   Text,
   useColorModeValue,
   Button,
+  Badge,
+  Flex,
+  VStack,
+  Box,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
-import type { ExamEnvironmentExamModeration } from "@prisma/client";
 import { useContext } from "react";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
+import { ExamEnvironmentExamModeration } from "@prisma/client";
 
-interface AttemptCardProps {
-  attempt: ExamEnvironmentExamModeration;
+interface ModerationCardProps {
+  moderation: ExamEnvironmentExamModeration;
 }
 
-export function AttemptCard({ attempt }: AttemptCardProps) {
+export function ModerationCard({ moderation }: ModerationCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
   const cardBg = useColorModeValue("gray.800", "gray.800");
@@ -28,7 +32,7 @@ export function AttemptCard({ attempt }: AttemptCardProps) {
   // Find users currently editing/viewing this attempt
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === `/attempt/${attempt.id}`;
+    return usersPath === `/moderation/${moderation.id}`;
   });
 
   return (
@@ -38,7 +42,10 @@ export function AttemptCard({ attempt }: AttemptCardProps) {
       h="auto"
       p={0}
       onClick={() =>
-        navigate({ to: editAttemptRoute.to, params: { id: attempt.id } })
+        navigate({
+          to: editAttemptRoute.to,
+          params: { id: moderation.examAttemptId },
+        })
       }
       _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
       borderRadius="xl"
@@ -59,7 +66,7 @@ export function AttemptCard({ attempt }: AttemptCardProps) {
         transition="all 0.15s"
       >
         <CardHeader pb={2}>
-          {/* <Flex align="center" justify="space-between">
+          <Flex align="center" justify="space-between">
             <Text
               fontSize="xl"
               fontWeight="bold"
@@ -67,19 +74,27 @@ export function AttemptCard({ attempt }: AttemptCardProps) {
               noOfLines={1}
               maxW="80%"
             >
-              {exam.config.name}
+              {moderation.id}
             </Text>
-            {exam.deprecated && (
-              <Badge colorScheme="red" ml={2}>
-                Deprecated
-              </Badge>
-            )}
-          </Flex> */}
+            <Badge
+              fontSize={"1em"}
+              colorScheme={
+                moderation.status === "Pending"
+                  ? "blue"
+                  : moderation.status === "Approved"
+                  ? "green"
+                  : "red"
+              }
+              ml={2}
+            >
+              {moderation.status}
+            </Badge>
+          </Flex>
         </CardHeader>
         <CardBody pt={2}>
           <HStack spacing={-2}>
             {usersError ? (
-              <Text>{usersError.message}</Text>
+              <Text color="red.300">{usersError.message}</Text>
             ) : editingUsers.length === 0 ? (
               <Text color="gray.400" fontSize="sm">
                 No one editing
@@ -113,6 +128,44 @@ export function AttemptCard({ attempt }: AttemptCardProps) {
               </Avatar>
             )}
           </HStack>
+          <VStack
+            align="start"
+            spacing={1}
+            mt={4}
+            fontSize="sm"
+            color="gray.300"
+          >
+            {moderation.feedback && (
+              <Text>
+                <Box as="span" fontWeight="bold" color="whiteAlpha.600">
+                  Feedback:
+                </Box>{" "}
+                {moderation.feedback}
+              </Text>
+            )}
+            {moderation.moderationDate && (
+              <Text>
+                <Box as="span" fontWeight="bold" color="whiteAlpha.600">
+                  Moderation Date:
+                </Box>{" "}
+                {new Date(moderation.moderationDate).toLocaleString()}
+              </Text>
+            )}
+            {moderation.moderatorId && (
+              <Text>
+                <Box as="span" fontWeight="bold" color="whiteAlpha.600">
+                  Moderator ID:
+                </Box>{" "}
+                {moderation.moderatorId}
+              </Text>
+            )}
+            <Text>
+              <Box as="span" fontWeight="bold" color="whiteAlpha.600">
+                Submission Date:
+              </Box>{" "}
+              {new Date(moderation.submissionDate).toString()}
+            </Text>
+          </VStack>
         </CardBody>
       </Card>
     </Button>

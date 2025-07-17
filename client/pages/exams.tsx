@@ -69,7 +69,7 @@ export function Exams() {
 
   const usersOnPage = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath.startsWith("/exam");
+    return usersPath.startsWith("/exams");
   });
 
   return (
