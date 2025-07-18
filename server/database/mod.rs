@@ -1,5 +1,4 @@
-use bson::oid::ObjectId;
-use mongodb::Collection;
+use mongodb::{Collection, bson::oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -25,7 +24,7 @@ pub struct ExamCreatorSession {
     pub id: ObjectId,
     pub user_id: ObjectId,
     pub session_id: String,
-    pub expires_at: u64,
+    pub expires_at: mongodb::bson::DateTime,
 }
 
 #[derive(Clone, Debug)]

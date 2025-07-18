@@ -1,4 +1,4 @@
-use bson::oid::ObjectId;
+use mongodb::bson::oid::ObjectId;
 use prisma_rust_schema;
 use serde::{Deserialize, Serialize};
 

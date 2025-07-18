@@ -20,6 +20,8 @@ pub enum Error {
     BsonAccess(#[from] bson::document::ValueAccessError),
     #[error("{0}")]
     BsonDeserialization(#[from] bson::de::Error),
+    #[error("{0}")]
+    TimeConversion(#[from] time::error::ConversionRange),
 }
 
 impl IntoResponse for Error {

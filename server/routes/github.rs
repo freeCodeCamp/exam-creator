@@ -6,11 +6,11 @@ use axum::{
     response::{IntoResponse, Redirect},
 };
 use axum_extra::extract::{PrivateCookieJar, cookie::Cookie};
-use bson::{doc, oid::ObjectId};
 use http::{
     StatusCode,
     header::{ACCEPT, USER_AGENT},
 };
+use mongodb::bson::{doc, oid::ObjectId};
 use oauth2::{
     AccessToken, AuthorizationCode, CsrfToken, EmptyExtraTokenFields, EndpointNotSet, EndpointSet,
     Scope, StandardTokenResponse, TokenResponse,
@@ -165,9 +165,9 @@ pub async fn github_handler(
 
     let expires_in = token
         .expires_in()
-        .unwrap_or(Duration::from_secs(server_state.env_vars.session_ttl_in_s))
-        .as_secs();
-    let expires_at = chrono::Utc::now().timestamp() as u64 + expires_in;
+        .unwrap_or(Duration::from_secs(server_state.env_vars.session_ttl_in_s));
+    let expires_at = chrono::Utc::now() + expires_in;
+    let expires_at = expires_at.into();
     let session_id = access_token;
     // Create session
     let session = ExamCreatorSession {
@@ -188,7 +188,7 @@ pub async fn github_handler(
         .path("/")
         .secure(true)
         .http_only(true)
-        .max_age(time::Duration::seconds(expires_in as i64));
+        .max_age(expires_in.try_into()?);
 
     return Ok(jar.add(cookie));
 }

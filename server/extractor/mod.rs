@@ -3,7 +3,7 @@ use axum::{
     http::request::Parts,
 };
 use axum_extra::extract::PrivateCookieJar;
-use bson::doc;
+use mongodb::bson::doc;
 
 use axum::extract::ws::WebSocketUpgrade;
 use axum::response::IntoResponse;

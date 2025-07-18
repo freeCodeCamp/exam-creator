@@ -8,10 +8,10 @@ use axum::{
     response::Response,
 };
 use axum_extra::extract::PrivateCookieJar;
-use bson::doc;
 use futures_util::TryStreamExt;
 use futures_util::{SinkExt, StreamExt};
 use http::StatusCode;
+use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use oauth2::CsrfToken;
 use once_cell::sync::Lazy;
