@@ -67,7 +67,7 @@ pub struct GitHubUserInfo {
     id: i64,
     avatar_url: String,
     email: Option<String>,
-    name: String,
+    name: Option<String>,
 }
 #[derive(Debug, serde::Deserialize)]
 pub struct GitHubUserEmail {
@@ -100,20 +100,25 @@ pub async fn github_handler(
     let github_user_info =
         get_github_user_info(&access_token, &http_client, server_state.env_vars.mock_auth).await?;
 
-    let email = if github_user_info.email.is_none() {
-        let emails =
-            get_github_user_emails(&access_token, &http_client, server_state.env_vars.mock_auth)
-                .await?;
-        let email = emails
-            .into_iter()
-            .find(|e| e.verified && e.primary)
-            .ok_or(Error::Server(
-                StatusCode::UNAUTHORIZED,
-                format!("no verified and primary emails associated with GitHub"),
-            ))?;
-        email.email
-    } else {
-        github_user_info.email.unwrap()
+    let email = match github_user_info.email {
+        Some(email) => email,
+        None => {
+            let emails = get_github_user_emails(
+                &access_token,
+                &http_client,
+                server_state.env_vars.mock_auth,
+            )
+            .await?;
+            let email =
+                emails
+                    .into_iter()
+                    .find(|e| e.verified && e.primary)
+                    .ok_or(Error::Server(
+                        StatusCode::UNAUTHORIZED,
+                        format!("no verified and primary emails associated with GitHub"),
+                    ))?;
+            email.email
+        }
     };
 
     // If mocking auth, add camperbot user to database
@@ -203,7 +208,7 @@ async fn get_github_user_info(
             id: 0,
             avatar_url: "".to_string(),
             email: Some("camperbot@freecodecamp.org".to_string()),
-            name: "Camperbot".to_string(),
+            name: Some("Camperbot".to_string()),
         };
 
         return Ok(github_user_info);
@@ -219,9 +224,9 @@ async fn get_github_user_info(
 
     let user_info_res = user_info_request.send().await?;
     let res = user_info_res.error_for_status()?;
-    let github_user_info: GitHubUserInfo = res.json().await.unwrap();
+    let github_user_info: GitHubUserInfo = res.json().await?;
     info!(
-        "{} {:?} {} {}",
+        "{} {:?} {:?} {}",
         github_user_info.id,
         github_user_info.email,
         github_user_info.name,
@@ -256,7 +261,7 @@ async fn get_github_user_emails(
 
     let user_emails_res = user_emails_request.send().await?;
     let res = user_emails_res.error_for_status()?;
-    let emails: Vec<GitHubUserEmail> = res.json().await.unwrap();
+    let emails: Vec<GitHubUserEmail> = res.json().await?;
 
     Ok(emails)
 }
