@@ -10,6 +10,7 @@ import {
   useColorModeValue,
   Button,
   Flex,
+  Checkbox,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
@@ -19,9 +20,17 @@ import { UsersWebSocketContext } from "../contexts/users-websocket";
 
 interface ExamCardProps {
   exam: Omit<EnvExam, "questionSets">;
+  isSelected?: boolean;
+  onSelectionChange?: (examId: string, selected: boolean) => void;
+  selectionMode?: boolean;
 }
 
-export function ExamCard({ exam }: ExamCardProps) {
+export function ExamCard({
+  exam,
+  isSelected = false,
+  onSelectionChange,
+  selectionMode = false,
+}: ExamCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
   const cardBg = useColorModeValue("gray.800", "gray.800");
@@ -33,15 +42,26 @@ export function ExamCard({ exam }: ExamCardProps) {
     return usersPath === `/exam/${exam.id}`;
   });
 
+  const handleClick = () => {
+    if (selectionMode && onSelectionChange) {
+      onSelectionChange(exam.id, !isSelected);
+    } else {
+      navigate({ to: editExamRoute.to, params: { id: exam.id } });
+    }
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    onSelectionChange?.(exam.id, e.target.checked);
+  };
+
   return (
     <Button
       variant="unstyled"
       w="full"
       h="auto"
       p={0}
-      onClick={() =>
-        navigate({ to: editExamRoute.to, params: { id: exam.id } })
-      }
+      onClick={handleClick}
       _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
       borderRadius="xl"
       transition="all 0.15s"
@@ -57,20 +77,30 @@ export function ExamCard({ exam }: ExamCardProps) {
         minH="120px"
         _hover={{ borderColor: accent, boxShadow: "lg" }}
         borderWidth={2}
-        borderColor="transparent"
+        borderColor={isSelected ? accent : "transparent"}
         transition="all 0.15s"
       >
         <CardHeader pb={2}>
           <Flex align="center" justify="space-between">
-            <Text
-              fontSize="xl"
-              fontWeight="bold"
-              color={accent}
-              noOfLines={1}
-              maxW="80%"
-            >
-              {exam.config.name}
-            </Text>
+            <Flex align="center" gap={3} maxW="80%">
+              {selectionMode && (
+                <Checkbox
+                  isChecked={isSelected}
+                  onChange={handleCheckboxChange}
+                  colorScheme="teal"
+                  size="lg"
+                />
+              )}
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                color={accent}
+                noOfLines={1}
+                flex={1}
+              >
+                {exam.config.name}
+              </Text>
+            </Flex>
             {exam.deprecated && (
               <Badge colorScheme="red" ml={2}>
                 Deprecated

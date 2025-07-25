@@ -1,4 +1,5 @@
 import type { JsonObject, JsonValue } from "@prisma/client/runtime/library";
+import { ObjectId } from "bson";
 
 /**
  * Helper function to recursively convert deeply-nested { "$oid": "..." } to "..."
@@ -78,6 +79,11 @@ export function deserializeToPrisma<T>(obj: JsonValue): T {
  * @returns A new object with the transformations applied for backend/MongoDB.
  */
 function _recursiveSerialize(value: any, depth = 0): JsonValue {
+  // If value is an ObjectId, convert it
+  if (typeof value === "string" && ObjectId.isValid(value)) {
+    return { $oid: value };
+  }
+
   // Base case: If it's a primitive or null, return it directly.
   if (value === null || typeof value !== "object") {
     return value;
@@ -133,10 +139,11 @@ function _recursiveSerialize(value: any, depth = 0): JsonValue {
  * This function serves as the public API for serialization.
  *
  * @param obj The object to transform, typically a Prisma-generated type.
+ * @param startDepth Useful to pass `-1` in cases where the input is an array
  * @returns A new object with the transformations applied, ready for the backend.
  */
-export function serializeFromPrisma<T>(obj: T): JsonValue {
+export function serializeFromPrisma<T>(obj: T, startDepth = 0): JsonValue {
   // The actual recursive transformation is done by the helper function.
   // We return a JsonValue as the output type is more dynamic than the input T.
-  return _recursiveSerialize(obj);
+  return _recursiveSerialize(obj, startDepth);
 }
