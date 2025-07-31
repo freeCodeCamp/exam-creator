@@ -5,7 +5,6 @@ import type {
   EnvQuestionSet,
   EnvQuestionType,
 } from "@prisma/client";
-import Prism from "prismjs";
 import { marked } from "marked";
 import { ObjectId } from "bson";
 import { markedHighlight } from "marked-highlight";
@@ -110,7 +109,10 @@ export function default_question(): EnvMultipleChoiceQuestion {
 marked.use(
   markedHighlight({
     highlight: (code, lang) => {
-      if (Prism.languages[lang]) {
+      // Use the global Prism instance loaded by the script tag
+      const Prism = window.Prism;
+
+      if (Prism && lang && Prism.languages[lang]) {
         return Prism.highlight(code, Prism.languages[lang], String(lang));
       } else {
         return code;
