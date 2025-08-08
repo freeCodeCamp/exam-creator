@@ -23,6 +23,12 @@ import {
   IconButton,
   Spinner,
   Checkbox,
+  Table,
+  Thead,
+  Tr,
+  Th,
+  Tbody,
+  Td,
 } from "@chakra-ui/react";
 import { ObjectId } from "bson";
 import { Save } from "lucide-react";
@@ -56,7 +62,7 @@ function Edit() {
     // refetchInterval: 5000,
   });
 
-  const bg = useColorModeValue("gray.900", "gray.900");
+  const bg = useColorModeValue("black", "black");
   const spinnerColor = useColorModeValue("teal.400", "teal.300");
 
   return (
@@ -193,8 +199,22 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
   //   },
   // });
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
+  const cardBg = useColorModeValue("gray.900", "gray.900");
   const accent = useColorModeValue("teal.400", "teal.300");
+
+  // { [type]: { numberOfSet: number, numberOfQuestions: number } }
+  const questionsBySet = exam.questionSets.reduce((acc, qs) => {
+    if (qs.type in acc) {
+      acc[qs.type].numberOfSet += 1;
+      acc[qs.type].numberOfQuestions += qs.questions.length;
+    } else {
+      acc[qs.type] = {
+        numberOfSet: 1,
+        numberOfQuestions: qs.questions.length,
+      };
+    }
+    return acc;
+  }, {} as { [key: string]: { numberOfSet: number; numberOfQuestions: number } });
 
   return (
     <>
@@ -421,10 +441,36 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
             <Heading size="md" color={accent} mb={2} id="current-configs-main">
               Configure Question Distribution
             </Heading>
+
             <Text color="gray.300" mb={2}>
               This section allows you to configure how many questions you want
               to add to the exam for a specific topic.
             </Text>
+
+            <Box mb={4}>
+              <Box overflowX="auto" borderRadius="md" bg="black" p={2}>
+                <Table variant="simple" size="sm" colorScheme="teal">
+                  <Thead>
+                    <Tr>
+                      <Th color="teal.300">Set Type</Th>
+                      <Th color="gray.200">Number of Set</Th>
+                      <Th color="gray.200">Number of Questions (total)</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {Object.entries(questionsBySet).map(([type, data]) => (
+                      <Tr key={type}>
+                        <Td color="gray.100" fontWeight="bold">
+                          {type}
+                        </Td>
+                        <Td color="gray.100">{data.numberOfSet}</Td>
+                        <Td color="gray.100">{data.numberOfQuestions}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            </Box>
             <TagConfigForm
               questionSets={exam.questionSets}
               setExam={setExam}

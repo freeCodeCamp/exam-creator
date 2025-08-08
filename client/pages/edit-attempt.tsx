@@ -51,7 +51,7 @@ function Edit() {
     // refetchInterval: 5000,
   });
 
-  const bg = useColorModeValue("gray.900", "gray.900");
+  const bg = useColorModeValue("black", "black");
   const spinnerColor = useColorModeValue("teal.400", "teal.300");
 
   return (

@@ -29,7 +29,7 @@ export function AuthCallbackGithub() {
     retry: false,
   });
 
-  const bg = useColorModeValue("gray.900", "gray.900");
+  const bg = useColorModeValue("black", "black");
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
