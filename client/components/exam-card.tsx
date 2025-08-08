@@ -72,7 +72,7 @@ export function ExamCard({
         bg={cardBg}
         borderRadius="xl"
         boxShadow="md"
-        p={4}
+        p={3}
         h="100%"
         minH="120px"
         _hover={{ borderColor: accent, boxShadow: "lg" }}
@@ -80,9 +80,9 @@ export function ExamCard({
         borderColor={isSelected ? accent : "transparent"}
         transition="all 0.15s"
       >
-        <CardHeader pb={2}>
+        <CardHeader pb={2} padding={1}>
           <Flex align="center" justify="space-between">
-            <Flex align="center" gap={3} maxW="80%">
+            <Flex align="center" gap={3} flex="1 1 0%" minW={0}>
               {selectionMode && (
                 <Checkbox
                   isChecked={isSelected}
@@ -97,18 +97,28 @@ export function ExamCard({
                 color={accent}
                 noOfLines={1}
                 flex={1}
+                minW={0}
+                textOverflow="ellipsis"
+                overflow="hidden"
+                whiteSpace="nowrap"
               >
                 {exam.config.name}
               </Text>
             </Flex>
             {exam.deprecated && (
-              <Badge colorScheme="red" ml={2}>
+              <Badge
+                colorScheme="red"
+                ml={2}
+                flexShrink={0}
+                minW="90px"
+                textAlign="center"
+              >
                 Deprecated
               </Badge>
             )}
           </Flex>
         </CardHeader>
-        <CardBody pt={2}>
+        <CardBody pt={2} padding={1}>
           <HStack spacing={-2}>
             {usersError ? (
               <Text>{usersError.message}</Text>
