@@ -40,7 +40,6 @@ Important server modules:
 Client highlights:
 
 - React 19 + Router (TanStack), React Query for data fetching, Chakra UI for styling, Immer for immutable state helpers.
-- Custom context providers: auth, websocket users, exam collaboration hook (`use-collab-exam.ts`).
 
 ## Build & Development Commands
 
@@ -243,8 +242,10 @@ Agents interacting with this repo SHOULD:
 - Respect environment variable constraints (`COOKIE_KEY` length, required secrets).
 - Run TS build (`tsc`) before shipping code changes to catch type regressions.
 - Avoid introducing `any` or `unsafe` patterns without justification.
+- Do not make sweeping refactors.
 - Update this file when altering architecture, env vars, primary scripts, or adding significant modules.
 - Update the `CHANGELOG.md` file as necessary.
+  - This file should be used as a place to keep track of planning and implemented changes via Markdown checkboxes within the relavent next release.
 
 ---
 
