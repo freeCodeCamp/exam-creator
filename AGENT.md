@@ -40,7 +40,6 @@ Important server modules:
 Client highlights:
 
 - React 19 + Router (TanStack), React Query for data fetching, Chakra UI for styling, Immer for immutable state helpers.
-- Custom context providers: auth, websocket users, exam collaboration hook (`use-collab-exam.ts`).
 
 ## Build & Development Commands
 
