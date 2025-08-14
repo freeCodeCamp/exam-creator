@@ -120,25 +120,31 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .build()?;
 
     let app = Router::new()
-        .route("/api/exams", get(routes::get_exams))
-        .route("/api/exams", post(routes::post_exam))
-        .route("/api/exams/{exam_id}", get(routes::get_exam_by_id))
-        .route("/api/exams/{exam_id}", put(routes::put_exam))
-        .route("/api/attempts", get(routes::get_attempts))
-        .route("/api/attempts/{attempt_id}", get(routes::get_attempt_by_id))
-        .route("/api/moderations", get(routes::get_moderations))
-        .route("/api/users", get(routes::get_users))
-        .route("/api/users/session", get(routes::get_session_user))
+        .route("/api/exams", get(routes::exams::get_exams))
+        .route("/api/exams", post(routes::exams::post_exam))
+        .route("/api/exams/{exam_id}", get(routes::exams::get_exam_by_id))
+        .route("/api/exams/{exam_id}", put(routes::exams::put_exam))
+        .route("/api/attempts", get(routes::attempts::get_attempts))
+        .route(
+            "/api/attempts/{attempt_id}",
+            get(routes::attempts::get_attempt_by_id),
+        )
+        .route(
+            "/api/moderations",
+            get(routes::moderations::get_moderations),
+        )
+        .route("/api/users", get(routes::users::get_users))
+        .route("/api/users/session", get(routes::users::get_session_user))
         .route(
             "/api/state/exams/{exam_id}",
             put(routes::discard_exam_state_by_id),
         )
         .route(
             "/auth/login/github",
-            get(routes::github::github_login_handler),
+            get(routes::auth::github::github_login_handler),
         )
-        .route("/auth/github", get(routes::github::github_handler))
-        .route("/auth/logout", delete(routes::delete_logout))
+        .route("/auth/github", get(routes::auth::github::github_handler))
+        .route("/auth/logout", delete(routes::auth::delete_logout))
         .route("/status/ping", get(routes::get_status_ping))
         .route("/ws/exam/{exam_id}", any(extractor::ws_handler_exam))
         .route("/ws/users", any(extractor::ws_handler_users))

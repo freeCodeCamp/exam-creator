@@ -15,7 +15,7 @@ use tracing::{error, info, warn};
 use crate::{
     database::ExamCreatorUser,
     errors::Error,
-    routes::handle_users_ws,
+    routes::websocket::handle_users_ws,
     state::{Activity, ServerState, User},
 };
 
