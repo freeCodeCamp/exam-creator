@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  EnvExam,
-  type EnvMultipleChoiceQuestion,
-  type EnvQuestionSet,
-  // type EnvQuestionType,
+  ExamCreatorExam,
+  type ExamEnvironmentMultipleChoiceQuestion,
+  type ExamEnvironmentQuestionSet,
+  // type ExamEnvironmentQuestionType,
 } from "@prisma/client";
 import {
   Box,
@@ -33,10 +33,10 @@ import {
 import { QuestionAccordion } from "./accordian";
 
 type MultipleChoiceFormProps = {
-  question: EnvMultipleChoiceQuestion;
-  questionSet: EnvQuestionSet;
-  questionSets: EnvQuestionSet[];
-  setExam: (partialExam: Partial<EnvExam>) => void;
+  question: ExamEnvironmentMultipleChoiceQuestion;
+  questionSet: ExamEnvironmentQuestionSet;
+  questionSets: ExamEnvironmentQuestionSet[];
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
 };
 
 export function MultipleChoiceForm({
@@ -337,9 +337,9 @@ export function MultipleChoiceForm({
 }
 
 type DialogueFormProps = {
-  questionSet: EnvQuestionSet;
-  questionSets: EnvQuestionSet[];
-  setExam: (partialExam: Partial<EnvExam>) => void;
+  questionSet: ExamEnvironmentQuestionSet;
+  questionSets: ExamEnvironmentQuestionSet[];
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
 };
 
 export function DialogueForm({
@@ -433,8 +433,8 @@ export function DialogueForm({
 
 type QuestionFormProps = {
   searchIds: string[];
-  questionSets: EnvQuestionSet[];
-  setExam: (partialExam: Partial<EnvExam>) => void;
+  questionSets: ExamEnvironmentQuestionSet[];
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
 };
 
 export function QuestionForm({

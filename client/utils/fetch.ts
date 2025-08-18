@@ -1,4 +1,7 @@
-import type { EnvExam, ExamEnvironmentExamModeration } from "@prisma/client";
+import type {
+  ExamCreatorExam,
+  ExamEnvironmentExamModeration,
+} from "@prisma/client";
 import type { Attempt, ClientSync, SessionUser, User } from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
@@ -29,8 +32,8 @@ async function authorizedFetch(
 }
 
 export async function discardExamStateById(
-  examId: EnvExam["id"]
-): Promise<EnvExam> {
+  examId: ExamCreatorExam["id"]
+): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/exams.json");
@@ -39,7 +42,7 @@ export async function discardExamStateById(
         `Failed to load mock exams: ${res.status} - ${res.statusText}`
       );
     }
-    const exams: EnvExam[] = await res.json();
+    const exams: ExamCreatorExam[] = await res.json();
 
     return exams[0];
   }
@@ -48,7 +51,7 @@ export async function discardExamStateById(
     method: "PUT",
   });
   const json = await res.json();
-  const deserialized = deserializeToPrisma<EnvExam>(json);
+  const deserialized = deserializeToPrisma<ExamCreatorExam>(json);
   return deserialized;
 }
 
@@ -100,7 +103,9 @@ export async function putState(state: ClientSync): Promise<ClientSync> {
   return deserialized;
 }
 
-export async function getExams(): Promise<Omit<EnvExam, "questionSets">[]> {
+export async function getExams(): Promise<
+  Omit<ExamCreatorExam, "questionSets">[]
+> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/exams.json");
@@ -109,30 +114,30 @@ export async function getExams(): Promise<Omit<EnvExam, "questionSets">[]> {
         `Failed to load mock exams: ${res.status} - ${res.statusText}`
       );
     }
-    const exams: EnvExam[] = await res.json();
+    const exams: ExamCreatorExam[] = await res.json();
     return exams.map(({ questionSets, ...rest }) => deserializeToPrisma(rest));
   }
 
   const res = await authorizedFetch("/api/exams");
   const json = await res.json();
   const deserialized =
-    deserializeToPrisma<Omit<EnvExam, "questionSets">[]>(json);
+    deserializeToPrisma<Omit<ExamCreatorExam, "questionSets">[]>(json);
   return deserialized;
 }
 
-export async function getExamById(examId: string): Promise<EnvExam> {
+export async function getExamById(examId: string): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
     const res = await fetch(`/mocks/exams.json`);
-    const exams: EnvExam[] = deserializeToPrisma(await res.json());
+    const exams: ExamCreatorExam[] = deserializeToPrisma(await res.json());
     const exam = exams.find((exam) => exam.id === examId)!;
     return exam;
   }
 
   const res = await authorizedFetch(`/api/exams/${examId}`);
   const json = await res.json();
-  const deserialized = deserializeToPrisma<EnvExam>(json);
+  const deserialized = deserializeToPrisma<ExamCreatorExam>(json);
   return deserialized;
 }
 
@@ -141,7 +146,9 @@ export async function getExamById(examId: string): Promise<EnvExam> {
  * @param exam The full exam to overwrite the existing one.
  * @returns
  */
-export async function putExamById(exam: EnvExam): Promise<EnvExam> {
+export async function putExamById(
+  exam: ExamCreatorExam
+): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
@@ -156,14 +163,14 @@ export async function putExamById(exam: EnvExam): Promise<EnvExam> {
     },
   });
   const json = await res.json();
-  const deserialized = deserializeToPrisma<EnvExam>(json);
+  const deserialized = deserializeToPrisma<ExamCreatorExam>(json);
   return deserialized;
 }
 
 /**
  * Server creates a new exam
  */
-export async function postExam(): Promise<EnvExam> {
+export async function postExam(): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
@@ -184,7 +191,7 @@ export async function postExam(): Promise<EnvExam> {
     method: "POST",
   });
   const json = await res.json();
-  const deserialized = deserializeToPrisma<EnvExam>(json);
+  const deserialized = deserializeToPrisma<ExamCreatorExam>(json);
   return deserialized;
 }
 

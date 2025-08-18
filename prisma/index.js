@@ -4,7 +4,7 @@
 import { writeFile } from "fs/promises";
 
 const GITHUB_PRISMA_URL =
-  "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/schema.prisma";
+  "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/refs/heads/chore_rename-temp-collection/api/prisma/schema.prisma";
 
 async function get_prisma_schema() {
   try {
@@ -24,13 +24,7 @@ async function main() {
     return;
   }
 
-  const modifier = "/// @prs.rename = _type";
-  const finder = /(?<=\{[^\}]+?\s)(?<!\/\/\/[^\n]+)type(?=\s[^\{]+?\})/gi;
-  const modifiedSchema = schema.replace(finder, (substring) => {
-    return `${modifier}\n  ${substring}`;
-  });
-
-  await writeFile("./prisma/schema.prisma", modifiedSchema);
+  await writeFile("./prisma/schema.prisma", schema);
 }
 
 await main();

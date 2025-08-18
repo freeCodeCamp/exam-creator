@@ -3,44 +3,46 @@ use prisma_rust_schema;
 use serde::{Deserialize, Serialize};
 
 prisma_rust_schema::import_types!(
-    schema_path = "./prisma/schema.prisma",
+    schema_path = "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/refs/heads/chore_rename-temp-collection/api/prisma/schema.prisma",
     derive = [Clone, Debug, Serialize, Deserialize],
     include = [
-        "EnvExam",
-        "EnvQuestionSet",
-        "EnvMultipleChoiceQuestion",
-        "EnvAudio",
-        "EnvQuestionType",
-        "EnvConfig",
-        "EnvQuestionSetConfig",
-        "EnvTagConfig",
-        "EnvAnswer",
-        "EnvExamAttempt",
-        "EnvQuestionSetAttempt",
-        "EnvMultipleChoiceQuestionAttempt",
-        "EnvGeneratedExam",
-        "EnvGeneratedQuestionSet",
-        "EnvGeneratedMultipleChoiceQuestion",
+        "ExamEnvironmentExam",
+        "ExamCreatorExam",
+        "ExamEnvironmentQuestionSet",
+        "ExamEnvironmentMultipleChoiceQuestion",
+        "ExamEnvironmentAudio",
+        "ExamEnvironmentQuestionType",
+        "ExamEnvironmentConfig",
+        "ExamEnvironmentQuestionSetConfig",
+        "ExamEnvironmentTagConfig",
+        "ExamEnvironmentAnswer",
+        "ExamEnvironmentExamAttempt",
+        "ExamEnvironmentQuestionSetAttempt",
+        "ExamEnvironmentMultipleChoiceQuestionAttempt",
+        "ExamEnvironmentGeneratedExam",
+        "ExamEnvironmentGeneratedQuestionSet",
+        "ExamEnvironmentGeneratedMultipleChoiceQuestion",
         "ExamEnvironmentExamModeration",
         "ExamEnvironmentExamModerationStatus",
     ]
 );
 
-impl Default for EnvExam {
+impl Default for ExamCreatorExam {
     fn default() -> Self {
-        EnvExam {
+        ExamCreatorExam {
             id: ObjectId::new(),
             question_sets: vec![],
             config: Default::default(),
             prerequisites: vec![],
             deprecated: false,
+            version: 1,
         }
     }
 }
 
-impl Default for EnvConfig {
+impl Default for ExamEnvironmentConfig {
     fn default() -> Self {
-        EnvConfig {
+        ExamEnvironmentConfig {
             name: String::new(),
             note: String::new(),
             tags: vec![],

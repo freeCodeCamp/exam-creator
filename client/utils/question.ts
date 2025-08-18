@@ -1,15 +1,17 @@
 import type {
-  EnvAnswer,
-  EnvExam,
-  EnvMultipleChoiceQuestion,
-  EnvQuestionSet,
-  EnvQuestionType,
+  ExamEnvironmentAnswer,
+  ExamCreatorExam,
+  ExamEnvironmentMultipleChoiceQuestion,
+  ExamEnvironmentQuestionSet,
+  ExamEnvironmentQuestionType,
 } from "@prisma/client";
 import { marked } from "marked";
 import { ObjectId } from "bson";
 import { markedHighlight } from "marked-highlight";
 
-export function new_question_type(t: EnvQuestionType): EnvQuestionSet {
+export function new_question_type(
+  t: ExamEnvironmentQuestionType
+): ExamEnvironmentQuestionSet {
   return {
     id: new ObjectId().toString(),
     type: t,
@@ -17,7 +19,7 @@ export function new_question_type(t: EnvQuestionType): EnvQuestionSet {
     questions: [defaultQuestion()],
   };
 }
-export function defaultQuestion(): EnvMultipleChoiceQuestion {
+export function defaultQuestion(): ExamEnvironmentMultipleChoiceQuestion {
   return {
     id: new ObjectId().toString(),
     text: "",
@@ -29,9 +31,9 @@ export function defaultQuestion(): EnvMultipleChoiceQuestion {
 }
 
 export function change_question_type(
-  updatedQuestionSet: EnvQuestionSet,
-  questionSets: EnvQuestionSet[],
-  setExam: (partialExam: Partial<EnvExam>) => void
+  updatedQuestionSet: ExamEnvironmentQuestionSet,
+  questionSets: ExamEnvironmentQuestionSet[],
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void
 ) {
   setExam({
     questionSets: questionSets.map((qt) =>
@@ -40,7 +42,7 @@ export function change_question_type(
   });
 }
 export function default_question_audio(): NonNullable<
-  EnvMultipleChoiceQuestion["audio"]
+  ExamEnvironmentMultipleChoiceQuestion["audio"]
 > {
   return {
     url: "",
@@ -49,9 +51,9 @@ export function default_question_audio(): NonNullable<
 }
 
 export function change_question(
-  updated_question: EnvMultipleChoiceQuestion,
-  questionSets: EnvQuestionSet[],
-  setExam: (partialExam: Partial<EnvExam>) => void
+  updated_question: ExamEnvironmentMultipleChoiceQuestion,
+  questionSets: ExamEnvironmentQuestionSet[],
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void
 ) {
   setExam({
     questionSets: questionSets.map((qt) => ({
@@ -64,9 +66,9 @@ export function change_question(
 }
 
 export function remove_question(
-  question: EnvMultipleChoiceQuestion,
-  questionSets: EnvQuestionSet[],
-  setExam: (partialExam: Partial<EnvExam>) => void
+  question: ExamEnvironmentMultipleChoiceQuestion,
+  questionSets: ExamEnvironmentQuestionSet[],
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void
 ) {
   // If question is only in question_type, remove question_type
   const question_type = questionSets.find((qt) =>
@@ -87,7 +89,7 @@ export function remove_question(
   });
 }
 
-export function default_question_answer(): EnvAnswer {
+export function default_question_answer(): ExamEnvironmentAnswer {
   return {
     id: new ObjectId().toString(),
     text: "",
@@ -95,7 +97,7 @@ export function default_question_answer(): EnvAnswer {
   };
 }
 
-export function default_question(): EnvMultipleChoiceQuestion {
+export function default_question(): ExamEnvironmentMultipleChoiceQuestion {
   return {
     id: new ObjectId().toString(),
     text: "",

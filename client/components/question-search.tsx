@@ -9,10 +9,10 @@ import {
   Fade,
   Badge,
 } from "@chakra-ui/react";
-import type { EnvExam } from "@prisma/client";
+import type { ExamCreatorExam } from "@prisma/client";
 
 type QuestionSearchProps = {
-  exam: EnvExam;
+  exam: ExamCreatorExam;
   searchIds: string[];
   setSearchIds: (ids: string[]) => void;
 };

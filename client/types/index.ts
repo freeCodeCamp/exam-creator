@@ -1,9 +1,9 @@
 import type {
-  EnvExam,
-  EnvExamAttempt,
-  EnvMultipleChoiceQuestion,
-  EnvMultipleChoiceQuestionAttempt,
-  EnvQuestionSet,
+  ExamCreatorExam,
+  ExamEnvironmentExamAttempt,
+  ExamEnvironmentMultipleChoiceQuestion,
+  ExamEnvironmentMultipleChoiceQuestionAttempt,
+  ExamEnvironmentQuestionSet,
 } from "@prisma/client";
 
 export interface User {
@@ -24,18 +24,18 @@ export interface Activity {
 
 export interface ClientSync {
   users: User[];
-  exams: EnvExam[];
+  exams: ExamCreatorExam[];
 }
 
-type AttemptQuestion = EnvMultipleChoiceQuestion & {
-  selected: EnvMultipleChoiceQuestionAttempt["answers"];
-  submissionTime: EnvMultipleChoiceQuestionAttempt["submissionTimeInMS"];
+type AttemptQuestion = ExamEnvironmentMultipleChoiceQuestion & {
+  selected: ExamEnvironmentMultipleChoiceQuestionAttempt["answers"];
+  submissionTime: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTimeInMS"];
 };
-type AttemptQuestionSet = EnvQuestionSet & {
+type AttemptQuestionSet = ExamEnvironmentQuestionSet & {
   questions: Array<AttemptQuestion>;
 };
-export type Attempt = EnvExam &
-  EnvExamAttempt & {
+export type Attempt = ExamCreatorExam &
+  ExamEnvironmentExamAttempt & {
     questionSets: Array<AttemptQuestionSet>;
   };
 

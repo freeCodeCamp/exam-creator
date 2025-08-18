@@ -180,13 +180,13 @@ pub struct Attempt {
     prerequisites: Vec<ObjectId>,
     deprecated: bool,
     question_sets: Vec<AttemptQuestionSet>,
-    config: prisma::EnvConfig,
+    config: prisma::ExamEnvironmentConfig,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AttemptQuestionSet {
     id: ObjectId,
-    _type: prisma::EnvQuestionType,
+    _type: prisma::ExamEnvironmentQuestionType,
     context: Option<String>,
     questions: Vec<AttemptQuestionSetQuestion>,
 }
@@ -197,8 +197,8 @@ pub struct AttemptQuestionSetQuestion {
     text: String,
     tags: Vec<String>,
     deprecated: bool,
-    audio: Option<prisma::EnvAudio>,
-    answers: Vec<prisma::EnvAnswer>,
+    audio: Option<prisma::ExamEnvironmentAudio>,
+    answers: Vec<prisma::ExamEnvironmentAnswer>,
     selected: Vec<ObjectId>,
     submission_time: i64,
 }
@@ -210,19 +210,23 @@ pub struct AttemptQuestionSetQuestion {
 ///
 /// NOTE: Generated exam is assumed to not be needed,
 /// because API ensures attempt only includes answers from assigned generation.
-pub fn construct_attempt(exam: &prisma::EnvExam, exam_attempt: &prisma::EnvExamAttempt) -> Attempt {
-    let prisma::EnvExam {
+pub fn construct_attempt(
+    exam: &prisma::ExamCreatorExam,
+    exam_attempt: &prisma::ExamEnvironmentExamAttempt,
+) -> Attempt {
+    let prisma::ExamCreatorExam {
         id,
         question_sets,
         config,
         prerequisites,
         deprecated,
+        version: _version,
     } = exam;
     // TODO: Can caluclate allocation size from exam
     let mut attempt_question_sets = vec![];
 
     for question_set in question_sets {
-        let prisma::EnvQuestionSet {
+        let prisma::ExamEnvironmentQuestionSet {
             id,
             _type,
             context,
@@ -242,7 +246,7 @@ pub fn construct_attempt(exam: &prisma::EnvExam, exam_attempt: &prisma::EnvExamA
         let mut attempt_questions = vec![];
 
         for question in questions {
-            let prisma::EnvMultipleChoiceQuestion {
+            let prisma::ExamEnvironmentMultipleChoiceQuestion {
                 id,
                 text,
                 tags,

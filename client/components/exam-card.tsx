@@ -14,12 +14,12 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
-import type { EnvExam } from "@prisma/client";
+import type { ExamCreatorExam } from "@prisma/client";
 import { useContext } from "react";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 
 interface ExamCardProps {
-  exam: Omit<EnvExam, "questionSets">;
+  exam: Omit<ExamCreatorExam, "questionSets">;
   isSelected?: boolean;
   onSelectionChange?: (examId: string, selected: boolean) => void;
   selectionMode?: boolean;
