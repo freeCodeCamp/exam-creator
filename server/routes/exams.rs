@@ -21,19 +21,19 @@ use crate::{
 pub async fn get_exams(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<Vec<prisma::EnvExam>>, Error> {
+) -> Result<Json<Vec<prisma::ExamCreatorExam>>, Error> {
     let mut exams_cursor = state
         .database
-        .temp_env_exam
+        .exam_creator_exam
         .clone_with_type::<mongodb::bson::Document>()
         .find(doc! {})
         .projection(doc! {"questionSets": false})
         .await?;
 
-    let mut exams: Vec<prisma::EnvExam> = vec![];
+    let mut exams: Vec<prisma::ExamCreatorExam> = vec![];
 
     while let Some(exam) = exams_cursor.try_next().await? {
-        let env_exam: prisma::EnvExam = exam.try_into()?;
+        let env_exam: prisma::ExamCreatorExam = exam.try_into()?;
         exams.push(env_exam);
     }
 
@@ -45,7 +45,7 @@ pub async fn get_exam_by_id(
     _auth_user: ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
-) -> Result<Json<prisma::EnvExam>, Error> {
+) -> Result<Json<prisma::ExamCreatorExam>, Error> {
     // TODO: Check if exam is in server state first:
     // {
     //     let client_sync = &mut state.client_sync.lock().unwrap();
@@ -60,7 +60,7 @@ pub async fn get_exam_by_id(
 
     let exam = state
         .database
-        .temp_env_exam
+        .exam_creator_exam
         .find_one(doc! { "_id": exam_id })
         .await?
         .ok_or(Error::Server(
@@ -77,11 +77,11 @@ pub async fn get_exam_by_id(
 pub async fn post_exam(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<prisma::EnvExam>, Error> {
+) -> Result<Json<prisma::ExamCreatorExam>, Error> {
     info!("post_exam");
-    let exam = prisma::EnvExam::default();
+    let exam = prisma::ExamCreatorExam::default();
 
-    state.database.temp_env_exam.insert_one(&exam).await?;
+    state.database.exam_creator_exam.insert_one(&exam).await?;
 
     Ok(Json(exam))
 }
@@ -92,8 +92,8 @@ pub async fn put_exam(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
-    Json(exam): Json<prisma::EnvExam>,
-) -> Result<Json<prisma::EnvExam>, Error> {
+    Json(exam): Json<prisma::ExamCreatorExam>,
+) -> Result<Json<prisma::ExamCreatorExam>, Error> {
     if exam.id != exam_id {
         return Err(Error::Server(
             StatusCode::BAD_REQUEST,
@@ -106,7 +106,7 @@ pub async fn put_exam(
     }
     state
         .database
-        .temp_env_exam
+        .exam_creator_exam
         .replace_one(doc! { "_id": exam_id }, &exam)
         .await?;
 

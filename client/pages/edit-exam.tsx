@@ -32,7 +32,7 @@ import {
 } from "@chakra-ui/react";
 import { ObjectId } from "bson";
 import { Save } from "lucide-react";
-import type { EnvExam } from "@prisma/client";
+import type { ExamCreatorExam } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { QuestionForm } from "../components/question-form";
@@ -155,19 +155,19 @@ function UsersEditing() {
   );
 }
 
-function examReducer(state: EnvExam, action: Partial<EnvExam>) {
+function examReducer(state: ExamCreatorExam, action: Partial<ExamCreatorExam>) {
   const newState = { ...state, ...action };
   return newState;
 }
 
-function EditExam({ exam: examData }: { exam: EnvExam }) {
+function EditExam({ exam: examData }: { exam: ExamCreatorExam }) {
   const { updateActivity } = useContext(UsersWebSocketContext)!;
   const [exam, setExam] = useReducer(examReducer, examData);
   const [searchIds, setSearchIds] = useState<string[]>([]);
   const [prereqInput, setPrereqInput] = useState("");
 
   const putExamMutation = useMutation({
-    mutationFn: (exam: EnvExam) => {
+    mutationFn: (exam: ExamCreatorExam) => {
       return putExamById(exam);
     },
     onSuccess(data, _variables, _context) {
@@ -191,7 +191,7 @@ function EditExam({ exam: examData }: { exam: EnvExam }) {
   }, [exam]);
 
   // const discardExamStateMutation = useMutation({
-  //   mutationFn: (examId: EnvExam["id"]) => {
+  //   mutationFn: (examId: ExamCreatorExam["id"]) => {
   //     return discardExamStateById(accessToken!, examId);
   //   },
   //   onSuccess(data, _variables, _context) {

@@ -1,4 +1,8 @@
-import type { EnvConfig, EnvExam, EnvQuestionSet } from "@prisma/client";
+import type {
+  ExamEnvironmentConfig,
+  ExamCreatorExam,
+  ExamEnvironmentQuestionSet,
+} from "@prisma/client";
 import { useState } from "react";
 import {
   Box,
@@ -17,9 +21,9 @@ import {
 import { X } from "lucide-react";
 
 type TagConfigFormProps = {
-  questionSets: EnvQuestionSet[];
-  setExam: (partialExam: Partial<EnvExam>) => void;
-  config: EnvConfig;
+  questionSets: ExamEnvironmentQuestionSet[];
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  config: ExamEnvironmentConfig;
 };
 
 export function TagConfigForm({

@@ -46,12 +46,18 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .with_expiry(Expiry::OnInactivity(time::Duration::seconds(10)));
 
     let database = database::Database {
-        temp_env_exam: client.database("freecodecamp").collection("EnvExamTemp"),
-        env_exam: client.database("freecodecamp").collection("EnvExam"),
-        env_exam_attempt: client.database("freecodecamp").collection("EnvExamAttempt"),
-        env_generated_exam: client
+        exam_creator_exam: client
             .database("freecodecamp")
-            .collection("EnvGeneratedExam"),
+            .collection("ExamCreatorExam"),
+        exam: client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentExam"),
+        exam_attempt: client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentExamAttempt"),
+        generated_exam: client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentGeneratedExam"),
         exam_creator_user: client
             .database("freecodecamp")
             .collection("ExamCreatorUser"),

@@ -1,12 +1,12 @@
-import type { EnvExam } from "@prisma/client";
+import type { ExamCreatorExam } from "@prisma/client";
 import { useEffect, useRef } from "react";
 import { useImmer } from "use-immer";
 import { deserializeToPrisma, serializeFromPrisma } from "../utils/serde";
 
 // Simple WebSocket wrapper for collaborative editing
 // TODO: Does not work reliably
-export function useCollabExam(examId: string, initialExam: EnvExam) {
-  const [exam, setExam] = useImmer<EnvExam>(initialExam);
+export function useCollabExam(examId: string, initialExam: ExamCreatorExam) {
+  const [exam, setExam] = useImmer<ExamCreatorExam>(initialExam);
   const wsRef = useRef<WebSocket | null>(null);
   const debounceRef = useRef<number | null>(null);
 
@@ -29,7 +29,7 @@ export function useCollabExam(examId: string, initialExam: EnvExam) {
   }, [examId, setExam]);
 
   // Send exam updates over WebSocket, debounced
-  const sendExamUpdate = (nextExam: EnvExam) => {
+  const sendExamUpdate = (nextExam: ExamCreatorExam) => {
     setExam(nextExam);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {

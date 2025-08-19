@@ -1,12 +1,15 @@
 use mongodb::{Collection, bson::oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    database::prisma::{EnvExam, ExamEnvironmentExamModeration},
-    state::{Activity, User},
-};
+use crate::state::{Activity, User};
 
 pub mod prisma;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DocId {
+    #[serde(rename = "_id")]
+    pub id: ObjectId,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExamCreatorUser {
@@ -29,13 +32,13 @@ pub struct ExamCreatorSession {
 
 #[derive(Clone, Debug)]
 pub struct Database {
-    pub temp_env_exam: Collection<prisma::EnvExam>,
-    pub env_exam: Collection<prisma::EnvExam>,
-    pub env_exam_attempt: Collection<prisma::EnvExamAttempt>,
-    pub env_generated_exam: Collection<prisma::EnvGeneratedExam>,
+    pub exam_creator_exam: Collection<prisma::ExamCreatorExam>,
+    pub exam: Collection<prisma::ExamEnvironmentExam>,
+    pub exam_attempt: Collection<prisma::ExamEnvironmentExamAttempt>,
+    pub generated_exam: Collection<prisma::ExamEnvironmentGeneratedExam>,
     pub exam_creator_user: Collection<ExamCreatorUser>,
     pub exam_creator_session: Collection<ExamCreatorSession>,
-    pub exam_environment_exam_moderation: Collection<ExamEnvironmentExamModeration>,
+    pub exam_environment_exam_moderation: Collection<prisma::ExamEnvironmentExamModeration>,
 }
 
 impl ExamCreatorUser {
@@ -58,7 +61,7 @@ impl ExamCreatorUser {
 
 // Needed for projections to work
 // TODO: Once prisma_rust_schema allows for `serde(default)` to be configured for struct, this is not needed.
-impl TryFrom<bson::Document> for EnvExam {
+impl TryFrom<bson::Document> for prisma::ExamCreatorExam {
     type Error = crate::errors::Error;
     fn try_from(value: bson::Document) -> Result<Self, Self::Error> {
         let id = value.get_object_id("_id")?;
@@ -77,15 +80,17 @@ impl TryFrom<bson::Document> for EnvExam {
                 .clone(),
         )?;
         let deprecated = value.get_bool("deprecated")?;
+        let version = value.get_i64("version")?;
 
-        let env_exam = EnvExam {
+        let exam_creator_exam = prisma::ExamCreatorExam {
             id,
             question_sets,
             config,
             prerequisites,
             deprecated,
+            version,
         };
 
-        Ok(env_exam)
+        Ok(exam_creator_exam)
     }
 }

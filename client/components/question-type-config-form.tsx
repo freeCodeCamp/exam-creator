@@ -1,8 +1,8 @@
 import {
-  EnvExam,
-  type EnvConfig,
-  type EnvQuestionSet,
-  type EnvQuestionType,
+  ExamCreatorExam,
+  type ExamEnvironmentConfig,
+  type ExamEnvironmentQuestionSet,
+  type ExamEnvironmentQuestionType,
 } from "@prisma/client";
 import { useState } from "react";
 import {
@@ -19,9 +19,9 @@ import {
 } from "@chakra-ui/react";
 
 type QuestionTypeConfigFormProps = {
-  questionSets: EnvQuestionSet[];
-  setExam: (partialExam: Partial<EnvExam>) => void;
-  config: EnvConfig;
+  questionSets: ExamEnvironmentQuestionSet[];
+  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  config: ExamEnvironmentConfig;
 };
 
 export function QuestionTypeConfigForm({
@@ -30,7 +30,7 @@ export function QuestionTypeConfigForm({
   config,
 }: QuestionTypeConfigFormProps) {
   const [selectedQuestionType, setSelectedQuestionType] =
-    useState<EnvQuestionType>();
+    useState<ExamEnvironmentQuestionType>();
   const [isCreatingQuestionTypeConfig, setIsCreatingQuestionTypeConfig] =
     useState(false);
   const [numberOfSet, setNumberOfSet] = useState(1);
@@ -45,7 +45,7 @@ export function QuestionTypeConfigForm({
       return [...acc, curr.type];
     }
     return acc;
-  }, [] as EnvQuestionType[]);
+  }, [] as ExamEnvironmentQuestionType[]);
 
   if (!isCreatingQuestionTypeConfig) {
     return (
@@ -70,7 +70,9 @@ export function QuestionTypeConfigForm({
           </FormLabel>
           <Select
             onChange={(e) =>
-              setSelectedQuestionType(e.target.value as EnvQuestionType)
+              setSelectedQuestionType(
+                e.target.value as ExamEnvironmentQuestionType
+              )
             }
             value={selectedQuestionType ?? ""}
             bg="gray.700"

@@ -43,7 +43,7 @@ pub struct ClientSync {
     /// Used to store online users' activity
     pub users: Vec<User>,
     /// Updated exams yet to be saved to the database
-    pub exams: Vec<prisma::EnvExam>,
+    pub exams: Vec<prisma::ExamCreatorExam>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,7 +98,7 @@ pub async fn cleanup_online_users(
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case", tag = "type", content = "data")]
 pub enum SocketEvents {
-    ExamUpdate(prisma::EnvExam),
+    ExamUpdate(prisma::ExamCreatorExam),
     UsersUpdate(Vec<User>),
     ActivityUpdate(Activity),
 }
