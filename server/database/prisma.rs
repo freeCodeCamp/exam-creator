@@ -3,7 +3,8 @@ use prisma_rust_schema;
 use serde::{Deserialize, Serialize};
 
 prisma_rust_schema::import_types!(
-    schema_path = "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/refs/heads/chore_rename-temp-collection/api/prisma/schema.prisma",
+    schema_path =
+        "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/schema.prisma",
     derive = [Clone, Debug, Serialize, Deserialize],
     include = [
         "ExamEnvironmentExam",

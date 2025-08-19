@@ -4,7 +4,7 @@
 import { writeFile } from "fs/promises";
 
 const GITHUB_PRISMA_URL =
-  "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/refs/heads/chore_rename-temp-collection/api/prisma/schema.prisma";
+  "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/schema.prisma";
 
 async function get_prisma_schema() {
   try {
