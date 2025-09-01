@@ -27,10 +27,10 @@ pub async fn discard_exam_state_by_id(
     _: ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
-) -> Result<Json<prisma::EnvExam>, Error> {
+) -> Result<Json<prisma::ExamCreatorExam>, Error> {
     let original_exam = state
         .database
-        .temp_env_exam
+        .exam_creator_exam
         .find_one(doc! {
             "_id": &exam_id
         })

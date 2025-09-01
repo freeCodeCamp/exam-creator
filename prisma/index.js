@@ -24,13 +24,7 @@ async function main() {
     return;
   }
 
-  const modifier = "/// @prs.rename = _type";
-  const finder = /(?<=\{[^\}]+?\s)(?<!\/\/\/[^\n]+)type(?=\s[^\{]+?\})/gi;
-  const modifiedSchema = schema.replace(finder, (substring) => {
-    return `${modifier}\n  ${substring}`;
-  });
-
-  await writeFile("./prisma/schema.prisma", modifiedSchema);
+  await writeFile("./prisma/schema.prisma", schema);
 }
 
 await main();
