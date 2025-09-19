@@ -1,5 +1,5 @@
 /**
- * This script gets the latest `schema.prisma`, then adds modifier doc comments to fields named `type`
+ * This script gets the latest `schema.prisma`
  */
 import { writeFile } from "fs/promises";
 
