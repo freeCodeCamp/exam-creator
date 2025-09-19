@@ -179,13 +179,17 @@ pub struct Attempt {
     id: ObjectId,
     prerequisites: Vec<ObjectId>,
     deprecated: bool,
+    #[serde(rename = "questionSets")]
     question_sets: Vec<AttemptQuestionSet>,
     config: prisma::ExamEnvironmentConfig,
+    #[serde(rename = "startTimeInMS")]
+    start_time_in_m_s: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AttemptQuestionSet {
     id: ObjectId,
+    #[serde(rename = "type")]
     _type: prisma::ExamEnvironmentQuestionType,
     context: Option<String>,
     questions: Vec<AttemptQuestionSetQuestion>,
@@ -200,7 +204,8 @@ pub struct AttemptQuestionSetQuestion {
     audio: Option<prisma::ExamEnvironmentAudio>,
     answers: Vec<prisma::ExamEnvironmentAnswer>,
     selected: Vec<ObjectId>,
-    submission_time: i64,
+    #[serde(rename = "submissionTimeInMS")]
+    submission_time_in_m_s: i64,
 }
 
 /// Constructs an `Attempt`:
@@ -273,7 +278,7 @@ pub fn construct_attempt(
                 audio: audio.clone(),
                 answers: answers.clone(),
                 selected,
-                submission_time,
+                submission_time_in_m_s: submission_time,
             };
 
             attempt_questions.push(attempt_question_set_question);
@@ -295,6 +300,7 @@ pub fn construct_attempt(
         deprecated: *deprecated,
         question_sets: attempt_question_sets,
         config: config.clone(),
+        start_time_in_m_s: exam_attempt.start_time_in_m_s,
     };
 
     attempt

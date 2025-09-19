@@ -144,10 +144,10 @@ export function Landing() {
                 w="full"
                 h="auto"
                 p={0}
-                disabled={true}
+                // disabled={true}
               >
                 <LandingCard filteredUsers={usersOnAttempts}>
-                  Attempts (Coming soon)
+                  Attempts (Beta)
                 </LandingCard>
               </Button>
             </SimpleGrid>

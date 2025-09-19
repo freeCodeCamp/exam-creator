@@ -11,7 +11,7 @@ import { ObjectId } from "bson";
  * @param value The JSON-deserialized value to transform.
  * @returns A new value with the transformations applied.
  */
-function _recursiveDeserialize(value: JsonValue): JsonValue {
+function _recursiveDeserialize(value: JsonValue): unknown {
   // Base case: If it's a primitive or null, return it directly.
   if (value === null || typeof value !== "object") {
     return value;
@@ -23,22 +23,34 @@ function _recursiveDeserialize(value: JsonValue): JsonValue {
   }
 
   // If it's an object, process its properties.
-  let newObj: JsonObject = {};
+  let newObj: Record<string, unknown> = {};
   for (const key in value) {
     if (Object.prototype.hasOwnProperty.call(value, key)) {
       // SAFETY: hasOwnProperty ensures key exists in value, and `undefined` is not serializable.
       const propValue = value[key]!;
 
-      // 1. Convert { "$oid": "..." } to "..."
+      // 1. Convert { "$oid": "..." } to "..." or { "$date": { "$numberLong": "..." } } to Date
       if (
         typeof propValue === "object" &&
         propValue !== null &&
-        Object.keys(propValue).length === 1 &&
-        (propValue as { $oid?: string })["$oid"] !== undefined // Assert to check for $oid
+        !Array.isArray(propValue) &&
+        Object.keys(propValue).length === 1
       ) {
-        newObj[key] = (propValue as { $oid: string })["$oid"]; // Assert to access $oid
+        // Assert to check for $oid
+        if ((propValue as { $oid?: string })["$oid"] !== undefined) {
+          newObj[key] = (propValue as { $oid: string })["$oid"]; // Assert to access $oid
+        } else if (
+          (propValue as { $date?: { $numberLong: string } })["$date"] !==
+          undefined
+        ) {
+          // @ts-expect-error
+          newObj[key] = new Date(Number(propValue["$date"]["$numberLong"]));
+        }
       } else if (key === "$oid") {
         newObj = propValue as JsonObject;
+      } else if (key === "$date") {
+        // @ts-expect-error
+        newObj = new Date(Number(propValue["$numberLong"]));
       } else {
         // Recursively transform nested objects/arrays
         newObj[key] = _recursiveDeserialize(propValue);

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-09-20
+
+### Added
+
+- client: attempt moderation viewing
+- server: `GET /api/attempts`
+
 ## [1.1.0] - 2025-09-19
 
 ### Added

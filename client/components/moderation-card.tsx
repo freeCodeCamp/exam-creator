@@ -148,7 +148,7 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
                 <Box as="span" fontWeight="bold" color="whiteAlpha.600">
                   Moderation Date:
                 </Box>{" "}
-                {new Date(moderation.moderationDate).toLocaleString()}
+                {new Date(moderation.moderationDate).toString()}
               </Text>
             )}
             {moderation.moderatorId && (

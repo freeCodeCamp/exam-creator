@@ -24,6 +24,7 @@ import {
   Tooltip as ReChartsTooltip,
   XAxis,
   YAxis,
+  Cell,
 } from "recharts";
 
 import { rootRoute } from "./root";
@@ -171,12 +172,18 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   //       Show questions in order final answer was recorded
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
   const timeToAnswers = flattened.map((q, i) => {
-    const secondsSinceStart =
+    // @ts-expect-error Look into
+    const submissionTime = q.submissionTimeInMS ?? 0;
+    const secondsSinceStart = (submissionTime - attempt.startTimeInMS) / 1000;
+    // Determine if the answer is correct
+    const isCorrect = q.answers
+      .filter((a) => a.isCorrect)
       // @ts-expect-error Look into
-      (q.submissionTimeInMS - attempt.startTimeInMS) / 1000;
+      .every((a) => q.selected && q.selected.includes(a.id));
     return {
       name: i + 1,
       value: secondsSinceStart,
+      isCorrect,
     };
   });
 
@@ -187,12 +194,14 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       f.answers
         .filter((a) => a.isCorrect)
         // @ts-expect-error Look into
-        .every((a) => f.selected.includes(a))
+        .every((a) => f.selected.includes(a.id))
     );
   }).length;
   const lastSubmission = Math.max(
-    // @ts-expect-error Look into
-    ...flattened.map((f) => f.submissionTimeInMS)
+    ...flattened.map((f) => {
+      // @ts-expect-error Look into
+      return f.submissionTimeInMS;
+    })
   );
   const timeToComplete = (lastSubmission - attempt.startTimeInMS) / 1000;
 
@@ -212,10 +221,24 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
         alignItems="center"
         gap={4}
       >
-        <Button colorScheme="green" px={4} fontWeight="bold" fontSize={"2xl"}>
+        {/* TODO: Awaiting implementation */}
+        <Button
+          colorScheme="green"
+          px={4}
+          fontWeight="bold"
+          fontSize={"2xl"}
+          disabled={true}
+        >
           Approve
         </Button>
-        <Button colorScheme="red" px={4} fontWeight="bold" fontSize={"2xl"}>
+        {/* TODO: Awaiting implementation */}
+        <Button
+          colorScheme="red"
+          px={4}
+          fontWeight="bold"
+          fontSize={"2xl"}
+          disabled={true}
+        >
           Deny
         </Button>
       </Box>
@@ -240,10 +263,17 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
               <Bar
                 type="monotone"
                 dataKey="value"
-                fill="purple"
-                // strokeWidth={2}
                 name="time to answer"
-              />
+                // Custom fill for each bar
+                fill={"purple"}
+              >
+                {timeToAnswers.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.isCorrect ? "green" : "purple"}
+                  />
+                ))}
+              </Bar>
               <XAxis
                 dataKey="name"
                 label={{
