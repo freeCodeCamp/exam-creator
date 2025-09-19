@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-09-19
+
+### Added
+
+- server: `GET|PUT /api/exam-challenges/{exam_id}`
+- client: exam-challenge map input fields
+
 ### Refactored
 
 - server: split into modules (9861dcc)

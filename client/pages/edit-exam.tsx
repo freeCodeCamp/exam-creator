@@ -29,14 +29,20 @@ import {
   Th,
   Tbody,
   Td,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import { ObjectId } from "bson";
 import { Save } from "lucide-react";
-import type { ExamCreatorExam } from "@prisma/client";
+import type { ExamCreatorExam, ExamEnvironmentChallenge } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { QuestionForm } from "../components/question-form";
-import { getExamById, putExamById } from "../utils/fetch";
+import {
+  getExamById,
+  getExamChallengeByExamId,
+  putExamById,
+  putExamEnvironmentChallenges,
+} from "../utils/fetch";
 import { TagConfigForm } from "../components/tag-config-form";
 import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
@@ -160,19 +166,41 @@ function examReducer(state: ExamCreatorExam, action: Partial<ExamCreatorExam>) {
   return newState;
 }
 
-function EditExam({ exam: examData }: { exam: ExamCreatorExam }) {
+interface EditExamProps {
+  exam: ExamCreatorExam;
+}
+
+function EditExam({ exam: examData }: EditExamProps) {
   const { updateActivity } = useContext(UsersWebSocketContext)!;
   const [exam, setExam] = useReducer(examReducer, examData);
+  const examEnvironmentChallengesQuery = useQuery({
+    queryKey: ["exam-challenge", exam.id],
+    queryFn: () => getExamChallengeByExamId(exam.id),
+    retry: false,
+  });
+  const [examEnvironmentChallenges, setExamEnvironmentChallenges] = useState<
+    Omit<ExamEnvironmentChallenge, "id">[]
+  >(examEnvironmentChallengesQuery.data || []);
   const [searchIds, setSearchIds] = useState<string[]>([]);
   const [prereqInput, setPrereqInput] = useState("");
+  const [challengeInput, setChallengeInput] = useState("");
 
-  const putExamMutation = useMutation({
-    mutationFn: (exam: ExamCreatorExam) => {
-      return putExamById(exam);
+  const handleDatabaseSave = useMutation({
+    mutationFn: ({
+      exam,
+      examEnvironmentChallenges,
+    }: {
+      exam: ExamCreatorExam;
+      examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[];
+    }) => {
+      return Promise.all([
+        putExamById(exam),
+        putExamEnvironmentChallenges(exam.id, examEnvironmentChallenges),
+      ]);
     },
-    onSuccess(data, _variables, _context) {
-      console.log(data);
-      setExam(data);
+    onSuccess([examData, examEnvironmentChallengesData], _variables, _context) {
+      setExam(examData);
+      setExamEnvironmentChallenges(examEnvironmentChallengesData);
     },
   });
 
@@ -189,6 +217,12 @@ function EditExam({ exam: examData }: { exam: ExamCreatorExam }) {
       });
     };
   }, [exam]);
+
+  useEffect(() => {
+    if (examEnvironmentChallengesQuery.data) {
+      setExamEnvironmentChallenges(examEnvironmentChallengesQuery.data);
+    }
+  }, [examEnvironmentChallengesQuery.data]);
 
   // const discardExamStateMutation = useMutation({
   //   mutationFn: (examId: ExamCreatorExam["id"]) => {
@@ -238,8 +272,10 @@ function EditExam({ exam: examData }: { exam: ExamCreatorExam }) {
           variant="solid"
           px={4}
           fontWeight="bold"
-          isLoading={putExamMutation.isPending}
-          onClick={() => putExamMutation.mutate(exam)}
+          isLoading={handleDatabaseSave.isPending}
+          onClick={() =>
+            handleDatabaseSave.mutate({ exam, examEnvironmentChallenges })
+          }
         >
           Save to Database
         </Button>
@@ -414,6 +450,98 @@ function EditExam({ exam: examData }: { exam: ExamCreatorExam }) {
                       />
                     </Badge>
                   ))}
+                </Box>
+                <Text color="gray.400" fontSize="xs" mt={1}>
+                  Enter a 24-character hex ObjectID and press Enter to add.
+                  Click ✕ to remove.
+                </Text>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel color="gray.300">Related Challenge IDs</FormLabel>
+                {examEnvironmentChallengesQuery.isError && (
+                  <FormErrorMessage>
+                    Error loading challenges:{" "}
+                    {examEnvironmentChallengesQuery.error.message}
+                  </FormErrorMessage>
+                )}
+                <Input
+                  type="text"
+                  placeholder="Add ObjectID and press Enter"
+                  bg="gray.700"
+                  color="gray.100"
+                  value={challengeInput || ""}
+                  disabled={
+                    examEnvironmentChallengesQuery.isPending ||
+                    examEnvironmentChallengesQuery.isError
+                  }
+                  onChange={(e) => setChallengeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const value = challengeInput?.trim();
+                      if (
+                        value &&
+                        ObjectId.isValid(value) &&
+                        !examEnvironmentChallenges.some(
+                          (ch) => ch.challengeId === value
+                        )
+                      ) {
+                        setExamEnvironmentChallenges((prev) => [
+                          ...prev,
+                          { examId: exam.id, challengeId: value },
+                        ]);
+                        setChallengeInput("");
+                      }
+                    }
+                  }}
+                  mb={2}
+                />
+                <Box
+                  bg="gray.700"
+                  borderRadius="md"
+                  px={2}
+                  py={1}
+                  minH="40px"
+                  maxH="120px"
+                  overflowY="auto"
+                  display="flex"
+                  flexWrap="wrap"
+                  alignItems="flex-start"
+                >
+                  {examEnvironmentChallengesQuery.isPending ? (
+                    <Spinner color={accent} size="md" />
+                  ) : (
+                    examEnvironmentChallenges.map(({ challengeId }, idx) => (
+                      <Badge
+                        key={challengeId}
+                        colorScheme="teal"
+                        variant="solid"
+                        mr={2}
+                        mb={1}
+                        px={2}
+                        py={1}
+                        borderRadius="md"
+                        display="flex"
+                        alignItems="center"
+                      >
+                        <span style={{ marginRight: 6 }}>{challengeId}</span>
+                        <IconButton
+                          aria-label="Remove challenge id"
+                          icon={<span>✕</span>}
+                          size="xs"
+                          colorScheme="red"
+                          variant="ghost"
+                          ml={1}
+                          onClick={() => {
+                            setExamEnvironmentChallenges((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            );
+                          }}
+                        />
+                      </Badge>
+                    ))
+                  )}
                 </Box>
                 <Text color="gray.400" fontSize="xs" mt={1}>
                   Enter a 24-character hex ObjectID and press Enter to add.

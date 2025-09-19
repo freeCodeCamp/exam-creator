@@ -34,6 +34,7 @@ pub struct ExamCreatorSession {
 pub struct Database {
     pub exam_creator_exam: Collection<prisma::ExamCreatorExam>,
     pub exam: Collection<prisma::ExamEnvironmentExam>,
+    pub exam_environment_challenge: Collection<prisma::ExamEnvironmentChallenge>,
     pub exam_attempt: Collection<prisma::ExamEnvironmentExamAttempt>,
     pub generated_exam: Collection<prisma::ExamEnvironmentGeneratedExam>,
     pub exam_creator_user: Collection<ExamCreatorUser>,

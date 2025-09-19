@@ -55,6 +55,9 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         exam_attempt: client
             .database("freecodecamp")
             .collection("ExamEnvironmentExamAttempt"),
+        exam_environment_challenge: client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentChallenge"),
         generated_exam: client
             .database("freecodecamp")
             .collection("ExamEnvironmentGeneratedExam"),
@@ -138,6 +141,11 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/moderations",
             get(routes::moderations::get_moderations),
+        )
+        .route(
+            "/api/exam-challenges/{exam_id}",
+            get(routes::exam_challenge::get_exam_challenges)
+                .put(routes::exam_challenge::put_exam_challenges), // .delete(routes::exam_challenge::delete_exam_challenge),
         )
         .route("/api/users", get(routes::users::get_users))
         .route("/api/users/session", get(routes::users::get_session_user))

@@ -1,5 +1,6 @@
 import type {
   ExamCreatorExam,
+  ExamEnvironmentChallenge,
   ExamEnvironmentExamModeration,
 } from "@prisma/client";
 import type { Attempt, ClientSync, SessionUser, User } from "../types";
@@ -387,6 +388,84 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
   const deserialized = deserializeToPrisma<Attempt>(json);
   return deserialized;
 }
+
+export async function getExamChallengeByExamId(
+  examId: ExamCreatorExam["id"]
+): Promise<ExamEnvironmentChallenge[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const exams = await fetch("/mocks/exams.json");
+
+    if (!exams.ok) {
+      throw new Error(
+        `Failed to load mock exam: ${exams.status} - ${exams.statusText}`
+      );
+    }
+
+    const examData = await exams.json();
+    const exam = examData.at(0)!;
+
+    return [
+      { id: exam._id.$oid, examId: exam._id.$oid, challengeId: exam._id.$oid },
+    ];
+  }
+
+  const res = await authorizedFetch(`/api/exam-challenges/${examId}`, {
+    method: "GET",
+  });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<ExamEnvironmentChallenge[]>(json);
+  return deserialized.filter((challenge) => challenge.examId === examId);
+}
+
+export async function putExamEnvironmentChallenges(
+  examId: string,
+  examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[]
+): Promise<ExamEnvironmentChallenge[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return examEnvironmentChallenges.map((challenge, index) => ({
+      ...challenge,
+      id: `mock-id-${index}`,
+    }));
+  }
+
+  const res = await authorizedFetch(`/api/exam-challenges/${examId}`, {
+    method: "PUT",
+    body: JSON.stringify(serializeFromPrisma(examEnvironmentChallenges)),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<ExamEnvironmentChallenge[]>(json);
+  return deserialized;
+}
+
+// export async function deleteExamEnvironmentChallengeById({
+//   challengeId,
+// }: {
+//   challengeId: ExamEnvironmentChallenge["challengeId"];
+// }): Promise<ExamEnvironmentChallenge[]> {
+//   if (import.meta.env.VITE_MOCK_DATA === "true") {
+//     await delayForTesting(300);
+
+//     return [];
+//   }
+
+//   const res = await authorizedFetch(
+//     `/api/exam-challenge?challengeId=${challengeId}`,
+//     {
+//       method: "DELETE",
+//     }
+//   );
+
+//   const json = await res.json();
+//   const deserialized = deserializeToPrisma<ExamEnvironmentChallenge[]>(json);
+//   return deserialized;
+// }
 
 export async function getStatusPing() {
   if (import.meta.env.VITE_MOCK_DATA === "true") {

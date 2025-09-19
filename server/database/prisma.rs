@@ -25,6 +25,7 @@ prisma_rust_schema::import_types!(
         "ExamEnvironmentGeneratedMultipleChoiceQuestion",
         "ExamEnvironmentExamModeration",
         "ExamEnvironmentExamModerationStatus",
+        "ExamEnvironmentChallenge",
     ]
 );
 
