@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
+## [1.3.1] - 2025-09-21
+
+### Fixed
+
+- server: seed exam challenge map to staging
+
 ## [1.3.0] - 2025-09-21
 
-## Added
+### Added
 
 - client: seed exams to staging and production db
 - server: `PUT /api/exams/{exam_id}/seed/staging`

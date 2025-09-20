@@ -119,6 +119,8 @@ pub async fn put_exam(
 
 /// Finds an exam in `ExamCreatorExam`
 /// Upserts it into staging database `ExamEnvironmentExam`
+///
+/// NOTE: Staging has a special case where the `ExamEnvironmentChallenge` documents need to be copied over
 #[instrument(skip_all, err(Debug))]
 pub async fn put_exam_by_id_to_staging(
     _auth_user: ExamCreatorUser,
@@ -134,7 +136,20 @@ pub async fn put_exam_by_id_to_staging(
             StatusCode::BAD_REQUEST,
             format!("exam non-existant: {exam_id}"),
         ))?;
-    info!("Found exam {exam_id} in database");
+    info!("Found exam {exam_id} in production database");
+
+    let exam_environment_challenges: Vec<prisma::ExamEnvironmentChallenge> = state
+        .production_database
+        .exam_environment_challenge
+        .find(doc! {"examId": exam_id})
+        .await?
+        .try_collect()
+        .await?;
+
+    info!(
+        "Found {} exam-challenge mappings in production database",
+        exam_environment_challenges.len()
+    );
 
     state
         .staging_database
@@ -147,6 +162,19 @@ pub async fn put_exam_by_id_to_staging(
         )
         .upsert(true)
         .await?;
+
+    state
+        .staging_database
+        .exam_environment_challenge
+        .delete_many(doc! {"examId": exam_id})
+        .await?;
+    if !exam_environment_challenges.is_empty() {
+        state
+            .staging_database
+            .exam_environment_challenge
+            .insert_many(exam_environment_challenges)
+            .await?;
+    }
 
     Ok(())
 }
