@@ -24,7 +24,7 @@ pub async fn delete_logout(
         ))?;
 
     server_state
-        .database
+        .production_database
         .exam_creator_session
         .delete_many(doc! {"user_id": &user.id})
         .await?;

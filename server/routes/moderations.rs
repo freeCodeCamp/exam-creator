@@ -15,7 +15,7 @@ pub async fn get_moderations(
     State(server_state): State<ServerState>,
 ) -> Result<Json<Vec<prisma::ExamEnvironmentExamModeration>>, Error> {
     let exam_moderations = server_state
-        .database
+        .production_database
         .exam_environment_exam_moderation
         .find(doc! {})
         .await?

@@ -16,21 +16,44 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
-import { Plus, Download, X } from "lucide-react";
+import {
+  Plus,
+  Download,
+  X,
+  ChevronDownIcon,
+  CodeXml,
+  AppWindow,
+} from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { useContext, useEffect, useState } from "react";
 
 import { rootRoute } from "./root";
 import { ExamCard } from "../components/exam-card";
-import { getExamById, getExams, postExam } from "../utils/fetch";
+import {
+  getExamById,
+  getExams,
+  postExam,
+  putExamByIdToProduction,
+  putExamByIdToStaging,
+} from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { editExamRoute } from "./edit-exam";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { serializeFromPrisma } from "../utils/serde";
+import {
+  SeedProductionModal,
+  SeedStagingModal,
+} from "../components/seed-modal";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
@@ -40,9 +63,21 @@ export function Exams() {
     updateActivity,
   } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
+
+  const {
+    isOpen: stagingIsOpen,
+    onOpen: stagingOnOpen,
+    onClose: stagingOnClose,
+  } = useDisclosure();
+  const {
+    isOpen: productionIsOpen,
+    onOpen: productionOnOpen,
+    onClose: productionOnClose,
+  } = useDisclosure();
 
   const examsQuery = useQuery({
     queryKey: ["exams"],
@@ -85,6 +120,42 @@ export function Exams() {
     },
   });
 
+  const seedExamToStagingMutation = useMutation({
+    mutationFn: (examIds: string[]) => {
+      const promises = examIds.map((id) => putExamByIdToStaging(id));
+      return Promise.all(promises);
+    },
+    onSuccess(_data, _variables, _context) {
+      stagingOnClose();
+      handleDeselectAll();
+      toast({
+        title: "Exams seeded to staging",
+        description: "The selected exams have been seeded to staging.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    },
+  });
+
+  const seedExamToProductionMutation = useMutation({
+    mutationFn: (examIds: string[]) => {
+      const promises = examIds.map((id) => putExamByIdToProduction(id));
+      return Promise.all(promises);
+    },
+    onSuccess(_data, _variables, _context) {
+      productionOnClose();
+      handleDeselectAll();
+      toast({
+        title: "Exams seeded to production",
+        description: "The selected exams have been seeded to production.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    },
+  });
+
   function handleExamSelection(examId: string, selected: boolean) {
     setSelectedExams((prev) => {
       const newSelection = new Set(prev);
@@ -113,6 +184,22 @@ export function Exams() {
     const examIds = [...selectedExams];
 
     examByIdMutation.mutate(examIds);
+  }
+
+  function handleSeedSelectedToStaging() {
+    if (!examsQuery.data || selectedExams.size === 0) return;
+
+    const examIds = [...selectedExams];
+
+    seedExamToStagingMutation.mutate(examIds);
+  }
+
+  function handleSeedSelectedToProduction() {
+    if (!examsQuery.data || selectedExams.size === 0) return;
+
+    const examIds = [...selectedExams];
+
+    seedExamToProductionMutation.mutate(examIds);
   }
 
   function toggleSelectionMode() {
@@ -289,23 +376,76 @@ export function Exams() {
                   Deselect All
                 </Button>
               </HStack>
-              <Button
-                leftIcon={<Download size={18} />}
-                colorScheme="green"
-                variant="solid"
-                px={6}
-                fontWeight="bold"
-                boxShadow="md"
-                _hover={{ bg: "green.500" }}
-                onClick={handleExportSelected}
-                isLoading={examByIdMutation.isPending}
-                isDisabled={
-                  selectedExams.size === 0 || examByIdMutation.isPending
-                }
-                loadingText={"Prepping Export"}
-              >
-                Export Selected ({selectedExams.size})
-              </Button>
+              <Menu>
+                <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                  Actions
+                </MenuButton>
+                <MenuList backgroundColor="gray.800">
+                  <MenuItem
+                    as={Button}
+                    backgroundColor="gray.800"
+                    borderRadius={0}
+                    boxShadow="md"
+                    color={"white"}
+                    colorScheme="green"
+                    fontWeight="bold"
+                    isDisabled={
+                      selectedExams.size === 0 || examByIdMutation.isPending
+                    }
+                    isLoading={examByIdMutation.isPending}
+                    justifyContent={"flex-start"}
+                    leftIcon={<Download size={18} />}
+                    loadingText={"Prepping Export"}
+                    onClick={handleExportSelected}
+                    _hover={{ bg: "green.500" }}
+                  >
+                    Export Selected
+                  </MenuItem>
+                  <MenuItem
+                    as={Button}
+                    backgroundColor="gray.800"
+                    borderRadius={0}
+                    boxShadow="md"
+                    color={"white"}
+                    colorScheme="green"
+                    fontWeight="bold"
+                    isDisabled={
+                      selectedExams.size === 0 ||
+                      seedExamToStagingMutation.isPending
+                    }
+                    isLoading={seedExamToStagingMutation.isPending}
+                    justifyContent={"flex-start"}
+                    leftIcon={<CodeXml size={18} />}
+                    loadingText={"Seed in progress"}
+                    onClick={stagingOnOpen}
+                    _hover={{ bg: "green.500" }}
+                  >
+                    Seed to Staging
+                  </MenuItem>
+                  <MenuItem
+                    as={Button}
+                    backgroundColor="gray.800"
+                    borderRadius={0}
+                    boxShadow="md"
+                    color={"white"}
+                    colorScheme="green"
+                    fontWeight="bold"
+                    // isDisabled={
+                    //   selectedExams.size === 0 ||
+                    //   seedExamToProductionMutation.isPending
+                    // }
+                    isDisabled={true}
+                    isLoading={seedExamToProductionMutation.isPending}
+                    justifyContent={"flex-start"}
+                    leftIcon={<AppWindow size={18} />}
+                    loadingText={"Seed in progress"}
+                    onClick={productionOnOpen}
+                    _hover={{ bg: "green.500" }}
+                  >
+                    Seed to Production (Coming Soon)
+                  </MenuItem>
+                </MenuList>
+              </Menu>
             </Flex>
           )}
           <Box>
@@ -335,6 +475,18 @@ export function Exams() {
           </Box>
         </Stack>
       </Center>
+      <SeedStagingModal
+        isOpen={stagingIsOpen}
+        onClose={stagingOnClose}
+        handleSeedSelectedToStaging={handleSeedSelectedToStaging}
+        seedExamToStagingMutation={seedExamToStagingMutation}
+      />
+      <SeedProductionModal
+        isOpen={productionIsOpen}
+        onClose={productionOnClose}
+        handleSeedSelectedToProduction={handleSeedSelectedToProduction}
+        seedExamToProductionMutation={seedExamToProductionMutation}
+      />
     </Box>
   );
 }

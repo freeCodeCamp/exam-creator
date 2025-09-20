@@ -55,3 +55,9 @@ impl Default for ExamEnvironmentConfig {
         }
     }
 }
+
+impl From<ExamCreatorExam> for bson::Bson {
+    fn from(exam: ExamCreatorExam) -> Self {
+        bson::to_bson(&exam).unwrap_or(bson::Bson::Null)
+    }
+}

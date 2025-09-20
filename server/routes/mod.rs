@@ -30,7 +30,7 @@ pub async fn discard_exam_state_by_id(
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<prisma::ExamCreatorExam>, Error> {
     let original_exam = state
-        .database
+        .production_database
         .exam_creator_exam
         .find_one(doc! {
             "_id": &exam_id

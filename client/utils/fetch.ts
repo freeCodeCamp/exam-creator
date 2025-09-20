@@ -467,6 +467,22 @@ export async function putExamEnvironmentChallenges(
 //   return deserialized;
 // }
 
+export async function putExamByIdToStaging(examId: string) {
+  return await authorizedFetch(`/api/exams/${examId}/seed/staging`, {
+    method: "PUT",
+  });
+}
+
+export async function putExamByIdToProduction(
+  _examId: string
+): Promise<Response> {
+  await delayForTesting(5000);
+  throw new Error("Seeding to production is not yet implemented.");
+  // return await authorizedFetch(`/api/exams/${examId}/seed/production`, {
+  //   method: "PUT",
+  // });
+}
+
 export async function getStatusPing() {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);

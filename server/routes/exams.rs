@@ -23,7 +23,7 @@ pub async fn get_exams(
     State(state): State<ServerState>,
 ) -> Result<Json<Vec<prisma::ExamCreatorExam>>, Error> {
     let mut exams_cursor = state
-        .database
+        .production_database
         .exam_creator_exam
         .clone_with_type::<mongodb::bson::Document>()
         .find(doc! {})
@@ -59,7 +59,7 @@ pub async fn get_exam_by_id(
     // }
 
     let exam = state
-        .database
+        .production_database
         .exam_creator_exam
         .find_one(doc! { "_id": exam_id })
         .await?
@@ -81,7 +81,11 @@ pub async fn post_exam(
     info!("post_exam");
     let exam = prisma::ExamCreatorExam::default();
 
-    state.database.exam_creator_exam.insert_one(&exam).await?;
+    state
+        .production_database
+        .exam_creator_exam
+        .insert_one(&exam)
+        .await?;
 
     Ok(Json(exam))
 }
@@ -105,10 +109,44 @@ pub async fn put_exam(
         .into());
     }
     state
-        .database
+        .production_database
         .exam_creator_exam
         .replace_one(doc! { "_id": exam_id }, &exam)
         .await?;
 
     Ok(Json(exam))
+}
+
+/// Finds an exam in `ExamCreatorExam`
+/// Upserts it into staging database `ExamEnvironmentExam`
+#[instrument(skip_all, err(Debug))]
+pub async fn put_exam_by_id_to_staging(
+    _auth_user: ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(exam_id): Path<ObjectId>,
+) -> Result<(), Error> {
+    let exam_creator_exam = state
+        .production_database
+        .exam_creator_exam
+        .find_one(doc! { "_id": exam_id })
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("exam non-existant: {exam_id}"),
+        ))?;
+    info!("Found exam {exam_id} in database");
+
+    state
+        .staging_database
+        .exam
+        .update_one(
+            doc! {"_id": exam_id},
+            doc! {
+                "$set": exam_creator_exam,
+            },
+        )
+        .upsert(true)
+        .await?;
+
+    Ok(())
 }

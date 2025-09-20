@@ -35,39 +35,75 @@ use crate::config::EnvVars;
 
 pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     info!("Creating app...");
-    let mut client_options = ClientOptions::parse(&env_vars.mongodb_uri).await.unwrap();
-    client_options.app_name = Some("Exam Creator".to_string());
+    let mut production_client_options = ClientOptions::parse(&env_vars.mongodb_uri_production)
+        .await
+        .unwrap();
+    production_client_options.app_name = Some("Exam Creator".to_string());
+    let mut staging_client_options = ClientOptions::parse(&env_vars.mongodb_uri_staging)
+        .await
+        .unwrap();
+    staging_client_options.app_name = Some("Exam Creator".to_string());
 
-    let client = mongodb::Client::with_options(client_options).unwrap();
+    let production_client = mongodb::Client::with_options(production_client_options).unwrap();
+    let staging_client = mongodb::Client::with_options(staging_client_options).unwrap();
 
     let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(time::Duration::seconds(10)));
 
-    let database = database::Database {
-        exam_creator_exam: client
+    let production_database = database::Database {
+        exam_creator_exam: production_client
             .database("freecodecamp")
             .collection("ExamCreatorExam"),
-        exam: client
+        exam: production_client
             .database("freecodecamp")
             .collection("ExamEnvironmentExam"),
-        exam_attempt: client
+        exam_attempt: production_client
             .database("freecodecamp")
             .collection("ExamEnvironmentExamAttempt"),
-        exam_environment_challenge: client
+        exam_environment_challenge: production_client
             .database("freecodecamp")
             .collection("ExamEnvironmentChallenge"),
-        generated_exam: client
+        generated_exam: production_client
             .database("freecodecamp")
             .collection("ExamEnvironmentGeneratedExam"),
-        exam_creator_user: client
+        exam_creator_user: production_client
             .database("freecodecamp")
             .collection("ExamCreatorUser"),
-        exam_creator_session: client
+        exam_creator_session: production_client
             .database("freecodecamp")
             .collection("ExamCreatorSession"),
-        exam_environment_exam_moderation: client
+        exam_environment_exam_moderation: production_client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentExamModeration"),
+    };
+
+    let staging_database = database::Database {
+        exam_creator_exam: staging_client
+            .database("freecodecamp")
+            .collection("ExamCreatorExam"),
+        exam: staging_client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentExam"),
+        exam_attempt: staging_client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentExamAttempt"),
+        exam_environment_challenge: staging_client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentChallenge"),
+        generated_exam: staging_client
+            .database("freecodecamp")
+            .collection("ExamEnvironmentGeneratedExam"),
+        // Should not be used
+        exam_creator_user: staging_client
+            .database("freecodecamp")
+            .collection("ExamCreatorUser"),
+        // Should not be used
+        exam_creator_session: staging_client
+            .database("freecodecamp")
+            .collection("ExamCreatorSession"),
+        exam_environment_exam_moderation: staging_client
             .database("freecodecamp")
             .collection("ExamEnvironmentExamModeration"),
     };
@@ -78,7 +114,8 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     }));
 
     let server_state = ServerState {
-        database,
+        production_database,
+        staging_database,
         client_sync,
         key: Key::from(env_vars.cookie_key.as_bytes()),
         env_vars: env_vars.clone(),
@@ -133,6 +170,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route("/api/exams", post(routes::exams::post_exam))
         .route("/api/exams/{exam_id}", get(routes::exams::get_exam_by_id))
         .route("/api/exams/{exam_id}", put(routes::exams::put_exam))
+        .route(
+            "/api/exams/{exam_id}/seed/staging",
+            put(routes::exams::put_exam_by_id_to_staging),
+        )
         .route("/api/attempts", get(routes::attempts::get_attempts))
         .route(
             "/api/attempts/{attempt_id}",

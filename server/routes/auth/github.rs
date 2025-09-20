@@ -132,7 +132,7 @@ pub async fn github_handler(
             email: "camperbot@freecodecamp.org".to_string(),
         };
         let res = server_state
-            .database
+            .production_database
             .exam_creator_user
             .insert_one(mock_user)
             .await;
@@ -149,7 +149,7 @@ pub async fn github_handler(
 
     // TEMP: User email must be in database
     let user = server_state
-        .database
+        .production_database
         .exam_creator_user
         .find_one(doc! {"email": &email})
         .await?
@@ -160,7 +160,7 @@ pub async fn github_handler(
 
     // Update user picture
     server_state
-        .database
+        .production_database
         .exam_creator_user
         .update_one(
             doc! {"_id": user.id},
@@ -183,7 +183,7 @@ pub async fn github_handler(
     };
 
     server_state
-        .database
+        .production_database
         .exam_creator_session
         .insert_one(&session)
         .await?;

@@ -15,7 +15,8 @@ pub struct EnvVars {
     pub github_client_secret: String,
     pub github_redirect_url: String,
     pub mock_auth: bool,
-    pub mongodb_uri: String,
+    pub mongodb_uri_production: String,
+    pub mongodb_uri_staging: String,
     pub port: u16,
     pub request_body_size_limit: usize,
     pub request_timeout_in_ms: u64,
@@ -113,11 +114,22 @@ impl EnvVars {
             }
         };
 
-        let Ok(mongodb_uri) = var("MONGODB_URI") else {
-            error!("MONGODB_URI not set");
-            panic!("MONGODB_URI required");
+        let Ok(mongodb_uri_production) = var("MONGODB_URI_PRODUCTION") else {
+            error!("MONGODB_URI_PRODUCTION not set");
+            panic!("MONGODB_URI_PRODUCTION required");
         };
-        assert!(!mongodb_uri.is_empty(), "MONGODB_URI must not be empty");
+        assert!(
+            !mongodb_uri_production.is_empty(),
+            "MONGODB_URI_PRODUCTION must not be empty"
+        );
+        let Ok(mongodb_uri_staging) = var("MONGODB_URI_STAGING") else {
+            error!("MONGODB_URI_STAGING not set");
+            panic!("MONGODB_URI_STAGING required");
+        };
+        assert!(
+            !mongodb_uri_staging.is_empty(),
+            "MONGODB_URI_STAGING must not be empty"
+        );
 
         let request_body_size_limit = match std::env::var("REQUEST_BODY_SIZE_LIMIT") {
             Ok(s) => s
@@ -163,7 +175,8 @@ impl EnvVars {
             github_client_secret,
             github_redirect_url,
             mock_auth,
-            mongodb_uri,
+            mongodb_uri_production,
+            mongodb_uri_staging,
             port,
             request_body_size_limit,
             request_timeout_in_ms,

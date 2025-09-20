@@ -22,7 +22,7 @@ pub async fn get_exam_challenges(
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<Vec<prisma::ExamEnvironmentChallenge>>, Error> {
     let mut exam_challenge_cursor = state
-        .database
+        .production_database
         .exam_environment_challenge
         .find(doc! {"examId": exam_id})
         .await?;
@@ -56,7 +56,7 @@ pub async fn put_exam_challenges(
     Json(exam_environment_challenges): Json<Vec<PutExamChallengeBody>>,
 ) -> Result<Json<Vec<prisma::ExamEnvironmentChallenge>>, Error> {
     let existing_exam_challenges: Vec<prisma::ExamEnvironmentChallenge> = state
-        .database
+        .production_database
         .exam_environment_challenge
         .find(doc! {"examId": exam_id})
         .await?
@@ -89,21 +89,21 @@ pub async fn put_exam_challenges(
             .collect();
 
     state
-        .database
+        .production_database
         .exam_environment_challenge
         .delete_many(doc! {"_id": {"$in": exam_challenges_to_delete}})
         .await?;
 
     if !exam_challenge_to_insert.is_empty() {
         state
-            .database
+            .production_database
             .exam_environment_challenge
             .insert_many(exam_challenge_to_insert)
             .await?;
     }
 
     let updated_exam_challenges: Vec<prisma::ExamEnvironmentChallenge> = state
-        .database
+        .production_database
         .exam_environment_challenge
         .find(doc! {"examId": exam_id})
         .await?

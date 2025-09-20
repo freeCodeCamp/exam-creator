@@ -42,8 +42,10 @@ bun run develop:server
 
 Required environment variables:
 
-- `MONGODB_URI`
-  - Cluster with `freecodecamp` database, and `EnvExamTemp` and `ExamCreatorUser` collections
+- `MONGODB_URI_PRODUCTION`
+  - Cluster with `freecodecamp` database for production
+- `MONGODB_URI_STAGING`
+  - Cluster with `freecodecamp` database for staging
 - `GITHUB_CLIENT_ID`
   - GitHub OAuth app id
   - NOTE: Not required if `MOCK_AUTH=true`

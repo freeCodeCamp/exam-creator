@@ -12,7 +12,8 @@ use crate::{
 
 #[derive(Clone)]
 pub struct ServerState {
-    pub database: Database,
+    pub production_database: Database,
+    pub staging_database: Database,
     pub client_sync: Arc<Mutex<ClientSync>>,
     pub key: Key,
     pub env_vars: EnvVars,

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-09-21
+
+## Added
+
+- client: seed exams to staging and production db
+- server: `PUT /api/exams/{exam_id}/seed/staging`
+
 ## [1.2.0] - 2025-09-20
 
 ### Added

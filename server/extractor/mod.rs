@@ -45,7 +45,7 @@ where
         };
 
         let user_session = state
-            .database
+            .production_database
             .exam_creator_session
             .find_one(doc! {"session_id": cookie})
             .await
@@ -59,7 +59,7 @@ where
             .ok_or((StatusCode::UNAUTHORIZED, "no existing session"))?;
 
         let user = state
-            .database
+            .production_database
             .exam_creator_user
             .find_one(doc! {"_id": user_session.user_id})
             .await
@@ -130,7 +130,7 @@ pub async fn ws_handler_users(
         ))?;
 
     let session = state
-        .database
+        .production_database
         .exam_creator_session
         .find_one(doc! { "session_id": cookie})
         .await?
@@ -140,7 +140,7 @@ pub async fn ws_handler_users(
         ))?;
 
     let user = state
-        .database
+        .production_database
         .exam_creator_user
         .find_one(doc! {"_id": session.user_id})
         .await?

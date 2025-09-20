@@ -24,10 +24,14 @@ pub async fn get_attempts(
     _: ExamCreatorUser,
     State(server_state): State<ServerState>,
 ) -> Result<Json<Vec<config::Attempt>>, Error> {
-    let mut exam_attempts = server_state.database.exam_attempt.find(doc! {}).await?;
+    let mut exam_attempts = server_state
+        .production_database
+        .exam_attempt
+        .find(doc! {})
+        .await?;
 
     let exams: Vec<prisma::ExamCreatorExam> = server_state
-        .database
+        .production_database
         .exam_creator_exam
         .find(doc! {})
         .await?
@@ -59,7 +63,7 @@ pub async fn get_attempt_by_id(
     Path(attempt_id): Path<ObjectId>,
 ) -> Result<Json<config::Attempt>, Error> {
     let exam_attempt = server_state
-        .database
+        .production_database
         .exam_attempt
         .find_one(doc! {"_id": attempt_id})
         .await?
@@ -69,7 +73,7 @@ pub async fn get_attempt_by_id(
         ))?;
 
     let exam = server_state
-        .database
+        .production_database
         .exam_creator_exam
         .find_one(doc! {"_id": exam_attempt.exam_id})
         .await?
