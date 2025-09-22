@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.4.1] - 2025-09-22
+
+### Fixed
+
+- server: database environment can be unset
+
 ## [1.4.0] - 2025-09-22
 
 ### Added

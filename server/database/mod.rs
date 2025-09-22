@@ -129,6 +129,9 @@ pub fn database_environment<'a>(state: &'a ServerState, user: &ExamCreatorUser) 
             info!("{}: using production database", user.email);
             &state.production_database
         }
-        _ => panic!("function called in invalid context"),
+        _ => {
+            info!("{}: using production database (default)", user.email);
+            &state.production_database
+        }
     }
 }
