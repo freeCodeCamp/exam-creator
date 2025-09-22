@@ -229,10 +229,10 @@ pub struct AttemptQuestionSetQuestion {
 /// NOTE: Generated exam is assumed to not be needed,
 /// because API ensures attempt only includes answers from assigned generation.
 pub fn construct_attempt(
-    exam: &prisma::ExamCreatorExam,
+    exam: &prisma::ExamEnvironmentExam,
     exam_attempt: &prisma::ExamEnvironmentExamAttempt,
 ) -> Attempt {
-    let prisma::ExamCreatorExam {
+    let prisma::ExamEnvironmentExam {
         id,
         question_sets,
         config,

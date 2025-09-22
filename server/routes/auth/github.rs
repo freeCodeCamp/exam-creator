@@ -22,7 +22,7 @@ use tracing::info;
 use url::Url;
 
 use crate::{
-    database::{ExamCreatorSession, ExamCreatorUser},
+    database::{ExamCreatorSession, ExamCreatorUser, Settings},
     errors::Error,
     state::ServerState,
 };
@@ -130,6 +130,7 @@ pub async fn github_handler(
             github_id: None,
             picture: None,
             email: "camperbot@freecodecamp.org".to_string(),
+            settings: Some(Settings::default()),
         };
         let res = server_state
             .production_database

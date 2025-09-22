@@ -47,64 +47,42 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     let production_client = mongodb::Client::with_options(production_client_options).unwrap();
     let staging_client = mongodb::Client::with_options(staging_client_options).unwrap();
 
+    // Ensure database is defined in URI with `/<database_name>`
+    let production_database = production_client
+        .default_database()
+        .expect("database must be defined in the MONGODB_URI_PRODUCTION URI");
+    let staging_database = staging_client
+        .default_database()
+        .expect("database must be defined in the MONGODB_URI_STAGING URI");
+
     let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(time::Duration::seconds(10)));
 
     let production_database = database::Database {
-        exam_creator_exam: production_client
-            .database("freecodecamp")
-            .collection("ExamCreatorExam"),
-        exam: production_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentExam"),
-        exam_attempt: production_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentExamAttempt"),
-        exam_environment_challenge: production_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentChallenge"),
-        generated_exam: production_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentGeneratedExam"),
-        exam_creator_user: production_client
-            .database("freecodecamp")
-            .collection("ExamCreatorUser"),
-        exam_creator_session: production_client
-            .database("freecodecamp")
-            .collection("ExamCreatorSession"),
-        exam_environment_exam_moderation: production_client
-            .database("freecodecamp")
+        exam_creator_exam: production_database.collection("ExamCreatorExam"),
+        exam: production_database.collection("ExamEnvironmentExam"),
+        exam_attempt: production_database.collection("ExamEnvironmentExamAttempt"),
+        exam_environment_challenge: production_database.collection("ExamEnvironmentChallenge"),
+        generated_exam: production_database.collection("ExamEnvironmentGeneratedExam"),
+        exam_creator_user: production_database.collection("ExamCreatorUser"),
+        exam_creator_session: production_database.collection("ExamCreatorSession"),
+        exam_environment_exam_moderation: production_database
             .collection("ExamEnvironmentExamModeration"),
     };
 
     let staging_database = database::Database {
-        exam_creator_exam: staging_client
-            .database("freecodecamp")
-            .collection("ExamCreatorExam"),
-        exam: staging_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentExam"),
-        exam_attempt: staging_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentExamAttempt"),
-        exam_environment_challenge: staging_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentChallenge"),
-        generated_exam: staging_client
-            .database("freecodecamp")
-            .collection("ExamEnvironmentGeneratedExam"),
+        exam_creator_exam: staging_database.collection("ExamCreatorExam"),
+        exam: staging_database.collection("ExamEnvironmentExam"),
+        exam_attempt: staging_database.collection("ExamEnvironmentExamAttempt"),
+        exam_environment_challenge: staging_database.collection("ExamEnvironmentChallenge"),
+        generated_exam: staging_database.collection("ExamEnvironmentGeneratedExam"),
         // Should not be used
-        exam_creator_user: staging_client
-            .database("freecodecamp")
-            .collection("ExamCreatorUser"),
+        exam_creator_user: staging_database.collection("ExamCreatorUser"),
         // Should not be used
-        exam_creator_session: staging_client
-            .database("freecodecamp")
-            .collection("ExamCreatorSession"),
-        exam_environment_exam_moderation: staging_client
-            .database("freecodecamp")
+        exam_creator_session: staging_database.collection("ExamCreatorSession"),
+        exam_environment_exam_moderation: staging_database
             .collection("ExamEnvironmentExamModeration"),
     };
 
@@ -190,6 +168,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         )
         .route("/api/users", get(routes::users::get_users))
         .route("/api/users/session", get(routes::users::get_session_user))
+        .route(
+            "/api/users/session/settings",
+            put(routes::users::put_user_settings),
+        )
         .route(
             "/api/state/exams/{exam_id}",
             put(routes::discard_exam_state_by_id),

@@ -21,6 +21,8 @@ pub enum Error {
     #[error("{0}")]
     BsonDeserialization(#[from] bson::de::Error),
     #[error("{0}")]
+    BsonSerialization(#[from] bson::ser::Error),
+    #[error("{0}")]
     TimeConversion(#[from] time::error::ConversionRange),
 }
 

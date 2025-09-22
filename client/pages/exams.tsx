@@ -54,6 +54,7 @@ import {
   SeedProductionModal,
   SeedStagingModal,
 } from "../components/seed-modal";
+import { DatabaseStatus } from "../components/database-status";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
@@ -226,6 +227,7 @@ export function Exams() {
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
       <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+        <DatabaseStatus />
         <Button
           colorScheme="teal"
           variant="outline"

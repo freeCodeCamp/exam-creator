@@ -3,7 +3,13 @@ import type {
   ExamEnvironmentChallenge,
   ExamEnvironmentExamModeration,
 } from "@prisma/client";
-import type { Attempt, ClientSync, SessionUser, User } from "../types";
+import type {
+  Attempt,
+  ClientSync,
+  SessionUser,
+  Settings,
+  User,
+} from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
 async function authorizedFetch(
@@ -69,6 +75,9 @@ export async function getState(): Promise<ClientSync> {
           activity: {
             page: new URL(window.location.href),
             lastActive: Date.now(),
+          },
+          settings: {
+            databaseEnvironment: "Staging",
           },
         },
       ],
@@ -200,11 +209,18 @@ export async function getUsers(): Promise<User[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const users = [
+    const users: User[] = [
       {
         name: "Camper Bot",
+        email: "camperbot@freecodecamp.org",
         picture: "https://avatars.githubusercontent.com/u/13561988?v=4",
-        activity: null,
+        activity: {
+          page: new URL(window.location.href),
+          lastActive: Date.now(),
+        },
+        settings: {
+          databaseEnvironment: "Staging",
+        },
       },
     ];
     const res = new Response(JSON.stringify(users));
@@ -221,11 +237,18 @@ export async function getSessionUser(): Promise<SessionUser> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const user = {
+    const user: SessionUser = {
       name: "Camper Bot",
+      email: "camperbot@freecodecamp.org",
       picture: "https://avatars.githubusercontent.com/u/13561988?v=4",
-      activity: null,
+      activity: {
+        lastActive: Date.now(),
+        page: new URL(window.location.href),
+      },
       webSocketToken: "",
+      settings: {
+        databaseEnvironment: "Staging",
+      },
     };
     const res = new Response(JSON.stringify(user));
     return res.json();
@@ -233,7 +256,33 @@ export async function getSessionUser(): Promise<SessionUser> {
 
   const res = await authorizedFetch("/api/users/session");
   const json = await res.json();
-  const deserialized = deserializeToPrisma<SessionUser>(json);
+  // TODO: This breaks { settings: Settings } in User
+  // const deserialized = deserializeToPrisma<SessionUser>(json);
+  // return deserialized;
+  return json;
+}
+
+export async function putUserSettings(
+  newSettings: Settings
+): Promise<Settings> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const settings: Settings = {
+      databaseEnvironment: newSettings.databaseEnvironment,
+    };
+    return settings;
+  }
+
+  const res = await authorizedFetch(`/api/users/session/settings`, {
+    method: "PUT",
+    body: JSON.stringify(serializeFromPrisma(newSettings)),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<Settings>(json);
   return deserialized;
 }
 

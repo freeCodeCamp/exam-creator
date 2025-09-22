@@ -1,7 +1,8 @@
 use mongodb::{Collection, bson::oid::ObjectId};
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
-use crate::state::{Activity, User};
+use crate::state::{Activity, ServerState, User};
 
 pub mod prisma;
 
@@ -19,6 +20,27 @@ pub struct ExamCreatorUser {
     pub github_id: Option<i64>,
     pub picture: Option<String>,
     pub email: String,
+    pub settings: Option<Settings>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Settings {
+    #[serde(rename = "databaseEnvironment")]
+    pub database_environment: DatabaseEnvironment,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum DatabaseEnvironment {
+    Production,
+    Staging,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            database_environment: DatabaseEnvironment::Production,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -55,6 +77,7 @@ impl ExamCreatorUser {
                     page: "/".to_string(),
                     last_active: chrono::Utc::now().timestamp_millis() as usize,
                 },
+                settings: self.settings.clone().unwrap_or_default(),
             }
         }
     }
@@ -93,5 +116,19 @@ impl TryFrom<bson::Document> for prisma::ExamCreatorExam {
         };
 
         Ok(exam_creator_exam)
+    }
+}
+
+pub fn database_environment<'a>(state: &'a ServerState, user: &ExamCreatorUser) -> &'a Database {
+    match user.settings.as_ref().map(|s| &s.database_environment) {
+        Some(DatabaseEnvironment::Staging) => {
+            info!("{}: using staging database", user.email);
+            &state.staging_database
+        }
+        Some(DatabaseEnvironment::Production) => {
+            info!("{}: using production database", user.email);
+            &state.production_database
+        }
+        _ => panic!("function called in invalid context"),
     }
 }

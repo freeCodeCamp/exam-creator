@@ -7,7 +7,7 @@ use tracing::error;
 
 use crate::{
     config::EnvVars,
-    database::{Database, prisma},
+    database::{Database, Settings, prisma},
 };
 
 #[derive(Clone)]
@@ -53,6 +53,7 @@ pub struct User {
     pub email: String,
     pub picture: String,
     pub activity: Activity,
+    pub settings: Settings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,6 +64,7 @@ pub struct SessionUser {
     pub activity: Activity,
     #[serde(rename = "webSocketToken")]
     pub web_socket_token: String,
+    pub settings: Settings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

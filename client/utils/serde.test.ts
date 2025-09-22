@@ -1,4 +1,4 @@
-import { Attempt } from "../types";
+import { Attempt, SessionUser } from "../types";
 import { deserializeToPrisma } from "./serde";
 
 const attempt = {
@@ -2793,4 +2793,77 @@ for (let i = 0; i < questionSets.length; i++) {
       }
     }
   }
+}
+
+// ------
+// SESSION USER TEST
+// ------
+
+const sessionUser: SessionUser = {
+  activity: {
+    lastActive: Date.now(),
+    // @ts-expect-error This is changed
+    page: "/",
+  },
+  email: "camperbot@freecodecamp.org",
+  name: "Camperbot",
+  picture: "",
+  settings: {
+    databaseEnvironment: "Staging",
+  },
+  webSocketToken: "",
+};
+
+// @ts-expect-error TODO: Investigate - probably activity.page being URL
+const deserializedSessionUser: SessionUser = deserializeToPrisma(sessionUser);
+
+if (deserializedSessionUser.email !== sessionUser.email) {
+  throw new Error(
+    `Expected email to be ${sessionUser.email}, but got ${deserializedSessionUser.email}`
+  );
+}
+
+if (deserializedSessionUser.name !== sessionUser.name) {
+  throw new Error(
+    `Expected name to be ${sessionUser.name}, but got ${deserializedSessionUser.name}`
+  );
+}
+
+if (deserializedSessionUser.picture !== sessionUser.picture) {
+  throw new Error(
+    `Expected picture to be ${sessionUser.picture}, but got ${deserializedSessionUser.picture}`
+  );
+}
+
+if (
+  deserializedSessionUser.settings.databaseEnvironment !==
+  sessionUser.settings.databaseEnvironment
+) {
+  throw new Error(
+    `Expected databaseEnvironment to be ${sessionUser.settings.databaseEnvironment}, but got ${deserializedSessionUser.settings.databaseEnvironment}`
+  );
+}
+
+if (deserializedSessionUser.webSocketToken !== sessionUser.webSocketToken) {
+  throw new Error(
+    `Expected webSocketToken to be ${sessionUser.webSocketToken}, but got ${deserializedSessionUser.webSocketToken}`
+  );
+}
+
+const sessionUserLastActive = deserializedSessionUser.activity.lastActive;
+const originalLastActive = sessionUser.activity.lastActive;
+
+// Allow a difference of up to 1000ms to account for any processing delays
+if (Math.abs(sessionUserLastActive - originalLastActive) > 1000) {
+  throw new Error(
+    `Expected lastActive to be approximately ${originalLastActive}, but got ${sessionUserLastActive}`
+  );
+}
+
+if (
+  deserializedSessionUser.activity.page.href !== sessionUser.activity.page.href
+) {
+  throw new Error(
+    `Expected page href to be ${sessionUser.activity.page.href}, but got ${deserializedSessionUser.activity.page.href}`
+  );
 }

@@ -7,7 +7,7 @@ use tower_sessions::Session;
 use tracing::instrument;
 
 use crate::{
-    database::ExamCreatorUser,
+    database::{ExamCreatorUser, Settings},
     errors::Error,
     state::{ServerState, SessionUser, User},
 };
@@ -53,6 +53,7 @@ pub async fn get_session_user(
         email,
         picture,
         activity,
+        settings,
     } = exam_creator_user.to_session(&users);
 
     let session_user = SessionUser {
@@ -61,7 +62,48 @@ pub async fn get_session_user(
         picture,
         activity,
         web_socket_token,
+        settings,
     };
 
     Ok(Json(session_user))
+}
+
+pub async fn put_user_settings(
+    exam_creator_user: ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Json(new_settings): Json<Settings>,
+) -> Result<Json<crate::database::Settings>, Error> {
+    let new_settings = bson::to_bson(&new_settings)?;
+    let _update_result = server_state
+        .production_database
+        .exam_creator_user
+        .update_one(
+            doc! { "_id": exam_creator_user.id },
+            doc! { "$set": { "settings": new_settings } },
+        )
+        .await?;
+
+    let updated_user = server_state
+        .production_database
+        .exam_creator_user
+        .find_one(doc! { "_id": exam_creator_user.id })
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("could not find user after update: {}", exam_creator_user.id),
+        ))?;
+
+    let settings = updated_user.settings.unwrap_or_default();
+
+    // Update state
+    let client_sync = &mut server_state.client_sync.lock().unwrap();
+    if let Some(user) = client_sync
+        .users
+        .iter_mut()
+        .find(|u| u.email == updated_user.email)
+    {
+        user.settings = settings.clone();
+    }
+
+    Ok(Json(settings))
 }

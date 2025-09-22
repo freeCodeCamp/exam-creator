@@ -11,6 +11,7 @@ export interface User {
   email: string;
   picture: string;
   activity: Activity;
+  settings: Settings;
 }
 
 export interface SessionUser extends User {
@@ -25,6 +26,10 @@ export interface Activity {
 export interface ClientSync {
   users: User[];
   exams: ExamCreatorExam[];
+}
+
+export interface Settings {
+  databaseEnvironment: "Production" | "Staging";
 }
 
 type AttemptQuestion = ExamEnvironmentMultipleChoiceQuestion & {

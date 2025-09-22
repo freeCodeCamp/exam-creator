@@ -80,11 +80,13 @@ where
                 page: "/".to_string(),
                 last_active: chrono::Utc::now().timestamp_millis() as usize,
             };
+            let settings = user.settings.clone().unwrap_or_default();
             client_sync.users.push(User {
                 name,
                 email,
                 picture,
                 activity,
+                settings,
             });
         }
 

@@ -24,6 +24,7 @@ import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
+import { DatabaseStatus } from "../components/database-status";
 
 export function Moderations() {
   const { user, logout } = useContext(AuthContext)!;
@@ -61,6 +62,7 @@ export function Moderations() {
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
       <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+        <DatabaseStatus />
         <Button
           colorScheme="teal"
           variant="outline"

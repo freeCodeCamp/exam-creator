@@ -30,6 +30,7 @@ import {
   Tbody,
   Td,
   FormErrorMessage,
+  useToast,
 } from "@chakra-ui/react";
 import { ObjectId } from "bson";
 import { Save } from "lucide-react";
@@ -172,6 +173,7 @@ interface EditExamProps {
 
 function EditExam({ exam: examData }: EditExamProps) {
   const { updateActivity } = useContext(UsersWebSocketContext)!;
+  const toast = useToast();
   const [exam, setExam] = useReducer(examReducer, examData);
   const examEnvironmentChallengesQuery = useQuery({
     queryKey: ["exam-challenge", exam.id],
@@ -198,10 +200,30 @@ function EditExam({ exam: examData }: EditExamProps) {
         putExamEnvironmentChallenges(exam.id, examEnvironmentChallenges),
       ]);
     },
-    onSuccess([examData, examEnvironmentChallengesData], _variables, _context) {
+    onSuccess([examData, examEnvironmentChallengesData]) {
       setExam(examData);
       setExamEnvironmentChallenges(examEnvironmentChallengesData);
+      toast({
+        title: "Exam Saved",
+        description: "Your exam has been saved to the temporary database.",
+        status: "success",
+        duration: 1000,
+        isClosable: true,
+        position: "top-right",
+      });
     },
+    onError(error: Error) {
+      console.error(error);
+      toast({
+        title: "Error Saving Exam",
+        description: error.message || "An error occurred saving exam.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+    },
+    retry: false,
   });
 
   useEffect(() => {

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-09-22
+
+### Added
+
+- client: database environment setting
+- server: `PUT /api/users/session/settings`
+
+### Fixed
+
+- client: toast when exam is saved to temp collection
+
 ## [1.3.1] - 2025-09-21
 
 ### Fixed
