@@ -36,6 +36,39 @@ bun run build
 bun run develop:server
 ```
 
+### Manual Testing Tips
+
+Set the database URIs in the `.env` file as:
+
+```.env
+MONGODB_URI_PRODUCTION=mongodb://127.0.0.1:27017/production?directConnection=true
+MONGODB_URI_STAGING=mongodb://127.0.0.1:27017/staging?directConnection=true
+```
+
+Then, run the following from the specified repos:
+
+#### `freeCodeCamp/freeCodeCamp`
+
+```bash
+pnpm run seed && cd api && pnpm run exam-env:seed
+```
+
+Replicate databases:
+
+```bash
+# outputs to `/dump/freecodecamp`
+mongodump --db freecodecamp
+mongorestore --db production dump/freecodecamp
+mongorestore --db staging dump/freecodecamp
+```
+
+#### `freeCodeCamp/exam-services`
+
+```bash
+# set `moderation-service/.env` to point to `/staging` or `/production` URI
+cd moderation-service && cargo run
+```
+
 ## Flight Manual
 
 ### Config

@@ -70,7 +70,7 @@ Docker build:
 
 Example local dev workflow:
 
-1. Start MongoDB (Atlas cluster or local). Ensure `MONGODB_URI` & `MONGOHQ_URL` (Prisma) env vars.
+1. Start MongoDB (Atlas cluster or local). Ensure `MONGODB_URI_PRODUCTION` and `MONGODB_URI_STAGING`.
 2. `bun install` (or `npm i`).
 3. Terminal A: `cargo run` (server) (set env vars).
 4. Terminal B: `bun run dev` (frontend hot reload).
@@ -80,8 +80,8 @@ Example local dev workflow:
 Required (panic if missing):
 
 - `COOKIE_KEY` (64 bytes) – session encryption/signing key.
-- `MONGODB_URI` – MongoDB connection string (Rust driver).
-- `MONGOHQ_URL` – Prisma datasource URI (MongoDB) for JS client generation.
+- `MONGODB_URI_PRODUCTION` – MongoDB connection string (Rust driver).
+- `MONGODB_URI_STAGING` – MongoDB connection string (Rust driver).
 
 Conditionally required (must exist unless `MOCK_AUTH=true` in debug):
 
@@ -123,10 +123,6 @@ WebSockets:
 
 Primary domain entities (subset):
 
-- `EnvExam` – canonical exam definition (question sets, config, prerequisites, deprecated flag).
-- `EnvGeneratedExam` – snapshot/generation for exam variant served to user.
-- `EnvExamAttempt` – user's attempt referencing generated exam & exam id, with per-question answers and submission times.
-- `EnvQuestionSet` / `EnvMultipleChoiceQuestion` / `EnvAnswer` – structural building blocks.
 - Moderation: `ExamEnvironmentExamModeration` with status (Approved|Denied|Pending) + feedback & timestamps.
 - User: `user` (extensive profile fields + relations to attempts/tokens).
 

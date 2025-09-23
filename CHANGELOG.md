@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- TODO: i64 vs f64 vs Int / Int64 / Double
+
+## [1.5.0] - 2025-09-23
+
+### Added
+
+- client: exam name and passing percent to moderation card
+- client: sql syntax highlighting
+  - Enable all languages
+
 ## [1.4.1] - 2025-09-22
 
 ### Fixed

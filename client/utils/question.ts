@@ -8,6 +8,7 @@ import type {
 import { marked } from "marked";
 import { ObjectId } from "bson";
 import { markedHighlight } from "marked-highlight";
+import Prism from "prismjs";
 
 export function new_question_type(
   t: ExamEnvironmentQuestionType
@@ -111,10 +112,7 @@ export function default_question(): ExamEnvironmentMultipleChoiceQuestion {
 marked.use(
   markedHighlight({
     highlight: (code, lang) => {
-      // Use the global Prism instance loaded by the script tag
-      const Prism = window.Prism;
-
-      if (Prism && lang && Prism.languages[lang]) {
+      if (lang && Prism.languages[lang]) {
         return Prism.highlight(code, Prism.languages[lang], String(lang));
       } else {
         return code;
