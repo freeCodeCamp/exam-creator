@@ -19,7 +19,7 @@ import { useContext, useEffect } from "react";
 
 import { rootRoute } from "./root";
 import { ModerationCard } from "../components/moderation-card";
-import { getModerations } from "../utils/fetch";
+import { getAttemptById, getModerations } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
@@ -38,7 +38,15 @@ export function Moderations() {
   const moderationsQuery = useQuery({
     queryKey: ["moderations"],
     enabled: !!user,
-    queryFn: () => getModerations(),
+    queryFn: async () => {
+      const moderations = await getModerations();
+      const attempts = [];
+      for (const moderation of moderations) {
+        const attempt = await getAttemptById(moderation.examAttemptId);
+        attempts.push({ ...moderation, config: attempt.config });
+      }
+      return attempts;
+    },
     retry: false,
   });
 

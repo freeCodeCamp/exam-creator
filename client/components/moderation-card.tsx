@@ -17,10 +17,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { useContext } from "react";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
-import { ExamEnvironmentExamModeration } from "@prisma/client";
+import {
+  ExamEnvironmentConfig,
+  ExamEnvironmentExamModeration,
+} from "@prisma/client";
 
 interface ModerationCardProps {
-  moderation: ExamEnvironmentExamModeration;
+  moderation: ExamEnvironmentExamModeration & { config: ExamEnvironmentConfig };
 }
 
 export function ModerationCard({ moderation }: ModerationCardProps) {
@@ -74,7 +77,7 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
               noOfLines={1}
               maxW="80%"
             >
-              {moderation.id}
+              {moderation.config.name}
             </Text>
             <Badge
               fontSize={"1em"}
@@ -90,44 +93,52 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
               {moderation.status}
             </Badge>
           </Flex>
+          <Text color="gray.400" fontSize="sm">
+            {moderation.id}
+          </Text>
         </CardHeader>
         <CardBody pt={2}>
-          <HStack spacing={-2}>
-            {usersError ? (
-              <Text color="red.300">{usersError.message}</Text>
-            ) : editingUsers.length === 0 ? (
-              <Text color="gray.400" fontSize="sm">
-                No one editing
-              </Text>
-            ) : (
-              editingUsers.slice(0, 5).map((user, idx) => (
-                <Tooltip label={user.name} key={user.name}>
-                  <Avatar
-                    src={user.picture}
-                    name={user.name}
-                    size="sm"
-                    border="2px solid"
-                    borderColor={cardBg}
-                    zIndex={5 - idx}
-                    ml={idx === 0 ? 0 : -2}
-                    boxShadow="md"
-                  />
-                </Tooltip>
-              ))
-            )}
-            {editingUsers.length > 5 && (
-              <Avatar
-                size="sm"
-                bg="gray.700"
-                color="gray.200"
-                ml={-2}
-                zIndex={0}
-                name={`+${editingUsers.length - 5} more`}
-              >
-                +{editingUsers.length - 5}
-              </Avatar>
-            )}
-          </HStack>
+          <Flex align="center" justify={"space-between"}>
+            <HStack spacing={-2}>
+              {usersError ? (
+                <Text color="red.300">{usersError.message}</Text>
+              ) : editingUsers.length === 0 ? (
+                <Text color="gray.400" fontSize="sm">
+                  No one editing
+                </Text>
+              ) : (
+                editingUsers.slice(0, 5).map((user, idx) => (
+                  <Tooltip label={user.name} key={user.name}>
+                    <Avatar
+                      src={user.picture}
+                      name={user.name}
+                      size="sm"
+                      border="2px solid"
+                      borderColor={cardBg}
+                      zIndex={5 - idx}
+                      ml={idx === 0 ? 0 : -2}
+                      boxShadow="md"
+                    />
+                  </Tooltip>
+                ))
+              )}
+              {editingUsers.length > 5 && (
+                <Avatar
+                  size="sm"
+                  bg="gray.700"
+                  color="gray.200"
+                  ml={-2}
+                  zIndex={0}
+                  name={`+${editingUsers.length - 5} more`}
+                >
+                  +{editingUsers.length - 5}
+                </Avatar>
+              )}
+            </HStack>
+            <Text color="gray.400" fontSize="sm" ml={2}>
+              Passing Percent: {moderation.config.passingPercent}
+            </Text>
+          </Flex>
           <VStack
             align="start"
             spacing={1}
