@@ -7,7 +7,7 @@ use tower_sessions::Session;
 use tracing::instrument;
 
 use crate::{
-    database::{ExamCreatorUser, Settings},
+    database::prisma,
     errors::Error,
     state::{ServerState, SessionUser, User},
 };
@@ -15,7 +15,7 @@ use crate::{
 /// Get all users online (in state)
 #[instrument(skip_all, err(Debug))]
 pub async fn get_users(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
 ) -> Result<Json<Vec<User>>, Error> {
     let users = &state.client_sync.lock().unwrap().users;
@@ -26,7 +26,7 @@ pub async fn get_users(
 /// Get current session user
 #[instrument(skip_all, err(Debug))]
 pub async fn get_session_user(
-    exam_creator_user: ExamCreatorUser,
+    exam_creator_user: prisma::ExamCreatorUser,
     session: Session,
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
@@ -69,10 +69,10 @@ pub async fn get_session_user(
 }
 
 pub async fn put_user_settings(
-    exam_creator_user: ExamCreatorUser,
+    exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,
-    Json(new_settings): Json<Settings>,
-) -> Result<Json<crate::database::Settings>, Error> {
+    Json(new_settings): Json<prisma::ExamCreatorUserSettings>,
+) -> Result<Json<prisma::ExamCreatorUserSettings>, Error> {
     let new_settings = mongodb::bson::serialize_to_bson(&new_settings)?;
     let _update_result = server_state
         .production_database

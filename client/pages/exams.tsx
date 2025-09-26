@@ -221,7 +221,7 @@ export function Exams() {
 
   const usersOnPage = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath.startsWith("/exams");
+    return usersPath?.startsWith("/exams");
   });
 
   return (
@@ -273,7 +273,7 @@ export function Exams() {
                 usersOnPage.slice(0, 5).map((user, idx) => (
                   <Tooltip label={user.name} key={user.email}>
                     <Avatar
-                      src={user.picture}
+                      src={user.picture ?? undefined}
                       name={user.name}
                       size="md"
                       border="2px solid"

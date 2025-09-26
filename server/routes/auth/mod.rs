@@ -4,14 +4,14 @@ use http::StatusCode;
 use mongodb::bson::doc;
 use tracing::instrument;
 
-use crate::{database::ExamCreatorUser, errors::Error, state::ServerState};
+use crate::{database::prisma, errors::Error, state::ServerState};
 
 pub mod github;
 
 /// Logs the user out by deleting the db session(s), and unsetting the sid
 #[instrument(skip_all, err(Debug))]
 pub async fn delete_logout(
-    user: ExamCreatorUser,
+    user: prisma::ExamCreatorUser,
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
 ) -> Result<PrivateCookieJar, Error> {

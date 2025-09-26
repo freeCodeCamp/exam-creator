@@ -37,7 +37,7 @@ export function UsersWebSocketProvider({
           ...p,
           activity: {
             ...p.activity,
-            page: new URL(p.activity.page, window.location.origin),
+            page: new URL(p.activity?.page || "", window.location.origin),
           },
         }));
         setUsers(userData);

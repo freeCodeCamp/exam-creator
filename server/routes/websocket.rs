@@ -8,7 +8,7 @@ use tokio::sync::broadcast;
 use tracing::info;
 
 use crate::{
-    database::ExamCreatorUser,
+    database::prisma,
     state::{ServerState, SocketEvents, remove_user, set_user_activity},
 };
 
@@ -18,7 +18,7 @@ static _EXAM_ROOMS: Lazy<Mutex<HashMap<String, broadcast::Sender<String>>>> =
 
 pub async fn _handle_exam_ws(
     socket: WebSocket,
-    auth_user: ExamCreatorUser,
+    auth_user: prisma::ExamCreatorUser,
     state: ServerState,
     exam_id: String,
 ) {
@@ -82,7 +82,11 @@ pub async fn _handle_exam_ws(
     );
 }
 
-pub async fn handle_users_ws(socket: WebSocket, auth_user: ExamCreatorUser, state: ServerState) {
+pub async fn handle_users_ws(
+    socket: WebSocket,
+    auth_user: prisma::ExamCreatorUser,
+    state: ServerState,
+) {
     let (mut sender, mut receiver) = socket.split();
     let client_sync = state.client_sync.clone();
 

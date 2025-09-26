@@ -12,45 +12,45 @@ pub struct DocId {
     pub id: ObjectId,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ExamCreatorUser {
-    #[serde(rename = "_id")]
-    pub id: ObjectId,
-    pub name: String,
-    pub github_id: Option<i64>,
-    pub picture: Option<String>,
-    pub email: String,
-    pub settings: Option<Settings>,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct ExamCreatorUser {
+//     #[serde(rename = "_id")]
+//     pub id: ObjectId,
+//     pub name: String,
+//     pub github_id: Option<i64>,
+//     pub picture: Option<String>,
+//     pub email: String,
+//     pub settings: Option<Settings>,
+// }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Settings {
-    #[serde(rename = "databaseEnvironment")]
-    pub database_environment: DatabaseEnvironment,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct Settings {
+//     #[serde(rename = "databaseEnvironment")]
+//     pub database_environment: DatabaseEnvironment,
+// }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum DatabaseEnvironment {
-    Production,
-    Staging,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub enum DatabaseEnvironment {
+//     Production,
+//     Staging,
+// }
 
-impl Default for Settings {
-    fn default() -> Self {
-        Settings {
-            database_environment: DatabaseEnvironment::Production,
-        }
-    }
-}
+// impl Default for Settings {
+//     fn default() -> Self {
+//         Settings {
+//             database_environment: DatabaseEnvironment::Production,
+//         }
+//     }
+// }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ExamCreatorSession {
-    #[serde(rename = "_id")]
-    pub id: ObjectId,
-    pub user_id: ObjectId,
-    pub session_id: String,
-    pub expires_at: mongodb::bson::DateTime,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct ExamCreatorSession {
+//     #[serde(rename = "_id")]
+//     pub id: ObjectId,
+//     pub user_id: ObjectId,
+//     pub session_id: String,
+//     pub expires_at: mongodb::bson::DateTime,
+// }
 
 #[derive(Clone, Debug)]
 pub struct Database {
@@ -59,12 +59,12 @@ pub struct Database {
     pub exam_environment_challenge: Collection<prisma::ExamEnvironmentChallenge>,
     pub exam_attempt: Collection<prisma::ExamEnvironmentExamAttempt>,
     pub generated_exam: Collection<prisma::ExamEnvironmentGeneratedExam>,
-    pub exam_creator_user: Collection<ExamCreatorUser>,
-    pub exam_creator_session: Collection<ExamCreatorSession>,
+    pub exam_creator_user: Collection<prisma::ExamCreatorUser>,
+    pub exam_creator_session: Collection<prisma::ExamCreatorSession>,
     pub exam_environment_exam_moderation: Collection<prisma::ExamEnvironmentExamModeration>,
 }
 
-impl ExamCreatorUser {
+impl prisma::ExamCreatorUser {
     pub fn to_session(&self, users: &Vec<User>) -> User {
         if let Some(user) = users.iter().find(|u| u.email == self.email) {
             user.to_owned()
@@ -119,13 +119,16 @@ impl TryFrom<bson::Document> for prisma::ExamCreatorExam {
     }
 }
 
-pub fn database_environment<'a>(state: &'a ServerState, user: &ExamCreatorUser) -> &'a Database {
+pub fn database_environment<'a>(
+    state: &'a ServerState,
+    user: &prisma::ExamCreatorUser,
+) -> &'a Database {
     match user.settings.as_ref().map(|s| &s.database_environment) {
-        Some(DatabaseEnvironment::Staging) => {
+        Some(prisma::ExamCreatorDatabaseEnvironment::Staging) => {
             info!("{}: using staging database", user.email);
             &state.staging_database
         }
-        Some(DatabaseEnvironment::Production) => {
+        Some(prisma::ExamCreatorDatabaseEnvironment::Production) => {
             info!("{}: using production database", user.email);
             &state.production_database
         }

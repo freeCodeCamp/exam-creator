@@ -144,7 +144,7 @@ function UsersEditing() {
           filteredUsers.map((user, idx) => (
             <Tooltip label={user.name} key={user.email}>
               <Avatar
-                src={user.picture}
+                src={user.picture ?? undefined}
                 name={user.name}
                 textColor={avatarTextColor}
                 size="sm"

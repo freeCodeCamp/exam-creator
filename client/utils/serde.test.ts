@@ -2836,11 +2836,11 @@ if (deserializedSessionUser.picture !== sessionUser.picture) {
 }
 
 if (
-  deserializedSessionUser.settings.databaseEnvironment !==
-  sessionUser.settings.databaseEnvironment
+  deserializedSessionUser.settings?.databaseEnvironment !==
+  sessionUser.settings?.databaseEnvironment
 ) {
   throw new Error(
-    `Expected databaseEnvironment to be ${sessionUser.settings.databaseEnvironment}, but got ${deserializedSessionUser.settings.databaseEnvironment}`
+    `Expected databaseEnvironment to be ${sessionUser.settings?.databaseEnvironment}, but got ${deserializedSessionUser.settings?.databaseEnvironment}`
   );
 }
 
@@ -2850,8 +2850,8 @@ if (deserializedSessionUser.webSocketToken !== sessionUser.webSocketToken) {
   );
 }
 
-const sessionUserLastActive = deserializedSessionUser.activity.lastActive;
-const originalLastActive = sessionUser.activity.lastActive;
+const sessionUserLastActive = deserializedSessionUser.activity?.lastActive ?? 0;
+const originalLastActive = sessionUser.activity?.lastActive ?? 0;
 
 // Allow a difference of up to 1000ms to account for any processing delays
 if (Math.abs(sessionUserLastActive - originalLastActive) > 1000) {

@@ -13,13 +13,13 @@ use tower_sessions::Session;
 use tracing::{error, info, warn};
 
 use crate::{
-    database::ExamCreatorUser,
+    database::prisma,
     errors::Error,
     routes::websocket::handle_users_ws,
     state::{Activity, ServerState, User},
 };
 
-impl<S> FromRequestParts<S> for ExamCreatorUser
+impl<S> FromRequestParts<S> for prisma::ExamCreatorUser
 where
     S: Send + Sync,
     ServerState: FromRef<S>,

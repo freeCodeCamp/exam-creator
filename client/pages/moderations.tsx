@@ -64,7 +64,7 @@ export function Moderations() {
   const usersOnPage = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
     // TODO: This might need to be `/attempts | /moderations`
-    return usersPath.startsWith("/moderations");
+    return usersPath?.startsWith("/moderations");
   });
 
   return (
@@ -116,7 +116,7 @@ export function Moderations() {
                 usersOnPage.slice(0, 5).map((user, idx) => (
                   <Tooltip label={user.name} key={user.email}>
                     <Avatar
-                      src={user.picture}
+                      src={user.picture ?? undefined}
                       name={user.name}
                       size="md"
                       border="2px solid"

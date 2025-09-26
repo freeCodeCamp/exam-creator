@@ -21,11 +21,7 @@ use tower_sessions::Session;
 use tracing::info;
 use url::Url;
 
-use crate::{
-    database::{ExamCreatorSession, ExamCreatorUser, Settings},
-    errors::Error,
-    state::ServerState,
-};
+use crate::{database::prisma, errors::Error, state::ServerState};
 
 type GitHubClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
@@ -123,14 +119,15 @@ pub async fn github_handler(
 
     // If mocking auth, add camperbot user to database
     if server_state.env_vars.mock_auth {
-        let mock_user = ExamCreatorUser {
+        let mock_user = prisma::ExamCreatorUser {
             id: ObjectId::parse_str("685d2e1c178564e7b9045589")
                 .expect("Unreachable. development static string"),
             name: "Camperbot".to_string(),
             github_id: None,
             picture: None,
             email: "camperbot@freecodecamp.org".to_string(),
-            settings: Some(Settings::default()),
+            settings: Some(prisma::ExamCreatorUserSettings::default()),
+            version: 1,
         };
         let res = server_state
             .production_database
@@ -176,11 +173,12 @@ pub async fn github_handler(
     let expires_at = expires_at.into();
     let session_id = access_token;
     // Create session
-    let session = ExamCreatorSession {
+    let session = prisma::ExamCreatorSession {
         id: ObjectId::new(),
         user_id: user.id,
         session_id,
         expires_at,
+        version: 1,
     };
 
     server_state

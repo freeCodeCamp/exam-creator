@@ -1,17 +1,15 @@
 import type {
   ExamCreatorExam,
+  ExamCreatorUser,
   ExamEnvironmentExamAttempt,
   ExamEnvironmentMultipleChoiceQuestion,
   ExamEnvironmentMultipleChoiceQuestionAttempt,
   ExamEnvironmentQuestionSet,
 } from "@prisma/client";
 
-export interface User {
-  name: string;
-  email: string;
-  picture: string;
+export interface User
+  extends Omit<ExamCreatorUser, "id" | "github_id" | "version"> {
   activity: Activity;
-  settings: Settings;
 }
 
 export interface SessionUser extends User {
@@ -32,18 +30,18 @@ export interface Settings {
   databaseEnvironment: "Production" | "Staging";
 }
 
-type AttemptQuestion = ExamEnvironmentMultipleChoiceQuestion & {
-  selected: ExamEnvironmentMultipleChoiceQuestionAttempt["answers"];
-  submissionTimeInMS: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTimeInMS"];
-  submissionTime: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTime"];
-};
-type AttemptQuestionSet = ExamEnvironmentQuestionSet & {
-  questions: Array<AttemptQuestion>;
-};
-export type Attempt = ExamCreatorExam &
-  ExamEnvironmentExamAttempt & {
-    questionSets: Array<AttemptQuestionSet>;
-  };
+export type Attempt = Omit<ExamCreatorExam, "questionSets"> & {
+  questionSets: Array<
+    Omit<ExamEnvironmentQuestionSet, "questions"> & {
+      questions: Array<
+        ExamEnvironmentMultipleChoiceQuestion &
+          Omit<ExamEnvironmentMultipleChoiceQuestionAttempt, "answers"> & {
+            selected: ExamEnvironmentMultipleChoiceQuestionAttempt["answers"];
+          }
+      >;
+    }
+  >;
+} & Omit<ExamEnvironmentExamAttempt, "questionSets">;
 
 // Replace all levels of `id` with _id: { $oid: string }
 // type OmitId<T> = {

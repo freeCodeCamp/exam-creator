@@ -9,11 +9,7 @@ use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use tracing::{info, instrument};
 
-use crate::{
-    database::{ExamCreatorUser, prisma},
-    errors::Error,
-    state::ServerState,
-};
+use crate::{database::prisma, errors::Error, state::ServerState};
 
 pub mod attempts;
 pub mod auth;
@@ -25,7 +21,7 @@ pub mod websocket;
 
 #[instrument(skip_all, err(Debug))]
 pub async fn discard_exam_state_by_id(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<prisma::ExamCreatorExam>, Error> {

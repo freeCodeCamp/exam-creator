@@ -8,18 +8,14 @@ use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use tracing::{info, instrument};
 
-use crate::{
-    database::{ExamCreatorUser, prisma},
-    errors::Error,
-    state::ServerState,
-};
+use crate::{database::prisma, errors::Error, state::ServerState};
 
 /// Get all exams
 ///
 /// The `questionSets` field is removed as not needed, but added in the typing for serialization
 #[instrument(skip_all, err(Debug))]
 pub async fn get_exams(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
 ) -> Result<Json<Vec<prisma::ExamCreatorExam>>, Error> {
     let mut exams_cursor = state
@@ -42,7 +38,7 @@ pub async fn get_exams(
 
 #[instrument(skip_all, err(Debug))]
 pub async fn get_exam_by_id(
-    _auth_user: ExamCreatorUser,
+    _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<prisma::ExamCreatorExam>, Error> {
@@ -75,7 +71,7 @@ pub async fn get_exam_by_id(
 /// Create an exam
 #[instrument(skip_all, err(Debug))]
 pub async fn post_exam(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
 ) -> Result<Json<prisma::ExamCreatorExam>, Error> {
     info!("post_exam");
@@ -93,7 +89,7 @@ pub async fn post_exam(
 /// Update an exam
 #[instrument(skip_all, err(Debug))]
 pub async fn put_exam(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
     Json(exam): Json<prisma::ExamCreatorExam>,
@@ -123,7 +119,7 @@ pub async fn put_exam(
 /// NOTE: Staging has a special case where the `ExamEnvironmentChallenge` documents need to be copied over
 #[instrument(skip_all, err(Debug))]
 pub async fn put_exam_by_id_to_staging(
-    _auth_user: ExamCreatorUser,
+    _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
 ) -> Result<(), Error> {

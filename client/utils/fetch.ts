@@ -62,37 +62,6 @@ export async function discardExamStateById(
   return deserialized;
 }
 
-export async function getState(): Promise<ClientSync> {
-  if (import.meta.env.VITE_MOCK_DATA === "true") {
-    await delayForTesting(300);
-
-    const clientSync: ClientSync = {
-      users: [
-        {
-          name: "Camper Bot",
-          email: "camperbot@freecodecamp.org",
-          picture: "https://avatars.githubusercontent.com/u/13561988?v=4",
-          activity: {
-            page: new URL(window.location.href),
-            lastActive: Date.now(),
-          },
-          settings: {
-            databaseEnvironment: "Staging",
-          },
-        },
-      ],
-      exams: [],
-    };
-
-    return clientSync;
-  }
-
-  const res = await authorizedFetch("/api/state");
-  const json = await res.json();
-  const deserialized = deserializeToPrisma<ClientSync>(json);
-  return deserialized;
-}
-
 // Update the state on the server
 export async function putState(state: ClientSync): Promise<ClientSync> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {

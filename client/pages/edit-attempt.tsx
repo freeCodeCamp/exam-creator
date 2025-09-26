@@ -137,7 +137,7 @@ function UsersEditing() {
           filteredUsers.map((user, idx) => (
             <Tooltip label={user.name} key={user.email}>
               <Avatar
-                src={user.picture}
+                src={user.picture ?? undefined}
                 name={user.name}
                 textColor={avatarTextColor}
                 size="sm"
@@ -175,13 +175,11 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
   const timeToAnswers = flattened.map((q, i) => {
     const submissionTimeInMS =
-      // @ts-expect-error Look into
       q.submissionTime?.getTime() ?? q.submissionTimeInMS ?? 0;
     const secondsSinceStart = (submissionTimeInMS - startTimeInMS) / 1000;
     // Determine if the answer is correct
     const isCorrect = q.answers
       .filter((a) => a.isCorrect)
-      // @ts-expect-error Look into
       .every((a) => q.selected && q.selected.includes(a.id));
     return {
       name: i + 1,
@@ -191,21 +189,16 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   });
 
   const answered = flattened.filter((f) => {
-    // @ts-expect-error Look into
     return !!f.submissionTime && !!f.submissionTimeInMS;
   }).length;
   const correct = flattened.filter((f) => {
-    return (
-      f.answers
-        .filter((a) => a.isCorrect)
-        // @ts-expect-error Look into
-        .every((a) => f.selected.includes(a.id))
-    );
+    return f.answers
+      .filter((a) => a.isCorrect)
+      .every((a) => f.selected.includes(a.id));
   }).length;
   const lastSubmission = Math.max(
     ...flattened.map((f) => {
-      // @ts-expect-error Look into
-      return f.submissionTime ?? f.submissionTimeInMS ?? 0;
+      return f.submissionTime?.getTime() ?? f.submissionTimeInMS ?? 0;
     })
   );
   const timeToComplete = (lastSubmission - startTimeInMS) / 1000;

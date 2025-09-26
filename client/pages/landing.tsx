@@ -45,9 +45,9 @@ export function Landing() {
   }, []);
 
   const usersOnAttempts =
-    users.filter((u) => u.activity.page.pathname.startsWith("/attempt")) ?? [];
+    users.filter((u) => u.activity.page.pathname?.startsWith("/attempt")) ?? [];
   const usersOnExams =
-    users.filter((u) => u.activity.page.pathname.startsWith("/exam")) ?? [];
+    users.filter((u) => u.activity.page.pathname?.startsWith("/exam")) ?? [];
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
@@ -95,7 +95,7 @@ export function Landing() {
                 users.slice(0, 5).map((user, idx) => (
                   <Tooltip label={user.name} key={user.email}>
                     <Avatar
-                      src={user.picture}
+                      src={user.picture ?? undefined}
                       name={user.name}
                       size="md"
                       border="2px solid"

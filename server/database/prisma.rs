@@ -12,6 +12,10 @@ prisma_rust_schema::import_types!(
     include = [
         "ExamEnvironmentExam",
         "ExamCreatorExam",
+        "ExamCreatorUser",
+        "ExamCreatorUserSettings",
+        "ExamCreatorDatabaseEnvironment",
+        "ExamCreatorSession",
         "ExamEnvironmentQuestionSet",
         "ExamEnvironmentMultipleChoiceQuestion",
         "ExamEnvironmentAudio",
@@ -64,5 +68,13 @@ impl Default for ExamEnvironmentConfig {
 impl From<ExamCreatorExam> for bson::Bson {
     fn from(exam: ExamCreatorExam) -> Self {
         mongodb::bson::serialize_to_bson(&exam).unwrap_or(bson::Bson::Null)
+    }
+}
+
+impl Default for ExamCreatorUserSettings {
+    fn default() -> Self {
+        Self {
+            database_environment: ExamCreatorDatabaseEnvironment::Production,
+        }
     }
 }

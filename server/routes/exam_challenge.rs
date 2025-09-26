@@ -8,16 +8,12 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use crate::{
-    database::{ExamCreatorUser, prisma},
-    errors::Error,
-    state::ServerState,
-};
+use crate::{database::prisma, errors::Error, state::ServerState};
 
 /// Get all exam-challenge mappings for the given exam id.
 #[instrument(skip_all, err(Debug))]
 pub async fn get_exam_challenges(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<Vec<prisma::ExamEnvironmentChallenge>>, Error> {
@@ -50,7 +46,7 @@ pub struct PutExamChallengeBody {
 /// TODO: Use `x_many` queries, and fewer ops
 #[instrument(skip_all, err(Debug))]
 pub async fn put_exam_challenges(
-    _: ExamCreatorUser,
+    _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
     Json(exam_environment_challenges): Json<Vec<PutExamChallengeBody>>,

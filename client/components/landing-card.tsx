@@ -56,7 +56,7 @@ export function LandingCard({ filteredUsers, children }: LandingCardProps) {
             filteredUsers.slice(0, 5).map((user, idx) => (
               <Tooltip label={user.name} key={user.name}>
                 <Avatar
-                  src={user.picture}
+                  src={user.picture ?? undefined}
                   name={user.name}
                   size="sm"
                   border="2px solid"
