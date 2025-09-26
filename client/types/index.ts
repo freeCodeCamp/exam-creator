@@ -34,7 +34,8 @@ export interface Settings {
 
 type AttemptQuestion = ExamEnvironmentMultipleChoiceQuestion & {
   selected: ExamEnvironmentMultipleChoiceQuestionAttempt["answers"];
-  submissionTime: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTimeInMS"];
+  submissionTimeInMS: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTimeInMS"];
+  submissionTime: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTime"];
 };
 type AttemptQuestionSet = ExamEnvironmentQuestionSet & {
   questions: Array<AttemptQuestion>;

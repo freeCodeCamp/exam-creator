@@ -73,7 +73,7 @@ pub async fn put_user_settings(
     State(server_state): State<ServerState>,
     Json(new_settings): Json<Settings>,
 ) -> Result<Json<crate::database::Settings>, Error> {
-    let new_settings = bson::to_bson(&new_settings)?;
+    let new_settings = mongodb::bson::serialize_to_bson(&new_settings)?;
     let _update_result = server_state
         .production_database
         .exam_creator_user

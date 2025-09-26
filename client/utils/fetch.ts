@@ -429,6 +429,24 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
     attempt.questionSets[2].questions[2].submissionTimeInMS =
       startTimeInMS + 25_000 * 7;
 
+    const startTime = new Date();
+    attempt.startTime = startTime;
+    attempt.questionSets[0].questions[0].submissionTime = new Date(
+      startTime.getTime() + 25_000
+    );
+    attempt.questionSets[1].questions[0].submissionTime = new Date(
+      startTime.getTime() + 25_000 * 2
+    );
+    attempt.questionSets[2].questions[0].submissionTime = new Date(
+      startTime.getTime() + 25_000 * 4
+    );
+    attempt.questionSets[2].questions[1].submissionTime = new Date(
+      startTime.getTime() + 25_000 * 4.5
+    );
+    attempt.questionSets[2].questions[2].submissionTime = new Date(
+      startTime.getTime() + 25_000 * 7
+    );
+
     return attempt;
   }
 
@@ -456,7 +474,12 @@ export async function getExamChallengeByExamId(
     const exam = examData.at(0)!;
 
     return [
-      { id: exam._id.$oid, examId: exam._id.$oid, challengeId: exam._id.$oid },
+      {
+        id: exam._id.$oid,
+        examId: exam._id.$oid,
+        challengeId: exam._id.$oid,
+        version: 1,
+      },
     ];
   }
 

@@ -511,7 +511,7 @@ function EditExam({ exam: examData }: EditExamProps) {
                       ) {
                         setExamEnvironmentChallenges((prev) => [
                           ...prev,
-                          { examId: exam.id, challengeId: value },
+                          { examId: exam.id, challengeId: value, version: 1 },
                         ]);
                         setChallengeInput("");
                       }

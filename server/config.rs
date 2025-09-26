@@ -187,6 +187,7 @@ impl EnvVars {
     }
 }
 
+#[serde_with::serde_as]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Attempt {
     id: ObjectId,
@@ -195,8 +196,9 @@ pub struct Attempt {
     #[serde(rename = "questionSets")]
     question_sets: Vec<AttemptQuestionSet>,
     config: prisma::ExamEnvironmentConfig,
-    #[serde(rename = "startTimeInMS")]
-    start_time_in_m_s: i64,
+    #[serde(rename = "startTime")]
+    #[serde_as(as = "bson::serde_helpers::datetime::AsRfc3339String")]
+    start_time: mongodb::bson::DateTime,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -217,8 +219,8 @@ pub struct AttemptQuestionSetQuestion {
     audio: Option<prisma::ExamEnvironmentAudio>,
     answers: Vec<prisma::ExamEnvironmentAnswer>,
     selected: Vec<ObjectId>,
-    #[serde(rename = "submissionTimeInMS")]
-    submission_time_in_m_s: i64,
+    #[serde(rename = "submissionTime")]
+    submission_time: mongodb::bson::DateTime,
 }
 
 /// Constructs an `Attempt`:
@@ -281,7 +283,11 @@ pub fn construct_attempt(
             };
 
             let selected = attempt_question.answers.clone();
-            let submission_time = attempt_question.submission_time_in_m_s;
+            let submission_time = if let Some(submission_time) = attempt_question.submission_time {
+                submission_time
+            } else {
+                mongodb::bson::DateTime::from_millis(attempt_question.submission_time_in_m_s as i64)
+            };
 
             let attempt_question_set_question = AttemptQuestionSetQuestion {
                 id: id.clone(),
@@ -291,7 +297,7 @@ pub fn construct_attempt(
                 audio: audio.clone(),
                 answers: answers.clone(),
                 selected,
-                submission_time_in_m_s: submission_time,
+                submission_time,
             };
 
             attempt_questions.push(attempt_question_set_question);
@@ -307,13 +313,19 @@ pub fn construct_attempt(
         attempt_question_sets.push(attempt_question_set);
     }
 
+    let start_time = if let Some(start_time) = exam_attempt.start_time {
+        start_time
+    } else {
+        mongodb::bson::DateTime::from_millis(exam_attempt.start_time_in_m_s as i64)
+    };
+
     let attempt = Attempt {
         id: *id,
         prerequisites: prerequisites.clone(),
         deprecated: *deprecated,
         question_sets: attempt_question_sets,
         config: config.clone(),
-        start_time_in_m_s: exam_attempt.start_time_in_m_s,
+        start_time,
     };
 
     attempt

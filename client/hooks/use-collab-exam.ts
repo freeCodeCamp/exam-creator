@@ -32,6 +32,7 @@ export function useCollabExam(examId: string, initialExam: ExamCreatorExam) {
   const sendExamUpdate = (nextExam: ExamCreatorExam) => {
     setExam(nextExam);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    // @ts-expect-error Nodejs type used for some reason
     debounceRef.current = setTimeout(() => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(

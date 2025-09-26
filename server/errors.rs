@@ -17,11 +17,9 @@ pub enum Error {
     #[error("{0}")]
     TowerSessions(#[from] tower_sessions::session::Error),
     #[error("{0}")]
-    BsonAccess(#[from] bson::document::ValueAccessError),
+    BsonAccess(#[from] mongodb::bson::error::ValueAccessErrorKind),
     #[error("{0}")]
-    BsonDeserialization(#[from] bson::de::Error),
-    #[error("{0}")]
-    BsonSerialization(#[from] bson::ser::Error),
+    BsonSerialization(#[from] mongodb::bson::error::Error),
     #[error("{0}")]
     TimeConversion(#[from] time::error::ConversionRange),
 }

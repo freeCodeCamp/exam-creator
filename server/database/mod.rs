@@ -89,22 +89,22 @@ impl TryFrom<bson::Document> for prisma::ExamCreatorExam {
     type Error = crate::errors::Error;
     fn try_from(value: bson::Document) -> Result<Self, Self::Error> {
         let id = value.get_object_id("_id")?;
-        let question_sets = bson::from_bson(
+        let question_sets = bson::deserialize_from_bson(
             value
                 .get("questionSets")
                 .unwrap_or(&bson::Bson::Array(vec![]))
                 .clone(),
         )
         .unwrap_or_default();
-        let config = bson::from_document(value.get_document("config")?.clone())?;
-        let prerequisites = bson::from_bson(
+        let config = bson::deserialize_from_document(value.get_document("config")?.clone())?;
+        let prerequisites = bson::deserialize_from_bson(
             value
                 .get("prerequisites")
                 .unwrap_or(&bson::Bson::Array(vec![]))
                 .clone(),
         )?;
         let deprecated = value.get_bool("deprecated")?;
-        let version = value.get_i64("version")?;
+        let version = value.get_i32("version")?;
 
         let exam_creator_exam = prisma::ExamCreatorExam {
             id,

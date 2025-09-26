@@ -168,13 +168,16 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
+  const startTimeInMS = attempt.startTime?.getTime() ?? attempt.startTimeInMS;
+
   // TODO: Consider bar chart with sorted values
   //       Show questions in order final answer was recorded
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
   const timeToAnswers = flattened.map((q, i) => {
-    // @ts-expect-error Look into
-    const submissionTime = q.submissionTimeInMS ?? 0;
-    const secondsSinceStart = (submissionTime - attempt.startTimeInMS) / 1000;
+    const submissionTimeInMS =
+      // @ts-expect-error Look into
+      q.submissionTime?.getTime() ?? q.submissionTimeInMS ?? 0;
+    const secondsSinceStart = (submissionTimeInMS - startTimeInMS) / 1000;
     // Determine if the answer is correct
     const isCorrect = q.answers
       .filter((a) => a.isCorrect)
@@ -187,8 +190,10 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
     };
   });
 
-  // @ts-expect-error Look into
-  const answered = flattened.filter((f) => !!f.submissionTimeInMS).length;
+  const answered = flattened.filter((f) => {
+    // @ts-expect-error Look into
+    return !!f.submissionTime && !!f.submissionTimeInMS;
+  }).length;
   const correct = flattened.filter((f) => {
     return (
       f.answers
@@ -200,10 +205,10 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const lastSubmission = Math.max(
     ...flattened.map((f) => {
       // @ts-expect-error Look into
-      return f.submissionTimeInMS;
+      return f.submissionTime ?? f.submissionTimeInMS ?? 0;
     })
   );
-  const timeToComplete = (lastSubmission - attempt.startTimeInMS) / 1000;
+  const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
   return (
     <>

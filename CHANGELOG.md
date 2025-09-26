@@ -2,9 +2,16 @@
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-09-26
+
 ### Fixed
 
-- TODO: i64 vs f64 vs Int / Int64 / Double
+- i64 vs f64 vs Int / Int64 / Double
+
+### Changed
+
+- use `DateTime` fields
+- use `totalTimeInS` and `retakeTimeInS`
 
 ## [1.5.0] - 2025-09-23
 

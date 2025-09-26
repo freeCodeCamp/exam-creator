@@ -85,6 +85,7 @@ pub async fn put_exam_challenges(
                 id: ObjectId::new(),
                 exam_id: new.exam_id,
                 challenge_id: new.challenge_id,
+                version: 1,
             })
             .collect();
 
