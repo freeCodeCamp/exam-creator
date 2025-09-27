@@ -104,7 +104,7 @@ impl TryFrom<bson::Document> for prisma::ExamCreatorExam {
                 .clone(),
         )?;
         let deprecated = value.get_bool("deprecated")?;
-        let version = value.get_i32("version")?;
+        let version = value.get_i64("version")?;
 
         let exam_creator_exam = prisma::ExamCreatorExam {
             id,

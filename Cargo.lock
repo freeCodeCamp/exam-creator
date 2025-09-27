@@ -389,7 +389,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -1128,7 +1128,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.0",
+ "socket2 0.5.10",
  "system-configuration",
  "tokio",
  "tower-service",
@@ -1944,8 +1944,8 @@ dependencies = [
 
 [[package]]
 name = "prisma-rust-schema"
-version = "2.0.0"
-source = "git+https://github.com/ShaunSHamilton/prisma-rust-schema.git#0db1d7be498089c950b5037e605ee347e50fd61c"
+version = "2.1.0"
+source = "git+https://github.com/ShaunSHamilton/prisma-rust-schema.git#a55fc840aac28e25392f0fb997a2b94d84ca180f"
 dependencies = [
  "proc-macro2",
  "psl",
@@ -2026,7 +2026,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash 2.1.1",
  "rustls",
- "socket2 0.6.0",
+ "socket2 0.5.10",
  "thiserror 2.0.16",
  "tokio",
  "tracing",
@@ -2063,7 +2063,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.0",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.60.2",
 ]
