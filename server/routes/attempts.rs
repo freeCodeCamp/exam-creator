@@ -25,7 +25,11 @@ pub async fn get_attempts(
     State(server_state): State<ServerState>,
 ) -> Result<Json<Vec<config::Attempt>>, Error> {
     let database = database_environment(&server_state, &exam_creator_user);
-    let mut exam_attempts = database.exam_attempt.find(doc! {}).await?;
+    let mut exam_attempts = database
+        .exam_attempt
+        // Not the practice exam
+        .find(doc! { "examId": { "$ne": "674819431ed2e8ac8d170f5e"}})
+        .await?;
 
     let exams: Vec<prisma::ExamEnvironmentExam> =
         database.exam.find(doc! {}).await?.try_collect().await?;

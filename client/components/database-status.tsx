@@ -11,6 +11,7 @@ import {
   MenuItem,
   useToast,
   Spinner,
+  Tooltip,
 } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronDownIcon, Database } from "lucide-react";
@@ -72,10 +73,14 @@ export function DatabaseStatus() {
 
   return (
     <HStack spacing={2}>
-      <Database size={16} />
-      <Text fontSize="sm" fontWeight="medium">
-        Database:
-      </Text>
+      <Tooltip label="Change the database environment to filter which attempts to moderate">
+        <HStack spacing={2}>
+          <Database size={16} />
+          <Text fontSize="sm" fontWeight="medium">
+            Database:
+          </Text>
+        </HStack>
+      </Tooltip>
       <Menu>
         <MenuButton
           as={Button}

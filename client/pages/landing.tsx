@@ -22,7 +22,6 @@ import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
 import { moderationsRoute } from "./moderations";
 import { LandingCard } from "../components/landing-card";
-import { DatabaseStatus } from "../components/database-status";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
@@ -51,9 +50,6 @@ export function Landing() {
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
-      <Box position="fixed" top={6} left={8} zIndex={101}>
-        <DatabaseStatus />
-      </Box>
       {/* Logout button top right */}
       <Button
         position="fixed"

@@ -4,6 +4,14 @@
 
 ## [2.0.0]
 
+### Added
+
+- server: `PUT /api/exams/{exam_id}/seed/production`
+- client: seed exam to production modal and button
+- client: exam seed location
+- server: `GET /api/exams`
+  - `{ exam: ExamCreatorExam, databaseEnvironments: ("Staging" | "Production")[] }[]`
+
 ### Fixed
 
 - i64 vs f64 vs Int / Int64 / Double
@@ -12,6 +20,7 @@
 
 - use `DateTime` fields
 - use `totalTimeInS` and `retakeTimeInS`
+- client: remove database status component from unrelated pages
 
 ## [1.5.0] - 2025-09-23
 

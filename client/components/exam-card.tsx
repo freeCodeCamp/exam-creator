@@ -11,6 +11,7 @@ import {
   Button,
   Flex,
   Checkbox,
+  CardFooter,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
@@ -23,6 +24,7 @@ interface ExamCardProps {
   isSelected?: boolean;
   onSelectionChange?: (examId: string, selected: boolean) => void;
   selectionMode?: boolean;
+  databaseEnvironments: ("Staging" | "Production")[];
 }
 
 export function ExamCard({
@@ -30,6 +32,7 @@ export function ExamCard({
   isSelected = false,
   onSelectionChange,
   selectionMode = false,
+  databaseEnvironments,
 }: ExamCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
@@ -156,6 +159,24 @@ export function ExamCard({
             )}
           </HStack>
         </CardBody>
+        <CardFooter padding="0" justifyContent={"space-evenly"}>
+          {databaseEnvironments.map((env) => (
+            <Tooltip
+              label={`This exam is seeded in the ${env} database`}
+              key={env}
+            >
+              <Badge
+                key={env}
+                colorScheme={env === "Production" ? "green" : "blue"}
+                flexShrink={0}
+                minW="90px"
+                textAlign="center"
+              >
+                {env}
+              </Badge>
+            </Tooltip>
+          ))}
+        </CardFooter>
       </Card>
     </Button>
   );
