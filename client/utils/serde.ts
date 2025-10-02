@@ -12,6 +12,14 @@ import { ObjectId } from "bson";
  * @returns A new value with the transformations applied.
  */
 function _recursiveDeserialize(value: JsonValue): unknown {
+  // If value is a string, and an ISO Date string, convert it to Date
+  if (typeof value === "string") {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+    return value;
+  }
   // Base case: If it's a primitive or null, return it directly.
   if (value === null || typeof value !== "object") {
     return value;
