@@ -6,6 +6,7 @@ use futures_util::TryStreamExt;
 use http::StatusCode;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
+use serde::Deserialize;
 use tracing::instrument;
 
 use crate::{
@@ -80,4 +81,48 @@ pub async fn get_attempt_by_id(
     let attempt = config::construct_attempt(&exam, &exam_attempt);
 
     Ok(Json(attempt))
+}
+
+#[derive(Deserialize)]
+pub struct PatchModerationStatusByAttemptIdBody {
+    #[serde(rename = "attemptId")]
+    pub attempt_id: mongodb::bson::oid::ObjectId,
+    pub status: prisma::ExamEnvironmentExamModerationStatus,
+}
+
+#[instrument(skip_all, err(Debug))]
+pub async fn patch_moderation_status_by_attempt_id(
+    exam_creator_user: prisma::ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(attempt_id): Path<mongodb::bson::oid::ObjectId>,
+    Json(body): Json<PatchModerationStatusByAttemptIdBody>,
+) -> Result<(), Error> {
+    if attempt_id != body.attempt_id {
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!(
+                "Path id does not match body id: {} != {}",
+                attempt_id, body.attempt_id
+            ),
+        ));
+    }
+
+    let database = database_environment(&server_state, &exam_creator_user);
+
+    let update_result = database
+        .exam_environment_exam_moderation
+        .update_one(
+            doc! { "examAttemptId": body.attempt_id },
+            doc! { "$set": { "status": bson::serialize_to_bson(&body.status)? } },
+        )
+        .await?;
+
+    if update_result.matched_count == 0 {
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("Moderation record non-existant for attempt: {}", attempt_id),
+        ));
+    }
+
+    Ok(())
 }

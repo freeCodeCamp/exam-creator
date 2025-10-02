@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createRoute, useParams, useNavigate } from "@tanstack/react-router";
 import {
   Box,
@@ -26,12 +26,16 @@ import {
   YAxis,
   Cell,
 } from "recharts";
+import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
-import { getAttemptById } from "../utils/fetch";
+import {
+  getAttemptById,
+  patchModerationStatusByAttemptId,
+} from "../utils/fetch";
 import { moderationsRoute } from "./moderations";
 import { Attempt } from "../types";
 
@@ -158,12 +162,32 @@ function UsersEditing() {
 function EditAttempt({ attempt }: { attempt: Attempt }) {
   const { updateActivity } = useContext(UsersWebSocketContext)!;
   const simpleGridRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
     updateActivity({
       page: new URL(window.location.href),
       lastActive: Date.now(),
     });
   }, [attempt]);
+
+  const patchModerationStatusByAttemptIdMutation = useMutation({
+    mutationKey: ["patch-moderation-status"],
+    mutationFn: (status: ExamEnvironmentExamModerationStatus) => {
+      return patchModerationStatusByAttemptId({
+        status,
+        attemptId: attempt.id,
+      });
+    },
+    retry: false,
+    onSuccess: () => {
+      // Navigate back to moderations page
+      navigate({ to: moderationsRoute.to });
+    },
+    onError: (error: any) => {
+      alert(`Error submitting moderation: ${error.message}`);
+    },
+  });
 
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
@@ -219,23 +243,29 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
         alignItems="center"
         gap={4}
       >
-        {/* TODO: Awaiting implementation */}
         <Button
           colorScheme="green"
           px={4}
           fontWeight="bold"
           fontSize={"2xl"}
-          disabled={true}
+          isLoading={patchModerationStatusByAttemptIdMutation.isPending}
+          isDisabled={patchModerationStatusByAttemptIdMutation.isPending}
+          onClick={() => {
+            patchModerationStatusByAttemptIdMutation.mutate("Approved");
+          }}
         >
           Approve
         </Button>
-        {/* TODO: Awaiting implementation */}
         <Button
           colorScheme="red"
           px={4}
           fontWeight="bold"
           fontSize={"2xl"}
-          disabled={true}
+          isLoading={patchModerationStatusByAttemptIdMutation.isPending}
+          isDisabled={patchModerationStatusByAttemptIdMutation.isPending}
+          onClick={() => {
+            patchModerationStatusByAttemptIdMutation.mutate("Denied");
+          }}
         >
           Deny
         </Button>

@@ -366,6 +366,30 @@ export async function getModerationById(
   return deserialized;
 }
 
+interface PatchModerationStatus {
+  attemptId: string;
+  status: ExamEnvironmentExamModerationStatus;
+}
+
+export async function patchModerationStatusByAttemptId({
+  attemptId,
+  status,
+}: PatchModerationStatus) {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return;
+  }
+
+  return await authorizedFetch(`/api/attempts/${attemptId}/moderation`, {
+    method: "PATCH",
+    body: JSON.stringify(serializeFromPrisma({ attemptId, status })),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
 export async function getAttempts(): Promise<Attempt[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);

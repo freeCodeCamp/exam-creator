@@ -1,6 +1,7 @@
 use axum::extract::MatchedPath;
 use axum::extract::Request;
 use axum::routing::delete;
+use axum::routing::patch;
 use axum::{
     Extension, Router,
     routing::{any, get, post, put},
@@ -160,6 +161,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/attempts/{attempt_id}",
             get(routes::attempts::get_attempt_by_id),
+        )
+        .route(
+            "/api/attempts/{attempt_id}/moderation",
+            patch(routes::attempts::patch_moderation_status_by_attempt_id),
         )
         .route(
             "/api/moderations",
