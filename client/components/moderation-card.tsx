@@ -93,9 +93,11 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
               {moderation.status}
             </Badge>
           </Flex>
-          <Text color="gray.400" fontSize="sm">
-            {moderation.id}
-          </Text>
+          <Tooltip label={`Moderation ID`} hasArrow>
+            <Text color="gray.400" fontSize="sm">
+              {moderation.id}
+            </Text>
+          </Tooltip>
         </CardHeader>
         <CardBody pt={2}>
           <Flex align="center" justify={"space-between"}>
