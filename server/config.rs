@@ -235,7 +235,7 @@ pub fn construct_attempt(
     exam_attempt: &prisma::ExamEnvironmentExamAttempt,
 ) -> Attempt {
     let prisma::ExamEnvironmentExam {
-        id,
+        id: _id,
         question_sets,
         config,
         prerequisites,
@@ -320,7 +320,7 @@ pub fn construct_attempt(
     };
 
     let attempt = Attempt {
-        id: *id,
+        id: exam_attempt.id,
         prerequisites: prerequisites.clone(),
         deprecated: *deprecated,
         question_sets: attempt_question_sets,
