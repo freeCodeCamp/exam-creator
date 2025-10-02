@@ -2,6 +2,7 @@ import type {
   ExamCreatorExam,
   ExamEnvironmentChallenge,
   ExamEnvironmentExamModeration,
+  ExamEnvironmentExamModerationStatus,
 } from "@prisma/client";
 import type {
   Attempt,
@@ -82,9 +83,12 @@ export async function putState(state: ClientSync): Promise<ClientSync> {
   return deserialized;
 }
 
-export async function getExams(): Promise<
-  Omit<ExamCreatorExam, "questionSets">[]
-> {
+type GetExam = {
+  exam: Omit<ExamCreatorExam, "questionSets">;
+  databaseEnvironments: ("Staging" | "Production")[];
+};
+
+export async function getExams(): Promise<GetExam[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/exams.json");
@@ -99,8 +103,7 @@ export async function getExams(): Promise<
 
   const res = await authorizedFetch("/api/exams");
   const json = await res.json();
-  const deserialized =
-    deserializeToPrisma<Omit<ExamCreatorExam, "questionSets">[]>(json);
+  const deserialized = deserializeToPrisma<GetExam[]>(json);
   return deserialized;
 }
 
@@ -309,9 +312,11 @@ export async function logout() {
   });
 }
 
-export async function getModerations(): Promise<
-  ExamEnvironmentExamModeration[]
-> {
+export async function getModerations({
+  status,
+}: {
+  status?: ExamEnvironmentExamModerationStatus;
+}): Promise<ExamEnvironmentExamModeration[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/moderations.json");
@@ -324,7 +329,11 @@ export async function getModerations(): Promise<
     return deserializeToPrisma(moderations);
   }
 
-  const res = await authorizedFetch("/api/moderations");
+  const url = new URL("/api/moderations", window.location.href);
+  if (status) {
+    url.searchParams.set("status", status);
+  }
+  const res = await authorizedFetch(url);
   const json = await res.json();
   const deserialized =
     deserializeToPrisma<ExamEnvironmentExamModeration[]>(json);
@@ -515,13 +524,11 @@ export async function putExamByIdToStaging(examId: string) {
 }
 
 export async function putExamByIdToProduction(
-  _examId: string
+  examId: string
 ): Promise<Response> {
-  await delayForTesting(5000);
-  throw new Error("Seeding to production is not yet implemented.");
-  // return await authorizedFetch(`/api/exams/${examId}/seed/production`, {
-  //   method: "PUT",
-  // });
+  return await authorizedFetch(`/api/exams/${examId}/seed/production`, {
+    method: "PUT",
+  });
 }
 
 export async function getStatusPing() {

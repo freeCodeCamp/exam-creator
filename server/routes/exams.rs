@@ -2,23 +2,32 @@ use axum::{
     Json,
     extract::{Path, State},
 };
+use bson::Document;
 use futures_util::TryStreamExt;
 use http::StatusCode;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
+use serde::Serialize;
 use tracing::{info, instrument};
 
 use crate::{database::prisma, errors::Error, state::ServerState};
 
-/// Get all exams
+#[derive(Serialize)]
+pub struct GetExam {
+    exam: prisma::ExamCreatorExam,
+    #[serde(rename = "databaseEnvironments")]
+    database_environments: Vec<prisma::ExamCreatorDatabaseEnvironment>,
+}
+
+/// Get all exams, and return which database environments they are already deployed to.
 ///
 /// The `questionSets` field is removed as not needed, but added in the typing for serialization
 #[instrument(skip_all, err(Debug))]
 pub async fn get_exams(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
-) -> Result<Json<Vec<prisma::ExamCreatorExam>>, Error> {
-    let mut exams_cursor = state
+) -> Result<Json<Vec<GetExam>>, Error> {
+    let mut exam_creator_exams_prod = state
         .production_database
         .exam_creator_exam
         .clone_with_type::<mongodb::bson::Document>()
@@ -26,11 +35,39 @@ pub async fn get_exams(
         .projection(doc! {"questionSets": false})
         .await?;
 
-    let mut exams: Vec<prisma::ExamCreatorExam> = vec![];
+    let mut exams: Vec<GetExam> = vec![];
 
-    while let Some(exam) = exams_cursor.try_next().await? {
-        let env_exam: prisma::ExamCreatorExam = exam.try_into()?;
-        exams.push(env_exam);
+    while let Some(exam) = exam_creator_exams_prod.try_next().await? {
+        let exam: prisma::ExamCreatorExam = exam.try_into()?;
+        let mut database_environments = vec![];
+
+        if state
+            .production_database
+            .exam
+            .find_one(doc! {"_id": exam.id})
+            .await?
+            .is_some()
+        {
+            database_environments.push(prisma::ExamCreatorDatabaseEnvironment::Production);
+        }
+        if state
+            .staging_database
+            .exam
+            .clone_with_type::<Document>()
+            .find_one(doc! {"_id": exam.id})
+            .projection(doc! {"_id": true})
+            .await?
+            .is_some()
+        {
+            database_environments.push(prisma::ExamCreatorDatabaseEnvironment::Staging);
+        }
+
+        let get_exam = GetExam {
+            exam,
+            database_environments,
+        };
+
+        exams.push(get_exam);
     }
 
     Ok(Json(exams))
@@ -171,6 +208,40 @@ pub async fn put_exam_by_id_to_staging(
             .insert_many(exam_environment_challenges)
             .await?;
     }
+
+    Ok(())
+}
+
+/// Finds an exam in `ExamCreatorExam`
+/// Upserts it into production database `ExamEnvironmentExam`
+#[instrument(skip_all, err(Debug))]
+pub async fn put_exam_by_id_to_production(
+    _auth_user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(exam_id): Path<ObjectId>,
+) -> Result<(), Error> {
+    let exam_creator_exam = state
+        .production_database
+        .exam_creator_exam
+        .find_one(doc! { "_id": exam_id })
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("exam non-existant: {exam_id}"),
+        ))?;
+    info!("Found exam {exam_id} in production database");
+
+    state
+        .production_database
+        .exam
+        .update_one(
+            doc! {"_id": exam_id},
+            doc! {
+                "$set": exam_creator_exam,
+            },
+        )
+        .upsert(true)
+        .await?;
 
     Ok(())
 }

@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 
 prisma_rust_schema::import_types!(
     schema_paths = [
-        "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/breaking_prisma-dates/api/prisma/schema.prisma",
-        "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/breaking_prisma-dates/api/prisma/exam-environment.prisma",
-        "https://raw.githubusercontent.com/ShaunSHamilton/freeCodeCamp/breaking_prisma-dates/api/prisma/exam-creator.prisma",
+        "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/schema.prisma",
+        "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/exam-environment.prisma",
+        "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/exam-creator.prisma",
     ],
     derive = [Clone, Debug, Serialize, Deserialize],
     include = [

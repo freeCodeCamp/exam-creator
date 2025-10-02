@@ -30,6 +30,7 @@ import {
   ChevronDownIcon,
   CodeXml,
   AppWindow,
+  Trash2,
 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
@@ -54,7 +55,6 @@ import {
   SeedProductionModal,
   SeedStagingModal,
 } from "../components/seed-modal";
-import { DatabaseStatus } from "../components/database-status";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
@@ -116,8 +116,7 @@ export function Exams() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      // Consider auto-deselecting
-      // handleDeselectAll();
+      handleDeselectAll();
     },
   });
 
@@ -129,6 +128,7 @@ export function Exams() {
     onSuccess(_data, _variables, _context) {
       stagingOnClose();
       handleDeselectAll();
+      examsQuery.refetch();
       toast({
         title: "Exams seeded to staging",
         description: "The selected exams have been seeded to staging.",
@@ -147,6 +147,7 @@ export function Exams() {
     onSuccess(_data, _variables, _context) {
       productionOnClose();
       handleDeselectAll();
+      examsQuery.refetch();
       toast({
         title: "Exams seeded to production",
         description: "The selected exams have been seeded to production.",
@@ -171,7 +172,7 @@ export function Exams() {
 
   function handleSelectAll() {
     if (examsQuery.data) {
-      setSelectedExams(new Set(examsQuery.data.map((exam) => exam.id)));
+      setSelectedExams(new Set(examsQuery.data.map(({ exam }) => exam.id)));
     }
   }
 
@@ -227,7 +228,6 @@ export function Exams() {
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
       <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
-        <DatabaseStatus />
         <Button
           colorScheme="teal"
           variant="outline"
@@ -432,11 +432,10 @@ export function Exams() {
                     color={"white"}
                     colorScheme="green"
                     fontWeight="bold"
-                    // isDisabled={
-                    //   selectedExams.size === 0 ||
-                    //   seedExamToProductionMutation.isPending
-                    // }
-                    isDisabled={true}
+                    isDisabled={
+                      selectedExams.size === 0 ||
+                      seedExamToProductionMutation.isPending
+                    }
                     isLoading={seedExamToProductionMutation.isPending}
                     justifyContent={"flex-start"}
                     leftIcon={<AppWindow size={18} />}
@@ -444,7 +443,23 @@ export function Exams() {
                     onClick={productionOnOpen}
                     _hover={{ bg: "green.500" }}
                   >
-                    Seed to Production (Coming Soon)
+                    Seed to Production
+                  </MenuItem>
+                  {/* TODO: Probably never going to create such functionality */}
+                  <MenuItem
+                    as={Button}
+                    backgroundColor="gray.800"
+                    borderRadius={0}
+                    boxShadow="md"
+                    color={"white"}
+                    colorScheme="green"
+                    fontWeight="bold"
+                    isDisabled={true}
+                    justifyContent={"flex-start"}
+                    leftIcon={<Trash2 size={18} />}
+                    _hover={{ bg: "green.500" }}
+                  >
+                    Delete
                   </MenuItem>
                 </MenuList>
               </Menu>
@@ -463,10 +478,11 @@ export function Exams() {
               </Center>
             ) : (
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
-                {examsQuery.data.map((exam) => (
+                {examsQuery.data.map(({ exam, databaseEnvironments }) => (
                   <ExamCard
                     key={exam.id}
                     exam={exam}
+                    databaseEnvironments={databaseEnvironments}
                     isSelected={selectedExams.has(exam.id)}
                     onSelectionChange={handleExamSelection}
                     selectionMode={selectionMode}
