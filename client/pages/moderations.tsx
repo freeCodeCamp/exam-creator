@@ -12,10 +12,14 @@ import {
   Tooltip,
   SimpleGrid,
   Flex,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import { rootRoute } from "./root";
 import { ModerationCard } from "../components/moderation-card";
@@ -25,9 +29,11 @@ import { UsersWebSocketContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
+import { ChevronDownIcon } from "lucide-react";
+import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 export function Moderations() {
-  const { user, logout } = useContext(AuthContext)!;
+  const { logout } = useContext(AuthContext)!;
   const {
     users,
     error: usersError,
@@ -35,11 +41,13 @@ export function Moderations() {
   } = useContext(UsersWebSocketContext)!;
   const navigate = useNavigate();
 
-  const moderationsQuery = useQuery({
-    queryKey: ["moderations"],
-    enabled: !!user,
-    queryFn: async () => {
-      const moderations = await getModerations();
+  const [filter, setFilter] =
+    useState<ExamEnvironmentExamModerationStatus>("Pending");
+
+  const moderationsMutation = useMutation({
+    mutationKey: ["filteredModerations"],
+    mutationFn: async (status: ExamEnvironmentExamModerationStatus) => {
+      const moderations = await getModerations({ status });
       const attempts = [];
       for (const moderation of moderations) {
         const attempt = await getAttemptById(moderation.examAttemptId);
@@ -51,11 +59,23 @@ export function Moderations() {
   });
 
   useEffect(() => {
+    if (moderationsMutation.isPending) {
+      return;
+    }
+    moderationsMutation.mutate(filter);
+  }, [filter]);
+
+  useEffect(() => {
     updateActivity({
       page: new URL(window.location.href),
       lastActive: Date.now(),
     });
   }, []);
+
+  function handleFilterChange(status: ExamEnvironmentExamModerationStatus) {
+    console.log("Filter changed to:", status);
+    setFilter(status);
+  }
 
   const bg = useColorModeValue("black", "black");
   const cardBg = useColorModeValue("gray.800", "gray.800");
@@ -141,23 +161,63 @@ export function Moderations() {
                 </Avatar>
               )}
             </HStack>
+            <Menu>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {filter}
+              </MenuButton>
+              <MenuList backgroundColor="gray.800">
+                {(["Pending", "Approved", "Denied"] as const).map((status) => {
+                  return (
+                    <MenuItem
+                      key={status}
+                      as={Button}
+                      backgroundColor="gray.800"
+                      borderRadius={0}
+                      boxShadow="md"
+                      color={"white"}
+                      colorScheme="green"
+                      fontWeight="bold"
+                      isDisabled={moderationsMutation.isPending}
+                      isLoading={moderationsMutation.isPending}
+                      justifyContent={"flex-start"}
+                      loadingText={"Filtering..."}
+                      onClick={() => handleFilterChange(status)}
+                      _hover={{ bg: "green.500" }}
+                    >
+                      {status}
+                    </MenuItem>
+                  );
+                })}
+              </MenuList>
+            </Menu>
           </Flex>
           <Box>
-            {moderationsQuery.isPending ? (
+            {moderationsMutation.isPending ? (
               <Center py={12}>
                 <Spinner color={accent} size="xl" />
               </Center>
-            ) : moderationsQuery.isError ? (
+            ) : moderationsMutation.isError ? (
               <Center>
                 <Text color="red.400" fontSize="lg">
-                  {moderationsQuery.error.message}
+                  {moderationsMutation.error.message}
                 </Text>
               </Center>
             ) : (
               <SimpleGrid columns={{ base: 1, md: 1, lg: 1 }} spacing={8}>
-                {moderationsQuery.data.map((moderation) => (
-                  <ModerationCard key={moderation.id} moderation={moderation} />
-                ))}
+                {moderationsMutation.isSuccess &&
+                  moderationsMutation.data.map((moderation) => (
+                    <ModerationCard
+                      key={moderation.id}
+                      moderation={moderation}
+                    />
+                  ))}
+                {moderationsMutation.data?.length === 0 && (
+                  <Center>
+                    <Text color="gray.400" fontSize="lg">
+                      No moderations found for "{filter}" status.
+                    </Text>
+                  </Center>
+                )}
               </SimpleGrid>
             )}
           </Box>
