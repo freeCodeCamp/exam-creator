@@ -8,9 +8,14 @@
 
 - server: `PUT /api/exams/{exam_id}/seed/production`
 - client: seed exam to production modal and button
-- client: exam seed location
+- client: exam seed location badges
 - server: `GET /api/exams`
   - `{ exam: ExamCreatorExam, databaseEnvironments: ("Staging" | "Production")[] }[]`
+- client: attempt moderation approve/deny
+- client: tooltips for more information
+- server: `PATCH /api/attempts/{attempt_id}/moderation`
+  - body: `{ attemptId: string, status: "Approved" | "Denied" }`
+- client: filter moderation records by status
 
 ### Fixed
 
