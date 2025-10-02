@@ -20,6 +20,7 @@
 ### Fixed
 
 - i64 vs f64 vs Int / Int64 / Double
+- server: attempt construction `id` from `examId` to `attemptId`
 
 ### Changed
 
