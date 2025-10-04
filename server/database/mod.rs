@@ -12,46 +12,6 @@ pub struct DocId {
     pub id: ObjectId,
 }
 
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub struct ExamCreatorUser {
-//     #[serde(rename = "_id")]
-//     pub id: ObjectId,
-//     pub name: String,
-//     pub github_id: Option<i64>,
-//     pub picture: Option<String>,
-//     pub email: String,
-//     pub settings: Option<Settings>,
-// }
-
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub struct Settings {
-//     #[serde(rename = "databaseEnvironment")]
-//     pub database_environment: DatabaseEnvironment,
-// }
-
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub enum DatabaseEnvironment {
-//     Production,
-//     Staging,
-// }
-
-// impl Default for Settings {
-//     fn default() -> Self {
-//         Settings {
-//             database_environment: DatabaseEnvironment::Production,
-//         }
-//     }
-// }
-
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub struct ExamCreatorSession {
-//     #[serde(rename = "_id")]
-//     pub id: ObjectId,
-//     pub user_id: ObjectId,
-//     pub session_id: String,
-//     pub expires_at: mongodb::bson::DateTime,
-// }
-
 #[derive(Clone, Debug)]
 pub struct Database {
     pub exam_creator_exam: Collection<prisma::ExamCreatorExam>,
@@ -80,42 +40,6 @@ impl prisma::ExamCreatorUser {
                 settings: self.settings.clone().unwrap_or_default(),
             }
         }
-    }
-}
-
-// Needed for projections to work
-// TODO: Once prisma_rust_schema allows for `serde(default)` to be configured for struct, this is not needed.
-impl TryFrom<bson::Document> for prisma::ExamCreatorExam {
-    type Error = crate::errors::Error;
-    fn try_from(value: bson::Document) -> Result<Self, Self::Error> {
-        let id = value.get_object_id("_id")?;
-        let question_sets = bson::deserialize_from_bson(
-            value
-                .get("questionSets")
-                .unwrap_or(&bson::Bson::Array(vec![]))
-                .clone(),
-        )
-        .unwrap_or_default();
-        let config = bson::deserialize_from_document(value.get_document("config")?.clone())?;
-        let prerequisites = bson::deserialize_from_bson(
-            value
-                .get("prerequisites")
-                .unwrap_or(&bson::Bson::Array(vec![]))
-                .clone(),
-        )?;
-        let deprecated = value.get_bool("deprecated")?;
-        let version = value.get_i64("version")?;
-
-        let exam_creator_exam = prisma::ExamCreatorExam {
-            id,
-            question_sets,
-            config,
-            prerequisites,
-            deprecated,
-            version,
-        };
-
-        Ok(exam_creator_exam)
     }
 }
 

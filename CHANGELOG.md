@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
-## [2.0.0]
+## [2.0.1] - 2025-10-04
+
+### Fixed
+
+- server: deserialize `ExamCreatorExam` from BSON document
+
+## [2.0.0] - 2025-10-04
 
 ### Added
 
