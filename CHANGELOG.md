@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.0.3] - 2025-10-04
+
+### Fixed
+
+- server: handle `f64` in `ExamEnvironmentExamConfig`
+
 ## [2.0.2] - 2025-10-04
 
 ### Fixed
