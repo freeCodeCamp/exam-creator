@@ -38,7 +38,7 @@ pub async fn get_exams(
     let mut exams: Vec<GetExam> = vec![];
 
     while let Some(exam) = exam_creator_exams_prod.try_next().await? {
-        let exam: prisma::ExamCreatorExam = bson::deserialize_from_document(exam)?;
+        let exam: prisma::ExamCreatorExam = exam.try_into()?;
         let mut database_environments = vec![];
 
         if state
@@ -190,7 +190,7 @@ pub async fn put_exam_by_id_to_staging(
         .update_one(
             doc! {"_id": exam_id},
             doc! {
-                "$set": bson::serialize_to_bson(&exam_creator_exam)?,
+                "$set": bson::serialize_to_document(&exam_creator_exam)?,
             },
         )
         .upsert(true)
@@ -237,7 +237,7 @@ pub async fn put_exam_by_id_to_production(
         .update_one(
             doc! {"_id": exam_id},
             doc! {
-                "$set": bson::serialize_to_bson(&exam_creator_exam)?,
+                "$set": bson::serialize_to_document(&exam_creator_exam)?,
             },
         )
         .upsert(true)

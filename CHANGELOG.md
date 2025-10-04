@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.0.2] - 2025-10-04
+
+### Fixed
+
+- server: deserialize `ExamCreatorExam` from BSON document manually in try_into
+
 ## [2.0.1] - 2025-10-04
 
 ### Fixed

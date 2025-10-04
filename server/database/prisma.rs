@@ -82,3 +82,43 @@ impl Default for ExamCreatorUserSettings {
         }
     }
 }
+
+// Needed for projections to work
+// TODO: Once prisma_rust_schema allows for `serde(default)` to be configured for struct, this is not needed.
+impl TryFrom<bson::Document> for ExamCreatorExam {
+    type Error = crate::errors::Error;
+    fn try_from(value: bson::Document) -> Result<Self, Self::Error> {
+        let id = value.get_object_id("_id")?;
+        let question_sets = bson::deserialize_from_bson(
+            value
+                .get("questionSets")
+                .unwrap_or(&bson::Bson::Array(vec![]))
+                .clone(),
+        )
+        .unwrap_or_default();
+        let config = bson::deserialize_from_document(value.get_document("config")?.clone())?;
+        let prerequisites = bson::deserialize_from_bson(
+            value
+                .get("prerequisites")
+                .unwrap_or(&bson::Bson::Array(vec![]))
+                .clone(),
+        )?;
+        let deprecated = value.get_bool("deprecated")?;
+        let version = match value.get("version") {
+            Some(bson::Bson::Int32(v)) => *v as i64,
+            Some(bson::Bson::Int64(v)) => *v,
+            _ => 1,
+        };
+
+        let exam_creator_exam = ExamCreatorExam {
+            id,
+            question_sets,
+            config,
+            prerequisites,
+            deprecated,
+            version,
+        };
+
+        Ok(exam_creator_exam)
+    }
+}
