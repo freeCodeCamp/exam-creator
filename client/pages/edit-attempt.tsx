@@ -194,6 +194,9 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
 
   const startTimeInMS = attempt.startTime?.getTime() ?? attempt.startTimeInMS;
 
+  const totalQuestions = attempt.config.questionSets
+    .map((qs) => qs.numberOfQuestions * qs.numberOfSet)
+    .reduce((a, b) => a + b, 0);
   // TODO: Consider bar chart with sorted values
   //       Show questions in order final answer was recorded
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
@@ -328,7 +331,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
               gap={4}
             >
               <GridItem rowSpan={1} colSpan={2} color="gray.300">
-                Total Questions: {flattened.length}
+                Total Questions: {totalQuestions}
               </GridItem>
               <GridItem colSpan={1} color="gray.300">
                 Total Answered: {answered}
