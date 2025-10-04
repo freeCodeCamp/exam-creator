@@ -21,6 +21,8 @@
 
 - i64 vs f64 vs Int / Int64 / Double
 - server: attempt construction `id` from `examId` to `attemptId`
+- client: total number of exam questions calculation
+- server: deserialization of `startTimeInMS` and `submissionTimeInMS` to f64
 
 ### Changed
 
