@@ -33,6 +33,16 @@ prisma_rust_schema::import_types!(
         "ExamEnvironmentExamModeration",
         "ExamEnvironmentExamModerationStatus",
         "ExamEnvironmentChallenge",
+    ],
+    patch = [
+        struct ExamEnvironmentExamAttempt {
+            #[serde(rename = "startTimeInMS")]
+            pub start_time_in_m_s: f64
+        },
+        struct ExamEnvironmentMultipleChoiceQuestionAttempt {
+            #[serde(rename = "submissionTimeInMS")]
+            pub submission_time_in_m_s: f64
+        },
     ]
 );
 
