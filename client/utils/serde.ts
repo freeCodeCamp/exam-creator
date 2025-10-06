@@ -13,7 +13,15 @@ import { ObjectId } from "bson";
  */
 function _recursiveDeserialize(value: JsonValue): unknown {
   // If value is a string, and an ISO Date string, convert it to Date
+  // Value MUST be an ISO 8601 string to be converted to Date
   if (typeof value === "string") {
+    const isIso8601 =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value);
+    if (!isIso8601) {
+      return value;
+    }
+    // Try to parse the string as a Date
+    // If parsing fails (invalid date), return the original string
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
       return date;

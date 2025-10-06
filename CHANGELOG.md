@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.0.5] - 2025-10-06
+
+### Fixed
+
+- client: only parse ISO 8601 strings to Date in `_recursiveDeserialize`
+
 ## [2.0.4] - 2025-10-04
 
 ### Fixed
