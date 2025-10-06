@@ -1,16 +1,9 @@
-use mongodb::{Collection, bson::oid::ObjectId};
-use serde::{Deserialize, Serialize};
+use mongodb::Collection;
 use tracing::info;
 
 use crate::state::{Activity, ServerState, User};
 
 pub mod prisma;
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DocId {
-    #[serde(rename = "_id")]
-    pub id: ObjectId,
-}
 
 #[derive(Clone, Debug)]
 pub struct Database {

@@ -35,7 +35,7 @@ prisma_rust_schema::import_types!(
         "ExamEnvironmentChallenge",
     ],
     patch = [
-        struct ExamEnvironmentExamConfig {
+        struct ExamEnvironmentConfig {
             #[serde(rename = "totalTimeInMS")]
             pub total_time_in_m_s: f64,
             #[serde(rename = "retakeTimeInMS")]
@@ -71,10 +71,10 @@ impl Default for ExamEnvironmentConfig {
             name: String::new(),
             note: String::new(),
             tags: vec![],
-            total_time_in_m_s: 2 * 60 * 60 * 1000,
+            total_time_in_m_s: 2.0 * 60.0 * 60.0 * 1000.0,
             total_time_in_s: Some(2 * 60 * 60),
             question_sets: vec![],
-            retake_time_in_m_s: 24 * 60 * 60 * 1000,
+            retake_time_in_m_s: 24.0 * 60.0 * 60.0 * 1000.0,
             retake_time_in_s: Some(24 * 60 * 60),
             passing_percent: 80.0,
         }

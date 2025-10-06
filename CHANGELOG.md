@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.0.4] - 2025-10-04
+
+### Fixed
+
+- server: fix prisma deserialization ident name `ExamEnvironmentExamConfig` -> `ExamEnvironmentConfig`
+
 ## [2.0.3] - 2025-10-04
 
 ### Fixed

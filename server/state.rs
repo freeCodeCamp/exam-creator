@@ -25,19 +25,6 @@ impl FromRef<ServerState> for Key {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserSession {
-    pub user: UserInfo,
-    pub session_id: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct UserInfo {
-    pub name: String,
-    pub email: String,
-    pub picture: String,
-}
-
 /// Ephemiral sync data form the server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClientSync {

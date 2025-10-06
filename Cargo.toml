@@ -19,7 +19,7 @@ http = "1"
 mongodb = { version = "3.3", features = ["bson-3"] }
 oauth2 = "5"
 once_cell = "1"
-prisma-rust-schema = { git = "https://github.com/ShaunSHamilton/prisma-rust-schema.git", version = "2.1.0", features = [
+prisma-rust-schema = { git = "https://github.com/ShaunSHamilton/prisma-rust-schema.git", version = "2.1.1", features = [
   "bson",
   "mongodb",
 ] }
