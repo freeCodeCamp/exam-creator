@@ -1,248 +1,213 @@
-# Exam Creator Project (AGENT.md)
+# Exam Creator Project
 
-This file provides unified, tool-agnostic guidance for AI coding agents and new contributors. It summarizes project purpose, structure, conventions, commands, architecture, testing, security, and operational considerations.
+AI agent and contributor guide for the Exam Creator full-stack application.
 
-## Project Overview
+## Overview
 
-Exam Creator is a full‑stack application for configuring, generating, moderating, and attempting exams comprised of question sets (multiple choice and dialogue groupings). It exposes a Rust (Axum) HTTP + WebSocket API backed by MongoDB and serves a bundled React (Vite + TypeScript + Chakra UI) frontend. Prisma (MongoDB connector) is used for schema typing / client generation (JS side) while Rust uses the official `mongodb` driver and custom domain models.
+Exam Creator is a Rust (Axum) + React (Vite + TypeScript) application for creating, generating, moderating, and attempting exams with multiple choice and dialogue question sets. MongoDB backend with Prisma schema typing and WebSocket support for real-time collaboration.
 
-Key capabilities:
-
-- Create/update exams with configurable question sets, tag quotas, timing, and passing criteria.
-- Generate exam variations from pools (EnvGeneratedExam) and track user attempts (EnvExamAttempt).
-- GitHub OAuth login (or mock auth in debug) with session management (tower-sessions, cookie key).
-- Real‑time collaboration & presence (WebSockets for users and exam state syncing; see `server/extractor/ws_handler_*`).
-- Moderation workflow for exam attempts with status + feedback.
+**Key Features:**
+- Exam configuration with question sets, tag quotas, timing, and passing criteria
+- Exam generation from question pools with user attempt tracking
+- GitHub OAuth (or mock auth in debug) with session management
+- Real-time collaboration via WebSockets (exam state sync, user presence)
+- Moderation workflow with approval/denial/feedback
 
 ## Repository Structure
 
-Top-level directories/files:
+```
+client/          React + TypeScript SPA (Vite, Chakra UI)
+server/          Rust Axum backend
+  ├── main.rs    Entry point
+  ├── app.rs     Router, CORS, sessions, OAuth setup
+  ├── config.rs  Environment variables
+  ├── routes/    HTTP handlers (exams, attempts, moderations, users, auth, websocket)
+  ├── extractor/ WebSocket handlers & auth extractor
+  ├── database/  DB helpers, Prisma bridging
+  ├── state.rs   Shared in-memory state (ClientSync)
+  └── errors.rs  Unified error handling
+prisma/          Schema & JS client generation
+public/          Static assets
+index.html       Frontend entry
+Dockerfile       Multi-stage build (bun + cargo chef + distroless)
+sample.env       Environment variable template
+```
 
-- `client/` React + TypeScript SPA (Vite) and UI components.
-- `server/` Rust Axum backend (entry: `server/main.rs`, app builder: `server/app.rs`).
-- `prisma/` Prisma schema (`schema.prisma`) & JS generation (used by frontend tooling / types).
-- `public/` Static assets copied into build.
-- `index.html` Frontend HTML entry (Vite).
-- `Dockerfile` Multi-stage build: bun + prisma generate + cargo chef + distroless runtime.
-- `sample.env` (if present) / environment variable sample (update when env changes).
-- `AGENT.md` (this file) universal agent configuration.
+**Tech Stack:**
+- Frontend: React 19, TanStack Router, React Query, Chakra UI, Immer
+- Backend: Axum, tower-sessions, MongoDB driver, oauth2
+- Build: Vite, Bun, cargo-chef
 
-Important server modules:
+## Development Commands
 
-- `config.rs` Environment variable ingestion & defaults (see Env Vars section).
-- `app.rs` Router construction (routes, CORS, sessions, tracing, static file serving, OAuth setup).
-- `routes/` HTTP route handlers (exams, attempts, moderations, users, auth, websocket endpoints in `websocket.rs`).
-- `extractor/` WebSocket handler logic.
-- `database/` DB related helpers (Prisma bridging / sessions / domain wrappers).
-- `state.rs` Shared state (in‑memory client sync & cleanup task).
-- `errors.rs` Unified error type -> HTTP responses.
+**Frontend:**
+- `bun install` or `npm install` - Install dependencies
+- `bun run dev` - Start Vite dev server (port 5173)
+- `bun run build` - Type-check + production build
+- `bun run preview` - Preview production build
 
-Client highlights:
+**Backend:**
+- `cargo run` - Run server (requires env vars, uses `docker` feature by default)
+- `cargo build --release` - Production build
+- `cargo fmt` - Format code
+- `cargo clippy` - Lint
 
-- React 19 + Router (TanStack), React Query for data fetching, Chakra UI for styling, Immer for immutable state helpers.
+**Prisma:**
+- `npx prisma generate` - Generate client (auto-run in Docker)
 
-## Build & Development Commands
+**Local Dev Workflow:**
+1. Start MongoDB (local or Atlas)
+2. Set environment variables (see sample.env)
+3. Terminal A: `cargo run` (server)
+4. Terminal B: `bun run dev` (frontend)
 
-Node tooling uses Bun for install in Docker, but locally you can use `bun` or `npm`/`pnpm` (lockfile is Bun). Recommended: Bun >= 1.1 or Node 20+.
+## Environment Variables
 
-Scripts (package.json):
+**Required:**
+- `COOKIE_KEY` - 64-byte session key
+- `MONGODB_URI_PRODUCTION` - MongoDB connection string
+- `MONGODB_URI_STAGING` - MongoDB connection string
 
-- `dev`: Start Vite dev server (defaults to port 5173 unless overridden).
-- `develop:server`: Run Rust server in debug (`cargo run`).
-- `build`: Type-check (`tsc`) then build production assets with Vite.
-- `preview`: Serve built frontend for local preview.
-
-Rust:
-
-- `cargo run` (optionally with `--features docker` if relying on that entry gating; main currently under `#[cfg(feature = "docker")]`). For local iterative dev you may remove that cfg or enable feature. If feature gating is unintended, consider removing attribute to allow plain `cargo run`.
-- `cargo build --release` for production binary.
-
-Prisma:
-
-- `npx prisma generate` (automatically run inside Docker build). Ensure MongoDB connection env var(s) available (see Env Vars).
-
-Docker build:
-
-1. Builds frontend via Bun.
-2. Generates Prisma client.
-3. Uses cargo-chef to layer dependencies.
-4. Copies frontend `dist` into runtime image alongside Rust binary (`/server`).
-
-Example local dev workflow:
-
-1. Start MongoDB (Atlas cluster or local). Ensure `MONGODB_URI_PRODUCTION` and `MONGODB_URI_STAGING`.
-2. `bun install` (or `npm i`).
-3. Terminal A: `cargo run` (server) (set env vars).
-4. Terminal B: `bun run dev` (frontend hot reload).
-
-## Environment Variables (from `server/config.rs`)
-
-Required (panic if missing):
-
-- `COOKIE_KEY` (64 bytes) – session encryption/signing key.
-- `MONGODB_URI_PRODUCTION` – MongoDB connection string (Rust driver).
-- `MONGODB_URI_STAGING` – MongoDB connection string (Rust driver).
-
-Conditionally required (must exist unless `MOCK_AUTH=true` in debug):
-
+**Conditionally Required (unless `MOCK_AUTH=true` in debug):**
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET`
 
-Optional with defaults:
+**Optional (with defaults):**
+- `PORT` (8080) - Server port
+- `ALLOWED_ORIGINS` (`http://127.0.0.1:{PORT}`) - CORS origins (CSV)
+- `GITHUB_REDIRECT_URL` (`http://127.0.0.1:{PORT}/auth/callback/github`)
+- `MOCK_AUTH` (false) - Bypass OAuth (debug only)
+- `REQUEST_BODY_SIZE_LIMIT` (5 * 2^20 bytes) - ~5 MiB
+- `REQUEST_TIMEOUT_IN_MS` (5000)
+- `SESSION_TTL_IN_S` (7200)
 
-- `PORT` (default 8080) – server bind port.
-- `ALLOWED_ORIGINS` (CSV) (default `http://127.0.0.1:{PORT}`) – CORS.
-- `GITHUB_REDIRECT_URL` (default `http://127.0.0.1:{PORT}/auth/callback/github`).
-- `MOCK_AUTH` (`true|false`, default false) – bypass OAuth for dev (only allowed in debug).
-- `REQUEST_BODY_SIZE_LIMIT` (default 5 \* 2^20 bytes ≈ 5 MiB).
-- `REQUEST_TIMEOUT_IN_MS` (default 5000).
-- `SESSION_TTL_IN_S` (default 7200).
+**Update `sample.env` when adding/modifying env vars.**
 
-Update `sample.env` (or add one) when modifying env vars. Regenerate documentation sections here accordingly.
+## Architecture
 
-## Runtime & Operations
+**Backend:**
+- Axum with tower-sessions (MemoryStore - not production-ready for multi-node)
+- MongoDB via official driver + custom domain models
+- Tracing for structured logging
+- CORS via `ALLOWED_ORIGINS`
+- GitHub OAuth via oauth2 crate
+- WebSocket state in `Arc<Mutex<ClientSync>>` with 5-min cleanup task
+- Static file serving: Built frontend (`dist/`) served by Rust server
 
-Server stack:
+**WebSockets:**
+- `/ws/exam/{exam_id}` - Collaborative exam editing (not fully implemented)
+- `/ws/users` - User presence tracking
 
-- Axum (HTTP routing, extractors, websockets via upgrade handlers).
-- tower-sessions with in-memory store (MemoryStore) – not suitable for multi-node production; replace with Redis or database-backed store for scaling.
-- Tracing (`tracing` & `tower_http::trace::TraceLayer`) logs request spans with latency.
-- CORS configured via `ALLOWED_ORIGINS` + credentials true.
-- GitHub OAuth (oauth2 crate) – ensure redirect URL matches GitHub app config.
-- Graceful shutdown on SIGINT/SIGTERM.
+**Data Model:**
+- Prisma schema for JS types
+- Rust uses custom domain models
+- `construct_attempt` in `config.rs` enriches attempts with submission times and selected answers
 
-Static file serving: Built frontend (`dist/`) is served by the Rust server, with SPA routes mapped to `index.html` for client-side navigation.
+## Code Style
 
-WebSockets:
+**TypeScript:**
+- Strict mode enabled (`tsconfig.json`)
+- PascalCase for components, camelCase for variables/functions
+- Avoid `any`, prefer explicit types
+- Functional components, hooks for side effects
+- React Query for server data
+- Immer for immutable state updates
+- Keep components < 200 LOC
 
-- `/ws/exam/{exam_id}` for collaborative exam editing/state.
-- `/ws/users` for presence / online users tracking.
-- Shared state: `ClientSync` (lists of users, exams) stored in `Arc<Mutex<...>>`; periodic cleanup task every 5 minutes.
+**Rust:**
+- Use `?` for error propagation via `errors.rs`
+- Thin route handlers, delegate logic to modules
+- Async-only (no blocking I/O)
+- Run `cargo fmt` and `cargo clippy`
 
-## Data Model (Prisma / Domain)
+**General:**
+- Document "why" not "what" in comments
+- Match existing code style
+- Check dependencies before use (package.json/Cargo.toml)
+- Group imports: external, internal, assets
 
-Primary domain entities (subset):
+## API Endpoints
 
-- Moderation: `ExamEnvironmentExamModeration` with status (Approved|Denied|Pending) + feedback & timestamps.
-- User: `user` (extensive profile fields + relations to attempts/tokens).
+**Exams:**
+- `GET /api/exams` - List exams
+- `POST /api/exams` - Create exam
+- `GET /api/exams/{exam_id}` - Get exam
+- `PUT /api/exams/{exam_id}` - Update exam
+- `PUT /api/exams/{exam_id}/seed/staging` - Seed to staging
+- `PUT /api/exams/{exam_id}/seed/production` - Seed to production
 
-Rust constructs composite Attempt DTO in `config.rs` (`construct_attempt`) filtering & enriching attempt responses with submission time and selected answers.
+**Attempts:**
+- `GET /api/attempts` - List attempts
+- `GET /api/attempts/{attempt_id}` - Get attempt
+- `PATCH /api/attempts/{attempt_id}/moderation` - Update moderation status
 
-## Code Style & Conventions
+**Moderations:**
+- `GET /api/moderations` - List moderation queue
 
-General:
+**Exam Challenges:**
+- `GET /api/exam-challenges/{exam_id}` - Get challenges
+- `PUT /api/exam-challenges/{exam_id}` - Update challenges
 
-- TypeScript strict (see `tsconfig.json` – ensure maintain strict flags; add if missing: `strict: true`).
-- Prefer functional, pure components; keep side effects in hooks or query callbacks.
-- Naming: PascalCase for React components, camelCase for variables/functions. Acronyms uppercase (ID, URL, API).
-- Avoid broad `any`; prefer explicit generics or type inference.
-- No silent suppression of errors (`// @ts-ignore` discouraged). Add runtime guards if needed.
-- Keep React components small (< ~200 LOC) and extract logic hooks where complex logic emerges.
-- Use React Query for server data; centralize fetch logic in `client/utils/fetch.ts` (auth headers, error translation).
-- Use Immer (or `use-immer`) for complex immutable updates rather than deep cloning.
+**Users:**
+- `GET /api/users` - List users (auth required)
+- `GET /api/users/session` - Current session user
+- `PUT /api/users/session/settings` - Update user settings
 
-Imports:
+**State:**
+- `PUT /api/state/exams/{exam_id}` - Discard exam state
 
-- Group: external libs, internal absolute/relative, styles/assets.
-- Prefer explicit file endings for local imports when ambiguity arises.
+**Auth:**
+- `GET /auth/login/github` - Initiate OAuth
+- `GET /auth/github` - OAuth callback
+- `DELETE /auth/logout` - Logout
 
-Rust:
+**Health:**
+- `GET /status/ping` - Health check
 
-- Use explicit error propagation (`?`) and unify error conversion through `errors.rs`.
-- Keep route handlers thin: delegate heavy logic to dedicated modules or helper functions.
-- Avoid blocking calls (always use async driver features). No synchronous file or network I/O on request path.
-- Enforce `clippy` (add CI step recommended) and `rustfmt` default style.
+**WebSockets:**
+- `/ws/exam/{exam_id}` - Collaborative exam editing (not fully implemented)
+- `/ws/users` - User presence tracking
 
-JSON / API:
+## Security
 
-- Consistent snake_case for JSON keys (Prisma side) unless existing clients demand otherwise.
-- Document new endpoints in this file (API section) and update frontend types (`client/types/`).
+- Never commit secrets (use `.gitignore` for `.env`)
+- `COOKIE_KEY` must be exactly 64 bytes
+- Enforce `ALLOWED_ORIGINS` (no wildcard credentials)
+- GitHub OAuth redirect must match app config
+- Validate user input server-side
+- Replace MemoryStore for production (use Redis/DB-backed store)
+- Rate limiting not implemented (consider tower-governor)
 
-## API Surface (High-Level)
+## Performance
 
-HTTP Endpoints (selected):
+- Offload CPU-heavy tasks to `tokio::task::spawn_blocking`
+- Add MongoDB indexes for frequently queried fields
+- MemoryStore has O(n) memory growth - migrate early
+- Monitor frontend bundle size, code-split routes if needed
 
-- `GET /api/exams` – list exams.
-- `POST /api/exams` – create exam.
-- `GET /api/exams/{exam_id}` – exam by id.
-- `PUT /api/exams/{exam_id}` – update exam.
-- `GET /api/attempts` – list attempts.
-- `GET /api/attempts/{attempt_id}` – attempt by id.
-- `GET /api/moderations` – list moderation queue/items.
-- `GET /api/users` – list users (requires auth).
-- `GET /api/users/session` – current session user.
-- `PUT /api/state/exams/{exam_id}` – discard exam state.
-- Auth: `GET /auth/login/github`, `GET /auth/github` (callback), `DELETE /auth/logout`.
-- Health: `GET /status/ping`.
-- WebSockets: `/ws/exam/{exam_id}`, `/ws/users`.
+## Adding Features
 
-Add new routes under `server/routes/` and mount in `app.rs`; ensure CORS & auth (if needed) handled.
+1. Update `prisma/schema.prisma` if data model changes, run `npx prisma generate`
+2. Add/update Rust route handler in `server/routes/`, register in `app.rs`
+3. Extend frontend types (`client/types/`) and queries (`client/utils/fetch.ts`)
+4. Implement React components
+5. Run `cargo clippy`, `cargo fmt`, and `tsc` to verify
+6. Update `sample.env` if new env vars added
+7. Update this file and `CHANGELOG.md`
 
-## Security Considerations
+## Open Items
 
-- Never commit real secrets. Use `.gitignore` for `.env`.
-- `COOKIE_KEY` must be exactly 64 bytes (validated) — rotate if compromised.
-- Enforce origin allowlist via `ALLOWED_ORIGINS`; avoid wildcard credentials.
-- GitHub OAuth redirect URL must match configured application; disallow open redirects.
-- HTTP client (`reqwest`) is configured with redirects disabled to mitigate SSRF risk.
-- Validate user input lengths and expected formats server-side (add explicit validation layer for new endpoints).
-- Replace in-memory session store for production deployments with a persistent store to avoid horizontal scaling issues & session loss on restart.
-- Rate limiting: Not currently implemented; consider `tower-governor` or custom middleware for brute force / abuse protection.
-- WebSocket: Authenticate/authorize participants (currently depends on session + client sync; tighten as needed for exam integrity).
+- Add automated tests (frontend + backend) and CI
+- Replace MemoryStore with Redis for production
+- Implement rate limiting and stronger WebSocket auth
+- Add E2E exam generation tests
+- Schema versioning/migration strategy
 
-## Performance & Scaling
+## Agent Expectations
 
-- Axum is async; ensure heavy CPU tasks (e.g. bulk generation) are offloaded to blocking thread pools (`tokio::task::spawn_blocking`).
-- MongoDB queries: Add indexes for frequently queried fields (e.g., examAttemptId, userId) (some defined in schema). Review query plans if latency grows.
-- Session MemoryStore leads to O(n) memory with active sessions — plan migration early.
-- Frontend bundles: Monitor Vite output size; code split routes if needed.
-
-## Logging & Observability
-
-- Structured logs via tracing; by default, environment filter uses crate name = debug. Override with `RUST_LOG=server=info` etc.
-- Include matched path in trace spans for route correlation.
-- Add metrics (future): integrate `metrics` crate + Prometheus exporter as needed.
-
-## Adding a New Feature (Playbook)
-
-1. Define API / data model changes; update `prisma/schema.prisma` if necessary (add new types/fields) and run `npx prisma generate`.
-2. Add/update Rust route handler in `server/routes/` and register in `app.rs`.
-3. Extend frontend types (`client/types/`) & queries (`client/utils/fetch.ts`).
-4. Implement React components & state hooks.
-5. Add tests (unit & integration) and doc updates (README + this file sections as needed).
-6. Verify `cargo clippy` & `cargo fmt` (add CI) and TS type checks (`tsc`).
-7. Update `sample.env` if new env vars introduced.
-
-## Configuration Management
-
-When adding configuration:
-
-1. Add env var with sane default (if not sensitive) in `config.rs`.
-2. Document here (Env Vars section) + `sample.env`.
-3. Ensure frontend consumption (if required) via build-time injection or dedicated endpoint (avoid leaking secrets).
-4. Consider validation (length, format) when reading var.
-
-## Open Improvement Items
-
-- Add automated test suites (frontend + backend) & CI pipeline.
-- Replace in-memory sessions with Redis-backed store for production.
-- Implement rate limiting & stronger auth checks for WebSockets.
-- Add E2E exam generation correctness tests.
-- Consider splitting domain logic from route layer for better testability.
-- Add schema versioning or migration strategy for evolving exam structures.
-
-## Tooling Expectations for Agents
-
-Agents interacting with this repo SHOULD:
-
-- Respect environment variable constraints (`COOKIE_KEY` length, required secrets).
-- Run TS build (`tsc`) before shipping code changes to catch type regressions.
-- Avoid introducing `any` or `unsafe` patterns without justification.
-- Do not make sweeping refactors.
-- Update this file when altering architecture, env vars, primary scripts, or adding significant modules.
-- Update the `CHANGELOG.md` file as necessary.
-  - This file should be used as a place to keep track of planning and implemented changes via Markdown checkboxes within the relavent next release.
-
----
-
-End of AGENT.md.
+- Respect env var constraints (COOKIE_KEY length, required secrets)
+- Run `tsc` before shipping code changes
+- Avoid `any` or `unsafe` without justification
+- No sweeping refactors
+- Update this file when changing architecture, env vars, or major modules
+- Update `CHANGELOG.md` with planning and implementation notes
