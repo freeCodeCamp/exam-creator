@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Changed (non-breaking)
+
+- client: remove odd prismjs languages for list of 58
+- client: use Rolldown bundler version of Vitejs
+- client: use advanced bundling options for smaller chunks
+
+### Dev
+
+- replace `vite` rollup with rolldown version
+
 ## [2.0.5] - 2025-10-06
 
 ### Fixed
