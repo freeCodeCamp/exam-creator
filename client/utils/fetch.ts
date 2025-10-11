@@ -177,6 +177,46 @@ export async function postExam(): Promise<ExamCreatorExam> {
   return deserialized;
 }
 
+interface PutGenerateExam {
+  examId: ExamCreatorExam["id"];
+  count: number;
+}
+
+/**
+ * Generate an exam based on the exam configuration
+ */
+export async function putGenerateExam({
+  examId,
+  count,
+}: PutGenerateExam): Promise<AsyncIterable<Uint8Array>> {
+  // }: PutGenerateExam): Promise<ReadableStream<Uint8Array>> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const generatedExam: PutGenerateExam = {
+      examId,
+      count,
+    };
+    return (async function* () {
+      yield new TextEncoder().encode(JSON.stringify(generatedExam));
+    })();
+  }
+
+  const res = await authorizedFetch(`/api/exams/${examId}/generate`, {
+    method: "PUT",
+    body: JSON.stringify({ count }),
+  });
+
+  if (!res.body) {
+    throw new Error("Failed to generate exam");
+  }
+
+  return res.body;
+  // const json = await res.json();
+  // const deserialized = deserializeToPrisma<PutGenerateExam>(json);
+  // return deserialized;
+}
+
 export async function getUsers(): Promise<User[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);

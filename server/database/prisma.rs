@@ -8,7 +8,7 @@ prisma_rust_schema::import_types!(
         "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/exam-environment.prisma",
         "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/api/prisma/exam-creator.prisma",
     ],
-    derive = [Clone, Debug, Serialize, Deserialize],
+    derive = [Clone, Debug, Serialize, Deserialize, PartialEq],
     include = [
         "ExamEnvironmentExam",
         "ExamCreatorExam",

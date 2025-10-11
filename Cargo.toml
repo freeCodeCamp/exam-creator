@@ -11,6 +11,7 @@ name = "server"
 [dependencies]
 axum = { version = "0.8", features = ["macros", "ws"] }
 axum-extra = { version = "0.10", features = ["cookie-private", "typed-header"] }
+axum-streams = { version = "0.23.1", features = ["json"] }
 bson = { version = "3", features = ["chrono-0_4", "serde_with-3", "serde"] }
 chrono = "0.4"
 dotenvy = "0.15"
@@ -23,6 +24,7 @@ prisma-rust-schema = { git = "https://github.com/ShaunSHamilton/prisma-rust-sche
   "bson",
   "mongodb",
 ] }
+rand = "0.9.2"
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -30,6 +32,7 @@ serde_with = "3"
 thiserror = "2"
 time = "0.3"
 tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1.17"
 tower = { version = "0.5", features = ["full"] }
 tower-http = { version = "0.6", features = [
   "cors",

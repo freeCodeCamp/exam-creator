@@ -15,6 +15,7 @@ pub mod attempts;
 pub mod auth;
 pub mod exam_challenge;
 pub mod exams;
+pub mod generation;
 pub mod moderations;
 pub mod users;
 pub mod websocket;

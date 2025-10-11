@@ -3,6 +3,7 @@ mod config;
 mod database;
 mod errors;
 mod extractor;
+mod generation;
 mod routes;
 mod state;
 

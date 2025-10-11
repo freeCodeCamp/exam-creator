@@ -32,7 +32,12 @@ import {
   AppWindow,
   Trash2,
 } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  experimental_streamedQuery,
+  mutationOptions,
+  useMutation,
+  useQuery,
+} from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { useContext, useEffect, useState } from "react";
 
@@ -44,6 +49,7 @@ import {
   postExam,
   putExamByIdToProduction,
   putExamByIdToStaging,
+  putGenerateExam,
 } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { editExamRoute } from "./edit-exam";
@@ -78,6 +84,11 @@ export function Exams() {
     isOpen: productionIsOpen,
     onOpen: productionOnOpen,
     onClose: productionOnClose,
+  } = useDisclosure();
+  const {
+    isOpen: generateStagingIsOpen,
+    onOpen: generateStagingOnOpen,
+    onClose: generateStagingOnClose,
   } = useDisclosure();
 
   const examsQuery = useQuery({
@@ -158,6 +169,34 @@ export function Exams() {
     },
   });
 
+  const generateToStagingMutation = useMutation(
+    mutationOptions({
+      mutationFn: ({
+        examIds,
+        count,
+      }: {
+        examIds: string[];
+        count: number;
+      }) => {
+        return experimental_streamedQuery({
+          streamFn: () => putGenerateExam(),
+        });
+      },
+      onSuccess(data, _variables, _context) {
+        generateStagingOnClose();
+        handleDeselectAll();
+        examsQuery.refetch();
+        toast({
+          title: "Exams generated to staging",
+          description: "The selected exams have been generated to staging.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      },
+    })
+  );
+
   function handleExamSelection(examId: string, selected: boolean) {
     setSelectedExams((prev) => {
       const newSelection = new Set(prev);
@@ -202,6 +241,14 @@ export function Exams() {
     const examIds = [...selectedExams];
 
     seedExamToProductionMutation.mutate(examIds);
+  }
+
+  function handleGenerateSelectedToStaging() {
+    if (!examsQuery.data || selectedExams.size === 0) return;
+
+    const examIds = [...selectedExams];
+
+    seedExamToProductionMutation.mutate({});
   }
 
   function toggleSelectionMode() {
@@ -445,6 +492,27 @@ export function Exams() {
                   >
                     Seed to Production
                   </MenuItem>
+                  <MenuItem
+                    as={Button}
+                    backgroundColor="gray.800"
+                    borderRadius={0}
+                    boxShadow="md"
+                    color={"white"}
+                    colorScheme="green"
+                    fontWeight="bold"
+                    isDisabled={
+                      selectedExams.size === 0 ||
+                      generateToStagingMutation.isPending
+                    }
+                    isLoading={generateToStagingMutation.isPending}
+                    justifyContent={"flex-start"}
+                    leftIcon={<CodeXml size={18} />}
+                    loadingText={"Generating in progress..."}
+                    onClick={generateStagingOnOpen}
+                    _hover={{ bg: "green.500" }}
+                  >
+                    Generate to Staging
+                  </MenuItem>
                   {/* TODO: Probably never going to create such functionality */}
                   <MenuItem
                     as={Button}
@@ -504,6 +572,12 @@ export function Exams() {
         onClose={productionOnClose}
         handleSeedSelectedToProduction={handleSeedSelectedToProduction}
         seedExamToProductionMutation={seedExamToProductionMutation}
+      />
+      <GenerateStagingModal
+        isOpen={generateStagingIsOpen}
+        onClose={generateStagingOnClose}
+        handleGenerateSelectedToStaging={handleGenerateSelectedToStaging}
+        generateExamToStagingMutation={generateToStagingMutation}
       />
     </Box>
   );

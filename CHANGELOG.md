@@ -8,6 +8,12 @@
 - client: use Rolldown bundler version of Vitejs
 - client: use advanced bundling options for smaller chunks
 
+### Added
+
+- client: generate exams button
+- server: `POST /api/exams/{exam_id}/generate`
+  - body: `{ count: u16 }`
+
 ### Dev
 
 - replace `vite` rollup with rolldown version

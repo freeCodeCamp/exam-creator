@@ -5,6 +5,8 @@ use http::StatusCode;
 pub enum Error {
     #[error("{1}")]
     Server(StatusCode, String),
+    #[error("{1}")]
+    Generation(StatusCode, String),
     // Froms
     #[error("{0}")]
     MongoDB(#[from] mongodb::error::Error),
@@ -37,6 +39,7 @@ impl From<Error> for StatusCode {
     fn from(error: Error) -> Self {
         match error {
             Error::Server(c, _) => c,
+            Error::Generation(c, _) => c,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
