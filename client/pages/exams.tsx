@@ -35,6 +35,7 @@ import {
 import {
   experimental_streamedQuery,
   mutationOptions,
+  queryOptions,
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
@@ -49,6 +50,7 @@ import {
   postExam,
   putExamByIdToProduction,
   putExamByIdToStaging,
+  PutGenerateExam,
   putGenerateExam,
 } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
@@ -61,6 +63,7 @@ import {
   SeedProductionModal,
   SeedStagingModal,
 } from "../components/seed-modal";
+import { GenerateStagingModal } from "../components/generate-modal";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
@@ -169,31 +172,39 @@ export function Exams() {
     },
   });
 
-  const generateToStagingMutation = useMutation(
-    mutationOptions({
-      mutationFn: ({
-        examIds,
-        count,
-      }: {
-        examIds: string[];
-        count: number;
-      }) => {
-        return experimental_streamedQuery({
-          streamFn: () => putGenerateExam(),
-        });
-      },
-      onSuccess(data, _variables, _context) {
-        generateStagingOnClose();
-        handleDeselectAll();
-        examsQuery.refetch();
-        toast({
-          title: "Exams generated to staging",
-          description: "The selected exams have been generated to staging.",
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
-      },
+  function handlePutGenerateExam() {
+    const ar = {
+      examId: "674819431ed2e8ac8d170f5e",
+      count: 1,
+    };
+    return putGenerateExam(ar);
+  }
+  const generateToStagingMutation = useQuery(
+    queryOptions({
+      queryKey: ["generateExamToStaging"],
+      enabled: false,
+      queryFn: experimental_streamedQuery({
+        streamFn: () => handlePutGenerateExam(),
+        // @ts-expect-error TODO: Look into
+        reducer(acc: PutGenerateExam[], chunk: Uint8Array) {
+          const textDecoder = new TextDecoder("utf-8");
+          const data = textDecoder.decode(chunk);
+          return [...acc, data];
+        },
+      }),
+      retry: false,
+      // onSuccess(data, _variables, _context) {
+      //   generateStagingOnClose();
+      //   handleDeselectAll();
+      //   examsQuery.refetch();
+      //   toast({
+      //     title: "Exams generated to staging",
+      //     description: "The selected exams have been generated to staging.",
+      //     status: "success",
+      //     duration: 5000,
+      //     isClosable: true,
+      //   });
+      // },
     })
   );
 
@@ -248,7 +259,7 @@ export function Exams() {
 
     const examIds = [...selectedExams];
 
-    seedExamToProductionMutation.mutate({});
+    generateToStagingMutation.refetch();
   }
 
   function toggleSelectionMode() {

@@ -98,7 +98,7 @@ export async function getExams(): Promise<GetExam[]> {
       );
     }
     const exams: ExamCreatorExam[] = await res.json();
-    return exams.map(({ questionSets, ...rest }) => deserializeToPrisma(rest));
+    return exams.map((exam) => deserializeToPrisma(exam));
   }
 
   const res = await authorizedFetch("/api/exams");
@@ -177,7 +177,7 @@ export async function postExam(): Promise<ExamCreatorExam> {
   return deserialized;
 }
 
-interface PutGenerateExam {
+export interface PutGenerateExam {
   examId: ExamCreatorExam["id"];
   count: number;
 }
@@ -197,9 +197,26 @@ export async function putGenerateExam({
       examId,
       count,
     };
-    return (async function* () {
-      yield new TextEncoder().encode(JSON.stringify(generatedExam));
-    })();
+
+    // Mock readable stream with delayed chunks of two `generatedExam` objects. This should return a JSON New Line stream
+    return new ReadableStream<Uint8Array>({
+      start(controller) {
+        let sent = 0;
+        const interval = setInterval(() => {
+          if (sent < count) {
+            controller.enqueue(
+              new TextEncoder().encode(
+                JSON.stringify(generatedExam) + (sent < count - 1 ? "\n" : "")
+              )
+            );
+            sent++;
+          } else {
+            clearInterval(interval);
+            controller.close();
+          }
+        }, 500);
+      },
+    });
   }
 
   const res = await authorizedFetch(`/api/exams/${examId}/generate`, {
