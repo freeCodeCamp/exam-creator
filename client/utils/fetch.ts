@@ -188,7 +188,9 @@ export interface PutGenerateExam {
 export async function putGenerateExam({
   examId,
   count,
-}: PutGenerateExam): Promise<AsyncIterable<Uint8Array>> {
+}: PutGenerateExam): Promise<
+  AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>
+> {
   // }: PutGenerateExam): Promise<ReadableStream<Uint8Array>> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -222,13 +224,16 @@ export async function putGenerateExam({
   const res = await authorizedFetch(`/api/exams/${examId}/generate`, {
     method: "PUT",
     body: JSON.stringify({ count }),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 
   if (!res.body) {
     throw new Error("Failed to generate exam");
   }
 
-  return res.body;
+  return res.body as ReadableStream<Uint8Array>;
   // const json = await res.json();
   // const deserialized = deserializeToPrisma<PutGenerateExam>(json);
   // return deserialized;

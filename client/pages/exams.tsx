@@ -32,13 +32,7 @@ import {
   AppWindow,
   Trash2,
 } from "lucide-react";
-import {
-  experimental_streamedQuery,
-  mutationOptions,
-  queryOptions,
-  useMutation,
-  useQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { useContext, useEffect, useState } from "react";
 
@@ -50,8 +44,6 @@ import {
   postExam,
   putExamByIdToProduction,
   putExamByIdToStaging,
-  PutGenerateExam,
-  putGenerateExam,
 } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { editExamRoute } from "./edit-exam";
@@ -172,42 +164,6 @@ export function Exams() {
     },
   });
 
-  function handlePutGenerateExam() {
-    const ar = {
-      examId: "674819431ed2e8ac8d170f5e",
-      count: 1,
-    };
-    return putGenerateExam(ar);
-  }
-  const generateToStagingMutation = useQuery(
-    queryOptions({
-      queryKey: ["generateExamToStaging"],
-      enabled: false,
-      queryFn: experimental_streamedQuery({
-        streamFn: () => handlePutGenerateExam(),
-        // @ts-expect-error TODO: Look into
-        reducer(acc: PutGenerateExam[], chunk: Uint8Array) {
-          const textDecoder = new TextDecoder("utf-8");
-          const data = textDecoder.decode(chunk);
-          return [...acc, data];
-        },
-      }),
-      retry: false,
-      // onSuccess(data, _variables, _context) {
-      //   generateStagingOnClose();
-      //   handleDeselectAll();
-      //   examsQuery.refetch();
-      //   toast({
-      //     title: "Exams generated to staging",
-      //     description: "The selected exams have been generated to staging.",
-      //     status: "success",
-      //     duration: 5000,
-      //     isClosable: true,
-      //   });
-      // },
-    })
-  );
-
   function handleExamSelection(examId: string, selected: boolean) {
     setSelectedExams((prev) => {
       const newSelection = new Set(prev);
@@ -256,10 +212,7 @@ export function Exams() {
 
   function handleGenerateSelectedToStaging() {
     if (!examsQuery.data || selectedExams.size === 0) return;
-
-    const examIds = [...selectedExams];
-
-    generateToStagingMutation.refetch();
+    // Generation is now handled inside the modal component.
   }
 
   function toggleSelectionMode() {
@@ -511,14 +464,9 @@ export function Exams() {
                     color={"white"}
                     colorScheme="green"
                     fontWeight="bold"
-                    isDisabled={
-                      selectedExams.size === 0 ||
-                      generateToStagingMutation.isPending
-                    }
-                    isLoading={generateToStagingMutation.isPending}
+                    isDisabled={selectedExams.size === 0}
                     justifyContent={"flex-start"}
                     leftIcon={<CodeXml size={18} />}
-                    loadingText={"Generating in progress..."}
                     onClick={generateStagingOnOpen}
                     _hover={{ bg: "green.500" }}
                   >
@@ -588,7 +536,9 @@ export function Exams() {
         isOpen={generateStagingIsOpen}
         onClose={generateStagingOnClose}
         handleGenerateSelectedToStaging={handleGenerateSelectedToStaging}
-        generateExamToStagingMutation={generateToStagingMutation}
+        // Placeholder prop kept for compatibility
+        generateExamToStagingMutation={{} as any}
+        selectedExamIds={[...selectedExams]}
       />
     </Box>
   );

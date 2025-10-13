@@ -10,14 +10,9 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tracing::info;
+use tracing::{info, instrument};
 
-use crate::{
-    database::{self, prisma},
-    errors::Error,
-    generation::{self},
-    state::ServerState,
-};
+use crate::{database::prisma, errors::Error, generation, state::ServerState};
 
 #[derive(Deserialize)]
 pub struct PutGenerateExamBody {
@@ -32,19 +27,18 @@ pub struct PutGenerateExamResponse {
 }
 
 /// Generate an exam based on the exam configuration
+#[instrument(skip_all, err(Debug))]
 pub async fn put_generate_exam(
-    auth_user: prisma::ExamCreatorUser,
+    _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
     Json(body): Json<PutGenerateExamBody>,
 ) -> Result<impl IntoResponse, Error> {
-    info!("Generating {} exam for exam_id: {}", body.count, exam_id);
-
-    // Clone the selected database so it can be moved into the spawned task ('static lifetime)
-    let database = database::database_environment(&state, &auth_user).clone();
+    let database = state.staging_database;
 
     // Fetch the exam from the appropriate database
-    let exam_creator_exam = database
+    let exam_creator_exam = state
+        .production_database
         .exam_creator_exam
         .find_one(doc! { "_id": exam_id })
         .await?
@@ -66,28 +60,35 @@ pub async fn put_generate_exam(
     // 2. Spawn a background task to do the generation
     tokio::spawn(async move {
         for i in 0..body.count {
-            match generation::generate_exam(exam_input.clone()) {
-                Ok(generated_exam) => {
-                    if let Err(e) = database.generated_exam.insert_one(&generated_exam).await {
-                        tracing::error!("Failed to insert generated exam: {}, stopping stream.", e);
-                        // The sender `tx` is dropped here, closing the channel and ending the stream.
-                        return;
-                    }
+            loop {
+                match generation::generate_exam(exam_input.clone()) {
+                    Ok(generated_exam) => {
+                        if let Err(e) = database.generated_exam.insert_one(&generated_exam).await {
+                            tracing::error!(
+                                "Failed to insert generated exam: {}, stopping stream.",
+                                e
+                            );
+                            // The sender `tx` is dropped here, closing the channel and ending the stream.
+                            return;
+                        }
 
-                    info!("Successfully generated exam: {}", generated_exam.id);
+                        info!("Successfully generated exam: {}", generated_exam.id);
 
-                    let res = PutGenerateExamResponse { count: i, exam_id };
+                        let res = PutGenerateExamResponse { count: i, exam_id };
 
-                    // 3. Send the result through the channel.
-                    // If the client disconnects, `send` will fail, and we break the loop.
-                    if tx.send(res).await.is_err() {
-                        tracing::warn!("Client disconnected, stopping exam generation.");
+                        // 3. Send the result through the channel.
+                        // If the client disconnects, `send` will fail, and we break the loop.
+                        if tx.send(res).await.is_err() {
+                            tracing::warn!("Client disconnected, stopping exam generation.");
+                            break;
+                        }
+
                         break;
                     }
-                }
-                Err(e) => {
-                    tracing::error!("Failed to generate exam: {:?}", e);
-                    break;
+                    Err(e) => {
+                        tracing::debug!("Failed to generate exam: {:?}", e);
+                        // break;
+                    }
                 }
             }
         }
