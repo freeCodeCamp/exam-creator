@@ -17,7 +17,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
 import type { ExamCreatorExam } from "@prisma/client";
 import { useContext } from "react";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 
 interface ExamCardProps {
   exam: Omit<ExamCreatorExam, "questionSets">;
@@ -34,7 +34,7 @@ export function ExamCard({
   selectionMode = false,
   databaseEnvironments,
 }: ExamCardProps) {
-  const { users, error: usersError } = useContext(UsersWebSocketContext)!;
+  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");

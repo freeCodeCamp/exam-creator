@@ -25,7 +25,11 @@ import { rootRoute } from "./root";
 import { ModerationCard } from "../components/moderation-card";
 import { getAttemptById, getModerations } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import {
+  UsersWebSocketActivityContext,
+  UsersWebSocketUsersContext,
+} from "../contexts/users-websocket";
+import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
@@ -34,11 +38,8 @@ import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 export function Moderations() {
   const { logout } = useContext(AuthContext)!;
-  const {
-    users,
-    error: usersError,
-    updateActivity,
-  } = useContext(UsersWebSocketContext)!;
+  const { error: usersError } = useContext(UsersWebSocketUsersContext)!;
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
 
   const [filter, setFilter] =
@@ -81,11 +82,7 @@ export function Moderations() {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  const usersOnPage = users.filter((u) => {
-    const usersPath = u.activity.page.pathname;
-    // TODO: This might need to be `/attempts | /moderations`
-    return usersPath?.startsWith("/moderations");
-  });
+  const { users: usersOnPage } = useUsersOnPath("/moderations");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>

@@ -1,11 +1,23 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { deserializeToPrisma } from "../utils/serde";
 import { Activity, User } from "../types";
 import { AuthContext } from "./auth";
 
-export const UsersWebSocketContext = createContext<{
+// Split contexts to avoid unnecessary re-renders
+export const UsersWebSocketUsersContext = createContext<{
   users: User[];
   error: Error | null;
+} | null>(null);
+
+export const UsersWebSocketActivityContext = createContext<{
   updateActivity: (activity: Activity) => void;
 } | null>(null);
 
@@ -19,6 +31,11 @@ export function UsersWebSocketProvider({
   const [error, setError] = useState<Error | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const debounceRef = useRef<number | null>(null);
+  const usersRef = useRef<User[]>(users);
+
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
 
   useEffect(() => {
     if (!user) {
@@ -40,7 +57,7 @@ export function UsersWebSocketProvider({
             page: new URL(p.activity?.page || "", window.location.origin),
           },
         }));
-        setUsers(userData);
+        setUsers((prev) => (shallowEqualUsers(prev, userData) ? prev : userData));
       }
     };
 
@@ -65,11 +82,15 @@ export function UsersWebSocketProvider({
     };
 
     return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
       ws.close(1000, "Component unmounted");
     };
   }, [user]);
 
-  function updateActivity(activity: Activity) {
+  const updateActivity = useCallback((activity: Activity) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     // @ts-expect-error Nodejs type used for some reason
     debounceRef.current = setTimeout(() => {
@@ -85,11 +106,35 @@ export function UsersWebSocketProvider({
         wsRef.current?.send(JSON.stringify(msg));
       }
     }, 1_000);
-  }
+  }, []);
+
+  const usersValue = useMemo(() => ({ users, error }), [users, error]);
+  const activityValue = useMemo(() => ({ updateActivity }), [updateActivity]);
 
   return (
-    <UsersWebSocketContext.Provider value={{ users, error, updateActivity }}>
-      {children}
-    </UsersWebSocketContext.Provider>
+    <UsersWebSocketActivityContext.Provider value={activityValue}>
+      <UsersWebSocketUsersContext.Provider value={usersValue}>
+        {children}
+      </UsersWebSocketUsersContext.Provider>
+    </UsersWebSocketActivityContext.Provider>
   );
+}
+
+function shallowEqualUsers(a: User[], b: User[]) {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const ua = a[i];
+    const ub = b[i];
+    if (
+      ua.email !== ub.email ||
+      ua.name !== ub.name ||
+      ua.picture !== ub.picture ||
+      ua.activity.lastActive !== ub.activity.lastActive ||
+      ua.activity.page.pathname !== ub.activity.page.pathname
+    ) {
+      return false;
+    }
+  }
+  return true;
 }

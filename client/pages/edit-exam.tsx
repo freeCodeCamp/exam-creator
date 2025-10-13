@@ -48,7 +48,10 @@ import { TagConfigForm } from "../components/tag-config-form";
 import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
 import { QuestionTypeConfigForm } from "../components/question-type-config-form";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import {
+  UsersWebSocketActivityContext,
+  UsersWebSocketUsersContext,
+} from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
 
@@ -111,7 +114,7 @@ function Edit() {
 }
 
 function UsersEditing() {
-  const { users, error: usersError } = useContext(UsersWebSocketContext)!;
+  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
 
   const filteredUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
@@ -172,7 +175,7 @@ interface EditExamProps {
 }
 
 function EditExam({ exam: examData }: EditExamProps) {
-  const { updateActivity } = useContext(UsersWebSocketContext)!;
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const toast = useToast();
   const [exam, setExam] = useReducer(examReducer, examData);
   const examEnvironmentChallengesQuery = useQuery({

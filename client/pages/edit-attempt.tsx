@@ -30,7 +30,10 @@ import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import {
+  UsersWebSocketActivityContext,
+  UsersWebSocketUsersContext,
+} from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import {
   getAttemptById,
@@ -97,11 +100,8 @@ function Edit() {
 }
 
 function UsersEditing() {
-  const {
-    users,
-    error: usersError,
-    updateActivity,
-  } = useContext(UsersWebSocketContext)!;
+  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
 
   useEffect(() => {
     updateActivity({
@@ -160,7 +160,7 @@ function UsersEditing() {
 }
 
 function EditAttempt({ attempt }: { attempt: Attempt }) {
-  const { updateActivity } = useContext(UsersWebSocketContext)!;
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const simpleGridRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 

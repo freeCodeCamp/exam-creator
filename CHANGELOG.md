@@ -14,6 +14,10 @@
 - server: `POST /api/exams/{exam_id}/generate`
   - body: `{ count: u16 }`
 
+### Fixed
+
+- client: split `UsersWebSocketContext` into `UsersWebSocketUsersContext` and `UsersWebSocketActivityContext` to prevent unnecessary page re-renders on user presence updates. Pages that only send activity updates (e.g., edit views) now subscribe only to the activity context.
+
 ### Dev
 
 - replace `vite` rollup with rolldown version

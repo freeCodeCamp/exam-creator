@@ -17,19 +17,20 @@ import { useContext, useEffect } from "react";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import {
+  UsersWebSocketActivityContext,
+  UsersWebSocketUsersContext,
+} from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
+import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { examsRoute } from "./exams";
 import { moderationsRoute } from "./moderations";
 import { LandingCard } from "../components/landing-card";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
-  const {
-    users,
-    error: usersError,
-    updateActivity,
-  } = useContext(UsersWebSocketContext)!;
+  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
 
   const bg = useColorModeValue("black", "black");
@@ -43,10 +44,8 @@ export function Landing() {
     });
   }, []);
 
-  const usersOnAttempts =
-    users.filter((u) => u.activity.page.pathname?.startsWith("/attempt")) ?? [];
-  const usersOnExams =
-    users.filter((u) => u.activity.page.pathname?.startsWith("/exam")) ?? [];
+  const { users: usersOnAttempts } = useUsersOnPath("/attempt");
+  const { users: usersOnExams } = useUsersOnPath("/exam");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>

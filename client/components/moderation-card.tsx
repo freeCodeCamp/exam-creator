@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useContext } from "react";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
 import {
   ExamEnvironmentConfig,
@@ -27,7 +27,7 @@ interface ModerationCardProps {
 }
 
 export function ModerationCard({ moderation }: ModerationCardProps) {
-  const { users, error: usersError } = useContext(UsersWebSocketContext)!;
+  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");

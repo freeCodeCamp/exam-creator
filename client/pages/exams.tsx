@@ -23,6 +23,9 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
+import { useContext, useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createRoute, useNavigate } from "@tanstack/react-router";
 import {
   Plus,
   Download,
@@ -32,9 +35,6 @@ import {
   AppWindow,
   Trash2,
 } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createRoute, useNavigate } from "@tanstack/react-router";
-import { useContext, useEffect, useState } from "react";
 
 import { rootRoute } from "./root";
 import { ExamCard } from "../components/exam-card";
@@ -47,7 +47,7 @@ import {
 } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { editExamRoute } from "./edit-exam";
-import { UsersWebSocketContext } from "../contexts/users-websocket";
+import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { serializeFromPrisma } from "../utils/serde";
@@ -56,14 +56,11 @@ import {
   SeedStagingModal,
 } from "../components/seed-modal";
 import { GenerateStagingModal } from "../components/generate-modal";
+import { useUsersOnPath } from "../hooks/use-users-on-path";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
-  const {
-    users,
-    error: usersError,
-    updateActivity,
-  } = useContext(UsersWebSocketContext)!;
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -231,10 +228,7 @@ export function Exams() {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  const usersOnPage = users.filter((u) => {
-    const usersPath = u.activity.page.pathname;
-    return usersPath?.startsWith("/exams");
-  });
+  // Intentionally avoid subscribing to users here to prevent full-page re-renders on presence updates.
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
@@ -275,40 +269,7 @@ export function Exams() {
                 Create exams for the Exam Environment.
               </Text>
             </Stack>
-            <HStack spacing={-2} ml={4}>
-              {usersError ? (
-                <Text color="red.400" fontSize="sm">
-                  {usersError.message}
-                </Text>
-              ) : (
-                usersOnPage.slice(0, 5).map((user, idx) => (
-                  <Tooltip label={user.name} key={user.email}>
-                    <Avatar
-                      src={user.picture ?? undefined}
-                      name={user.name}
-                      size="md"
-                      border="2px solid"
-                      borderColor={bg}
-                      zIndex={5 - idx}
-                      ml={idx === 0 ? 0 : -3}
-                      boxShadow="md"
-                    />
-                  </Tooltip>
-                ))
-              )}
-              {usersOnPage.length > 5 && (
-                <Avatar
-                  size="md"
-                  bg="gray.700"
-                  color="gray.200"
-                  ml={-3}
-                  zIndex={0}
-                  name={`+${usersOnPage.length - 5} more`}
-                >
-                  +{usersOnPage.length - 5}
-                </Avatar>
-              )}
-            </HStack>
+            <ExamsUsersOnPageAvatars />
             <HStack spacing={4} ml={8}>
               <Button
                 leftIcon={selectionMode ? <X size={18} /> : undefined}
@@ -464,13 +425,14 @@ export function Exams() {
                     color={"white"}
                     colorScheme="green"
                     fontWeight="bold"
-                    isDisabled={selectedExams.size === 0}
+                    // isDisabled={selectedExams.size === 0}
+                    isDisabled={true}
                     justifyContent={"flex-start"}
                     leftIcon={<CodeXml size={18} />}
                     onClick={generateStagingOnOpen}
                     _hover={{ bg: "green.500" }}
                   >
-                    Generate to Staging
+                    Generate to Staging (Coming Soon)
                   </MenuItem>
                   {/* TODO: Probably never going to create such functionality */}
                   <MenuItem
@@ -486,7 +448,7 @@ export function Exams() {
                     leftIcon={<Trash2 size={18} />}
                     _hover={{ bg: "green.500" }}
                   >
-                    Delete
+                    Delete (TBD)
                   </MenuItem>
                 </MenuList>
               </Menu>
@@ -541,6 +503,48 @@ export function Exams() {
         selectedExamIds={[...selectedExams]}
       />
     </Box>
+  );
+}
+
+function ExamsUsersOnPageAvatars() {
+  const { users: usersOnPage, error: usersError } = useUsersOnPath("/exams");
+  const bg = useColorModeValue("black", "black");
+
+  return (
+    <HStack spacing={-2} ml={4}>
+      {usersError ? (
+        <Text color="red.400" fontSize="sm">
+          {usersError.message}
+        </Text>
+      ) : (
+        usersOnPage.slice(0, 5).map((user, idx) => (
+          <Tooltip label={user.name} key={user.email}>
+            <Avatar
+              src={user.picture ?? undefined}
+              name={user.name}
+              size="md"
+              border="2px solid"
+              borderColor={bg}
+              zIndex={5 - idx}
+              ml={idx === 0 ? 0 : -3}
+              boxShadow="md"
+            />
+          </Tooltip>
+        ))
+      )}
+      {usersOnPage.length > 5 && (
+        <Avatar
+          size="md"
+          bg="gray.700"
+          color="gray.200"
+          ml={-3}
+          zIndex={0}
+          name={`+${usersOnPage.length - 5} more`}
+        >
+          +{usersOnPage.length - 5}
+        </Avatar>
+      )}
+    </HStack>
   );
 }
 
