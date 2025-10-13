@@ -57,7 +57,9 @@ export function UsersWebSocketProvider({
             page: new URL(p.activity?.page || "", window.location.origin),
           },
         }));
-        setUsers((prev) => (shallowEqualUsers(prev, userData) ? prev : userData));
+        setUsers((prev) =>
+          shallowEqualUsers(prev, userData) ? prev : userData
+        );
       }
     };
 
