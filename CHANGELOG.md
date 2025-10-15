@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-10-15
+
 ### Changed (non-breaking)
 
 - client: remove odd prismjs languages for list of 58
