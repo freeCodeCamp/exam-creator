@@ -19,32 +19,31 @@ import {
   ModalOverlay,
   Stack,
   Progress,
+  useToast,
 } from "@chakra-ui/react";
-import { UseQueryResult } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { putGenerateExam } from "../utils/fetch";
 
-interface GenerateStagingModalProps {
+interface GenerateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  handleGenerateSelectedToStaging: () => void;
-  generateExamToStagingMutation: UseQueryResult<Response[], Error>;
   selectedExamIds: string[];
+  databaseEnvironment: "staging" | "production";
 }
 
-export function GenerateStagingModal({
+export function GenerateModal({
   isOpen,
   onClose,
-  handleGenerateSelectedToStaging: _handleGenerateSelectedToStaging,
-  generateExamToStagingMutation: _generateExamToStagingMutation,
   selectedExamIds,
-}: GenerateStagingModalProps) {
+  databaseEnvironment,
+}: GenerateModalProps) {
   const [val, setVal] = useState("");
   const [count, setCount] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const abortRef = useRef<AbortController | null>(null);
+  const toast = useToast();
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setVal(e.target.value);
@@ -71,67 +70,30 @@ export function GenerateStagingModal({
     return Math.max(1, Math.min(100, Math.floor(n)));
   }
 
-  // Helper: iterate JSON NL from stream (ReadableStream or AsyncIterable)
+  // Helper: iterate JSON NL from ReadableStream
   async function* iterateJsonLines(
-    stream: AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>
+    stream: ReadableStream<Uint8Array<ArrayBuffer>>
   ) {
-    // Normalize to async iterator
     const textDecoder = new TextDecoder("utf-8");
-    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-    let iter: AsyncIterable<Uint8Array> | null = null;
-
-    if (typeof (stream as any).getReader === "function") {
-      // ReadableStream path
-      reader = (stream as ReadableStream<Uint8Array>).getReader();
-    } else if (Symbol.asyncIterator in (stream as any)) {
-      iter = stream as AsyncIterable<Uint8Array>;
-    } else {
-      throw new Error("Unsupported stream type from putGenerateExam");
-    }
+    const reader = stream.getReader();
 
     let buffer = "";
 
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          buffer += textDecoder.decode(value, { stream: true });
-          let idx: number;
-          while ((idx = buffer.indexOf("\n")) >= 0) {
-            const line = buffer.slice(0, idx).trim();
-            buffer = buffer.slice(idx + 1);
-            if (!line) continue;
-            try {
-              yield JSON.parse(line);
-            } catch {
-              // ignore invalid line
-            }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        buffer += textDecoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, idx).trim();
+          buffer = buffer.slice(idx + 1);
+          if (!line) continue;
+          try {
+            yield JSON.parse(line);
+          } catch {
+            // ignore invalid line
           }
-        }
-      }
-      if (buffer.trim().length > 0) {
-        try {
-          yield JSON.parse(buffer);
-        } catch {
-          /* ignore */
-        }
-      }
-      return;
-    }
-
-    // AsyncIterable path
-    for await (const chunk of iter!) {
-      buffer += textDecoder.decode(chunk, { stream: true });
-      let idx: number;
-      while ((idx = buffer.indexOf("\n")) >= 0) {
-        const line = buffer.slice(0, idx).trim();
-        buffer = buffer.slice(idx + 1);
-        if (!line) continue;
-        try {
-          yield JSON.parse(line);
-        } catch {
-          // ignore invalid
         }
       }
     }
@@ -142,6 +104,7 @@ export function GenerateStagingModal({
         /* ignore */
       }
     }
+    return;
   }
 
   async function startGeneration() {
@@ -154,7 +117,11 @@ export function GenerateStagingModal({
     try {
       await Promise.all(
         selectedExamIds.map(async (examId) => {
-          const stream = await putGenerateExam({ examId, count });
+          const stream = await putGenerateExam({
+            examId,
+            count,
+            databaseEnvironment,
+          });
           let latest = 0;
           for await (const msg of iterateJsonLines(stream)) {
             // Server sends { count: i (0-based), examId }
@@ -170,8 +137,24 @@ export function GenerateStagingModal({
           }));
         })
       );
-    } catch (e: any) {
-      setError(e?.message ?? "Generation failed");
+      toast({
+        title: `Generated Exams to ${databaseEnvironment}`,
+        description: "The selected exams have been seeded to the database.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (e: unknown) {
+      console.error(e);
+      if (e instanceof DOMException && e.name === "AbortError") {
+        setError("Generation aborted");
+      } else if (e instanceof Error) {
+        setError(e.message);
+      } else if (typeof e === "string") {
+        setError(e);
+      } else {
+        setError("Generation failed. Unknown error - See console.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -190,12 +173,14 @@ export function GenerateStagingModal({
     >
       <ModalOverlay />
       <ModalContent backgroundColor={"gray.700"} color={"white"}>
-        <ModalHeader>Generate Exams to Staging</ModalHeader>
+        <ModalHeader>Generate Exams to {databaseEnvironment}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isGenerating ? (
             <>
-              <Text>Generating exams to staging in progress...</Text>
+              <Text>
+                Generating exams to {databaseEnvironment} in progress...
+              </Text>
               <Stack mt={3} spacing={3}>
                 {selectedExamIds.map((id) => (
                   <Stack key={id} spacing={1}>
@@ -225,15 +210,19 @@ export function GenerateStagingModal({
           ) : (
             <Text>
               This is a potentially destructive action. Are you sure you want to
-              generate the staging database with the selected exams?
+              generate the {databaseEnvironment} database with the selected
+              exams?
             </Text>
           )}
 
-          <FormControl isInvalid={val !== "generate staging"} mt={4}>
+          <FormControl
+            isInvalid={val !== `generate ${databaseEnvironment}`}
+            mt={4}
+          >
             <FormLabel>Confirmation</FormLabel>
             <Input type="text" value={val} onChange={handleInputChange} />
             <FormHelperText color="#c4c8d0">
-              Type "generate staging" to confirm
+              Type "generate {databaseEnvironment}" to confirm
             </FormHelperText>
           </FormControl>
 
@@ -286,7 +275,7 @@ export function GenerateStagingModal({
               await startGeneration();
             }}
             isDisabled={
-              val !== "generate staging" ||
+              val !== `generate ${databaseEnvironment}` ||
               selectedExamIds.length === 0 ||
               count < 1 ||
               count > 100
@@ -294,7 +283,7 @@ export function GenerateStagingModal({
             loadingText="Generating..."
             isLoading={isGenerating}
           >
-            Generate in Staging
+            Generate in {databaseEnvironment}
           </Button>
         </ModalFooter>
       </ModalContent>

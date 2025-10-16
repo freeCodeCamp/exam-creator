@@ -158,8 +158,12 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             put(routes::exams::put_exam_by_id_to_production),
         )
         .route(
-            "/api/exams/{exam_id}/generate",
-            put(routes::generation::put_generate_exam),
+            "/api/generations/exams/{exam_id}/staging",
+            put(routes::generations::put_generations_by_exam_id_to_staging),
+        )
+        .route(
+            "/api/generations/exams/{exam_id}/production",
+            put(routes::generations::put_generations_by_exam_id_to_production),
         )
         .route("/api/attempts", get(routes::attempts::get_attempts))
         .route(

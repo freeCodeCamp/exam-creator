@@ -2,11 +2,21 @@
 
 ## [Unreleased]
 
-## [2.1.1] - 2025-10-16
+## [2.2.0] - 2025-10-16
 
 ### Refactored
 
 - remove deprecated database fields now that migration has been run
+
+### Added
+
+- client: staging and production generate options
+- server: `PUT /api/generations/exams/{exam_id}/staging`
+- server: `PUT /api/generations/exams/{exam_id}/production`
+
+### Removed
+
+- server: `PUT /api/exams/{exam_id}/generate`
 
 ## [2.1.0] - 2025-10-15
 

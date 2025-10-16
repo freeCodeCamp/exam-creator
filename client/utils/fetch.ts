@@ -180,6 +180,7 @@ export async function postExam(): Promise<ExamCreatorExam> {
 export interface PutGenerateExam {
   examId: ExamCreatorExam["id"];
   count: number;
+  databaseEnvironment: "staging" | "production";
 }
 
 /**
@@ -188,20 +189,19 @@ export interface PutGenerateExam {
 export async function putGenerateExam({
   examId,
   count,
-}: PutGenerateExam): Promise<
-  AsyncIterable<Uint8Array> | ReadableStream<Uint8Array>
-> {
+  databaseEnvironment,
+}: PutGenerateExam): Promise<ReadableStream<Uint8Array<ArrayBuffer>>> {
   // }: PutGenerateExam): Promise<ReadableStream<Uint8Array>> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const generatedExam: PutGenerateExam = {
+    const generatedExam = {
       examId,
       count,
     };
 
     // Mock readable stream with delayed chunks of two `generatedExam` objects. This should return a JSON New Line stream
-    return new ReadableStream<Uint8Array>({
+    return new ReadableStream<Uint8Array<ArrayBuffer>>({
       start(controller) {
         let sent = 0;
         const interval = setInterval(() => {
@@ -221,22 +221,22 @@ export async function putGenerateExam({
     });
   }
 
-  const res = await authorizedFetch(`/api/exams/${examId}/generate`, {
-    method: "PUT",
-    body: JSON.stringify({ count }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await authorizedFetch(
+    `/api/generations/exams/${examId}/${databaseEnvironment}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ count }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   if (!res.body) {
     throw new Error("Failed to generate exam");
   }
 
-  return res.body as ReadableStream<Uint8Array>;
-  // const json = await res.json();
-  // const deserialized = deserializeToPrisma<PutGenerateExam>(json);
-  // return deserialized;
+  return res.body;
 }
 
 export async function getUsers(): Promise<User[]> {

@@ -12,7 +12,12 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tracing::{info, instrument};
 
-use crate::{database::prisma, errors::Error, generation, state::ServerState};
+use crate::{
+    database::{Database, prisma},
+    errors::Error,
+    generate,
+    state::ServerState,
+};
 
 #[derive(Deserialize)]
 pub struct PutGenerateExamBody {
@@ -28,15 +33,15 @@ pub struct PutGenerateExamResponse {
 
 /// Generate an exam based on the exam configuration
 #[instrument(skip_all, err(Debug))]
-pub async fn put_generate_exam(
+pub async fn put_generations_by_exam_id_to_staging(
     _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(exam_id): Path<ObjectId>,
     Json(body): Json<PutGenerateExamBody>,
 ) -> Result<impl IntoResponse, Error> {
-    let database = state.staging_database;
+    let database = state.staging_database.clone();
 
-    // Fetch the exam from the appropriate database
+    // Fetch the exam from the source
     let exam_creator_exam = state
         .production_database
         .exam_creator_exam
@@ -46,9 +51,40 @@ pub async fn put_generate_exam(
             StatusCode::BAD_REQUEST,
             format!("exam non-existent: {exam_id}"),
         ))?;
+    put_generations_by_exam_id(body.count, database, exam_id, exam_creator_exam).await
+}
 
+/// Generate an exam based on the exam configuration
+#[instrument(skip_all, err(Debug))]
+pub async fn put_generations_by_exam_id_to_production(
+    _auth_user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(exam_id): Path<ObjectId>,
+    Json(body): Json<PutGenerateExamBody>,
+) -> Result<impl IntoResponse, Error> {
+    let database = state.production_database.clone();
+
+    // Fetch the exam from the source
+    let exam_creator_exam = state
+        .production_database
+        .exam_creator_exam
+        .find_one(doc! { "_id": exam_id })
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("exam non-existent: {exam_id}"),
+        ))?;
+    put_generations_by_exam_id(body.count, database, exam_id, exam_creator_exam).await
+}
+
+async fn put_generations_by_exam_id(
+    count: i16,
+    database: Database,
+    exam_id: ObjectId,
+    exam_creator_exam: prisma::ExamCreatorExam,
+) -> Result<impl IntoResponse, Error> {
     // Convert to ExamInput for generation
-    let exam_input = generation::ExamInput {
+    let exam_input = generate::ExamInput {
         id: exam_creator_exam.id,
         question_sets: exam_creator_exam.question_sets,
         config: exam_creator_exam.config,
@@ -59,9 +95,9 @@ pub async fn put_generate_exam(
 
     // 2. Spawn a background task to do the generation
     tokio::spawn(async move {
-        for i in 0..body.count {
+        for i in 0..count {
             loop {
-                match generation::generate_exam(exam_input.clone()) {
+                match generate::generate_exam(exam_input.clone()) {
                     Ok(generated_exam) => {
                         if let Err(e) = database.generated_exam.insert_one(&generated_exam).await {
                             tracing::error!(
