@@ -93,7 +93,7 @@ pub async fn put_user_settings(
             format!("could not find user after update: {}", exam_creator_user.id),
         ))?;
 
-    let settings = updated_user.settings.unwrap_or_default();
+    let settings = updated_user.settings;
 
     // Update state
     let client_sync = &mut server_state.client_sync.lock().unwrap();

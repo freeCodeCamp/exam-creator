@@ -479,20 +479,6 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
     const attempts: Attempt[] = deserializeToPrisma(await res.json());
     const attempt = attempts[0];
 
-    const startTimeInMS = Date.now() - 10 * 60 * 60 * 1000;
-    attempt.startTimeInMS = startTimeInMS;
-
-    attempt.questionSets[0].questions[0].submissionTimeInMS =
-      startTimeInMS + 25_000;
-    attempt.questionSets[1].questions[0].submissionTimeInMS =
-      startTimeInMS + 25_000 * 2;
-    attempt.questionSets[2].questions[0].submissionTimeInMS =
-      startTimeInMS + 25_000 * 4;
-    attempt.questionSets[2].questions[1].submissionTimeInMS =
-      startTimeInMS + 25_000 * 4.5;
-    attempt.questionSets[2].questions[2].submissionTimeInMS =
-      startTimeInMS + 25_000 * 7;
-
     const startTime = new Date();
     attempt.startTime = startTime;
     attempt.questionSets[0].questions[0].submissionTime = new Date(

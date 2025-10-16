@@ -126,7 +126,7 @@ pub async fn github_handler(
             github_id: None,
             picture: None,
             email: "camperbot@freecodecamp.org".to_string(),
-            settings: Some(prisma::ExamCreatorUserSettings::default()),
+            settings: prisma::ExamCreatorUserSettings::default(),
             version: 1,
         };
         let res = server_state

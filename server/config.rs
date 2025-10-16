@@ -283,11 +283,7 @@ pub fn construct_attempt(
             };
 
             let selected = attempt_question.answers.clone();
-            let submission_time = if let Some(submission_time) = attempt_question.submission_time {
-                submission_time
-            } else {
-                mongodb::bson::DateTime::from_millis(attempt_question.submission_time_in_m_s as i64)
-            };
+            let submission_time = attempt_question.submission_time;
 
             let attempt_question_set_question = AttemptQuestionSetQuestion {
                 id: id.clone(),
@@ -313,11 +309,7 @@ pub fn construct_attempt(
         attempt_question_sets.push(attempt_question_set);
     }
 
-    let start_time = if let Some(start_time) = exam_attempt.start_time {
-        start_time
-    } else {
-        mongodb::bson::DateTime::from_millis(exam_attempt.start_time_in_m_s as i64)
-    };
+    let start_time = exam_attempt.start_time;
 
     let attempt = Attempt {
         id: exam_attempt.id,

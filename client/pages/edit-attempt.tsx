@@ -192,7 +192,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  const startTimeInMS = attempt.startTime?.getTime() ?? attempt.startTimeInMS;
+  const startTimeInMS = attempt.startTime.getTime();
 
   const totalQuestions = attempt.config.questionSets
     .map((qs) => qs.numberOfQuestions * qs.numberOfSet)
@@ -201,8 +201,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   //       Show questions in order final answer was recorded
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
   const timeToAnswers = flattened.map((q, i) => {
-    const submissionTimeInMS =
-      q.submissionTime?.getTime() ?? q.submissionTimeInMS ?? 0;
+    const submissionTimeInMS = q.submissionTime?.getTime() ?? 0;
     const secondsSinceStart = (submissionTimeInMS - startTimeInMS) / 1000;
     // Determine if the answer is correct
     const isCorrect = q.answers
@@ -216,7 +215,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   });
 
   const answered = flattened.filter((f) => {
-    return !!f.submissionTime && !!f.submissionTimeInMS;
+    return !!f.submissionTime;
   }).length;
   const correct = flattened.filter((f) => {
     return f.answers
@@ -225,7 +224,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   }).length;
   const lastSubmission = Math.max(
     ...flattened.map((f) => {
-      return f.submissionTime?.getTime() ?? f.submissionTimeInMS ?? 0;
+      return f.submissionTime?.getTime() ?? 0;
     })
   );
   const timeToComplete = (lastSubmission - startTimeInMS) / 1000;

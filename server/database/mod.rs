@@ -30,7 +30,7 @@ impl prisma::ExamCreatorUser {
                     page: "/".to_string(),
                     last_active: chrono::Utc::now().timestamp_millis() as usize,
                 },
-                settings: self.settings.clone().unwrap_or_default(),
+                settings: self.settings.clone(),
             }
         }
     }
@@ -40,17 +40,13 @@ pub fn database_environment<'a>(
     state: &'a ServerState,
     user: &prisma::ExamCreatorUser,
 ) -> &'a Database {
-    match user.settings.as_ref().map(|s| &s.database_environment) {
-        Some(prisma::ExamCreatorDatabaseEnvironment::Staging) => {
+    match user.settings.database_environment {
+        prisma::ExamCreatorDatabaseEnvironment::Staging => {
             info!("{}: using staging database", user.email);
             &state.staging_database
         }
-        Some(prisma::ExamCreatorDatabaseEnvironment::Production) => {
+        prisma::ExamCreatorDatabaseEnvironment::Production => {
             info!("{}: using production database", user.email);
-            &state.production_database
-        }
-        _ => {
-            info!("{}: using production database (default)", user.email);
             &state.production_database
         }
     }
