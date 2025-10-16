@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.1.1] - 2025-10-16
+
+### Refactored
+
+- remove deprecated database fields now that migration has been run
+
 ## [2.1.0] - 2025-10-15
 
 ### Changed (non-breaking)

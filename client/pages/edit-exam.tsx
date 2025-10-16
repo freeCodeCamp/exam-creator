@@ -371,9 +371,7 @@ function EditExam({ exam: examData }: EditExamProps) {
               <FormControl>
                 <FormLabel color="gray.300">Total Time [s]</FormLabel>
                 <NumberInput
-                  value={
-                    exam.config.totalTimeInS ?? exam.config.totalTimeInMS / 1000
-                  }
+                  value={exam.config.totalTimeInS}
                   onChange={(_, value) =>
                     setExam({
                       config: {
@@ -392,10 +390,7 @@ function EditExam({ exam: examData }: EditExamProps) {
                   Retake (Cooldown) Time [s]
                 </FormLabel>
                 <NumberInput
-                  value={
-                    exam.config.retakeTimeInS ??
-                    exam.config.retakeTimeInMS / 1000
-                  }
+                  value={exam.config.retakeTimeInS}
                   onChange={(_, value) =>
                     setExam({
                       config: {

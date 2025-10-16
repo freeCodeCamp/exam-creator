@@ -6,7 +6,7 @@
     "config": {
       "name": "Practice Exam",
       "note": "This exam is for learning the Exam Environment.",
-      "totalTimeInMS": 120000,
+      "totalTimeInS": 120,
       "tags": [],
       "questionSets": [
         {
@@ -24,10 +24,10 @@
           "numberOfIncorrectAnswers": 3
         }
       ],
-      "retakeTimeInMS": 0,
+      "retakeTimeInS": 0,
       "passingPercent": 80.0
     },
-    "startTimeInMS": 1234567890,
+    "startTime": "2023-06-09T12:34:56.789Z",
     "needsRetake": false,
     "examId": {
       "$oid": "674819431ed2e8ac8d170f5e"
@@ -58,7 +58,7 @@
                 "$oid": "674818271ff8b2a575a57251"
               }
             ],
-            "submissionTimeInMS": 1234567890,
+            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is an example of a multiple-choice question without audio. Which answer has the most text? Also, some code:\n\n```js\nconst a = 1;\n```",
             "answers": [
               {
@@ -115,7 +115,7 @@
                 "$oid": "674818446784013ac9152ec1"
               }
             ],
-            "submissionTimeInMS": 1234567890,
+            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is an example of a multiple-choice question with audio. Listen to the audio to answer this question: When was freeCodeCamp started?",
             "answers": [
               {
@@ -169,7 +169,7 @@
                 "$oid": "67481867cfb879a9f90a1298"
               }
             ],
-            "submissionTimeInMS": 1234567890,
+            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is one of the multiple-choice questions associated with the dialogue. What is the third word of the dialogue text?",
             "answers": [
               {
@@ -214,7 +214,7 @@
                 "$oid": "6748188f09398c3c40fccc63"
               }
             ],
-            "submissionTimeInMS": 1234567890,
+            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is one of the multiple-choice questions associated with the dialogue. What is the seventh word of the dialogue text?",
             "answers": [
               {
@@ -259,7 +259,7 @@
                 "$oid": "674818a83f795ef97e3ba99e"
               }
             ],
-            "submissionTimeInMS": 1234567890,
+            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is one of the multiple-choice questions associated with the dialogue. What is the last word of the dialogue text?",
             "answers": [
               {
