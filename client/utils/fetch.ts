@@ -3,6 +3,7 @@ import type {
   ExamEnvironmentChallenge,
   ExamEnvironmentExamModeration,
   ExamEnvironmentExamModerationStatus,
+  ExamEnvironmentGeneratedExam,
 } from "@prisma/client";
 import type {
   Attempt,
@@ -175,6 +176,21 @@ export async function postExam(): Promise<ExamCreatorExam> {
   const json = await res.json();
   const deserialized = deserializeToPrisma<ExamCreatorExam>(json);
   return deserialized;
+}
+
+interface GetGenerations {
+  generatedExam: ExamEnvironmentGeneratedExam;
+  databaseEnvironments: ("Staging" | "Production")[];
+}
+
+export async function getGenerations(): Promise<GetGenerations[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+  }
+
+  const res = await authorizedFetch("/api/generations");
+  const json = await res.json();
+  return deserializeToPrisma(json);
 }
 
 export interface PutGenerateExam {
