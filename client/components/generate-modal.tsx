@@ -131,19 +131,34 @@ export function GenerateModal({
             setProgress((prev) => ({ ...prev, [examId]: soFar }));
           }
           // Ensure we mark complete if stream ended without last line
-          setProgress((prev) => ({
-            ...prev,
-            [examId]: Math.max(prev[examId] ?? 0, count),
-          }));
+          // Stream can timeout before all generations are done
+          // setProgress((prev) => ({
+          //   ...prev,
+          //   [examId]: Math.max(prev[examId] ?? 0, count),
+          // }));
         })
       );
-      toast({
-        title: `Generated Exams to ${databaseEnvironment}`,
-        description: "The selected exams have been seeded to the database.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
+      const isAllExamsGenerated = selectedExamIds.every(
+        (id) => (progress[id] ?? 0) >= count
+      );
+
+      if (!isAllExamsGenerated) {
+        toast({
+          title: `Generation Timeout in ${databaseEnvironment}`,
+          description: `Generation process timed out before all exams could be generated. Please try again.`,
+          status: "warning",
+          duration: 7000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: `Generated Exams to ${databaseEnvironment}`,
+          description: `All generated exams have been seeded to the database.`,
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     } catch (e: unknown) {
       console.error(e);
       if (e instanceof DOMException && e.name === "AbortError") {
@@ -179,39 +194,43 @@ export function GenerateModal({
           {isGenerating ? (
             <>
               <Text>
-                Generating exams to {databaseEnvironment} in progress...
+                Generating exams to {databaseEnvironment} in progress... This
+                will timeout if the input number of generations is not generated
+                in 10s.
               </Text>
-              <Stack mt={3} spacing={3}>
-                {selectedExamIds.map((id) => (
-                  <Stack key={id} spacing={1}>
-                    <Text fontSize="sm" color="gray.300">
-                      {id}
-                    </Text>
-                    <Progress
-                      size="sm"
-                      colorScheme="yellow"
-                      value={progress[id] ?? 0}
-                      max={count}
-                      hasStripe
-                      isAnimated
-                    />
-                    <Text fontSize="xs" color="gray.400">
-                      {progress[id] ?? 0}/{count}
-                    </Text>
-                  </Stack>
-                ))}
-              </Stack>
-              {error && (
-                <Text mt={3} color="red.300">
-                  {error}
-                </Text>
-              )}
             </>
           ) : (
             <Text>
               This is a potentially destructive action. Are you sure you want to
               generate the {databaseEnvironment} database with the selected
               exams?
+            </Text>
+          )}
+          {Object.keys(progress).length > 0 && (
+            <Stack mt={3} spacing={3}>
+              {selectedExamIds.map((id) => (
+                <Stack key={id} spacing={1}>
+                  <Text fontSize="sm" color="gray.300">
+                    {id}
+                  </Text>
+                  <Progress
+                    size="sm"
+                    colorScheme="yellow"
+                    value={progress[id] ?? 0}
+                    max={count}
+                    hasStripe
+                    isAnimated
+                  />
+                  <Text fontSize="xs" color="gray.400">
+                    {progress[id] ?? 0}/{count}
+                  </Text>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+          {error && (
+            <Text mt={3} color="red.300">
+              {error}
             </Text>
           )}
 

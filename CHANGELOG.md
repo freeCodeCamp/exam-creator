@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [2.3.0] - 2025-10-18
+
+### Added
+
+- server: timeout for exam generations of 10s
+- client: inform user of generation timeout
+
 ## [2.2.0] - 2025-10-16
 
 ### Refactored
