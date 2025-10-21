@@ -212,7 +212,7 @@ export async function getGenerations({
 export interface PutGenerateExam {
   examId: ExamCreatorExam["id"];
   count: number;
-  databaseEnvironment: "staging" | "production";
+  databaseEnvironment: "Staging" | "Production";
 }
 
 /**
@@ -254,7 +254,7 @@ export async function putGenerateExam({
   }
 
   const res = await authorizedFetch(
-    `/api/generations/exams/${examId}/${databaseEnvironment}`,
+    `/api/exams/${examId}/generations/${databaseEnvironment}`,
     {
       method: "PUT",
       body: JSON.stringify({ count }),

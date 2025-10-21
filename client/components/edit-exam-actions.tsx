@@ -1,8 +1,15 @@
-import { Box, Button, useColorModeValue, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  useColorModeValue,
+  useDisclosure,
+  useToast,
+} from "@chakra-ui/react";
 import { CodeXml, Save } from "lucide-react";
 import { putExamById, putExamEnvironmentChallenges } from "../utils/fetch";
 import { ExamCreatorExam, ExamEnvironmentChallenge } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
+import { GenerateModal } from "./generate-modal";
 
 interface EditExamActionsProps {
   exam: ExamCreatorExam;
@@ -14,6 +21,11 @@ export function EditExamActions({
   examEnvironmentChallenges,
 }: EditExamActionsProps) {
   const toast = useToast();
+  const {
+    isOpen: generateIsOpen,
+    onOpen: generateOnOpen,
+    onClose: generateOnClose,
+  } = useDisclosure();
 
   const handleDatabaseSave = useMutation({
     mutationFn: ({
@@ -91,9 +103,15 @@ export function EditExamActions({
         variant="solid"
         px={4}
         fontWeight="bold"
+        onClick={generateOnOpen}
       >
         Generate Exams
       </Button>
+      <GenerateModal
+        isOpen={generateIsOpen}
+        onClose={generateOnClose}
+        examId={exam.id}
+      />
     </Box>
   );
 }
