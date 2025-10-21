@@ -143,3 +143,14 @@ export function parseMarkdown(markdown: unknown): string {
       return "unknown";
   }
 }
+
+export function compare<T, U>(arr: T[], cb: (a: T, b: T) => U): U[] {
+  const results: U[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = i + 1; j < arr.length; j++) {
+      results.push(cb(arr[i], arr[j]));
+    }
+  }
+
+  return results;
+}

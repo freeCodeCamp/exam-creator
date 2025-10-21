@@ -151,22 +151,6 @@ export function Landing() {
                   Attempts (Beta)
                 </LandingCard>
               </Button>
-              {/* <Button
-                onClick={() => navigate({ to: generationsRoute.to })}
-                _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
-                borderRadius="xl"
-                transition="all 0.15s"
-                display="block"
-                textAlign="left"
-                variant="unstyled"
-                w="full"
-                h="auto"
-                p={0}
-              >
-                <LandingCard filteredUsers={usersOnGenerations}>
-                  Generations (Beta)
-                </LandingCard>
-              </Button> */}
             </SimpleGrid>
           </Box>
         </Stack>

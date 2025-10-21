@@ -245,3 +245,25 @@ pub async fn put_exam_by_id_to_production(
 
     Ok(())
 }
+
+pub async fn get_generations_by_exam_id_with_database_environment(
+    _auth_user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path((exam_id, database_environment)): Path<(ObjectId, prisma::ExamCreatorDatabaseEnvironment)>,
+) -> Result<Json<Vec<prisma::ExamEnvironmentGeneratedExam>>, Error> {
+    let database = match database_environment {
+        prisma::ExamCreatorDatabaseEnvironment::Staging => state.staging_database.clone(),
+        prisma::ExamCreatorDatabaseEnvironment::Production => state.production_database.clone(),
+    };
+
+    let generated_exams: Vec<prisma::ExamEnvironmentGeneratedExam> = database
+        .generated_exam
+        .find(doc! {
+            "examId": exam_id
+        })
+        .await?
+        .try_collect()
+        .await?;
+
+    Ok(Json(generated_exams))
+}

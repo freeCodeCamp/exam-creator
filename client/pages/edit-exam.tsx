@@ -1,5 +1,5 @@
 import { useState, useContext, useReducer, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createRoute, useParams, useNavigate } from "@tanstack/react-router";
 import {
   Box,
@@ -30,23 +30,17 @@ import {
   Tbody,
   Td,
   FormErrorMessage,
-  useToast,
 } from "@chakra-ui/react";
 import { ObjectId } from "bson";
-import { Save } from "lucide-react";
 import type { ExamCreatorExam, ExamEnvironmentChallenge } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { QuestionForm } from "../components/question-form";
-import {
-  getExamById,
-  getExamChallengeByExamId,
-  putExamById,
-  putExamEnvironmentChallenges,
-} from "../utils/fetch";
+import { getExamById, getExamChallengeByExamId } from "../utils/fetch";
 import { TagConfigForm } from "../components/tag-config-form";
 import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
+import { EditExamActions } from "../components/edit-exam-actions";
 import { QuestionTypeConfigForm } from "../components/question-type-config-form";
 import {
   UsersWebSocketActivityContext,
@@ -54,6 +48,7 @@ import {
 } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
+import { EditExamGenerationVariability } from "../components/edit-exam-generation-variability";
 
 function Edit() {
   const { id } = useParams({ from: "/exams/$id" });
@@ -176,7 +171,6 @@ interface EditExamProps {
 
 function EditExam({ exam: examData }: EditExamProps) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
-  const toast = useToast();
   const [exam, setExam] = useReducer(examReducer, examData);
   const examEnvironmentChallengesQuery = useQuery({
     queryKey: ["exam-challenge", exam.id],
@@ -189,45 +183,6 @@ function EditExam({ exam: examData }: EditExamProps) {
   const [searchIds, setSearchIds] = useState<string[]>([]);
   const [prereqInput, setPrereqInput] = useState("");
   const [challengeInput, setChallengeInput] = useState("");
-
-  const handleDatabaseSave = useMutation({
-    mutationFn: ({
-      exam,
-      examEnvironmentChallenges,
-    }: {
-      exam: ExamCreatorExam;
-      examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[];
-    }) => {
-      return Promise.all([
-        putExamById(exam),
-        putExamEnvironmentChallenges(exam.id, examEnvironmentChallenges),
-      ]);
-    },
-    onSuccess([examData, examEnvironmentChallengesData]) {
-      setExam(examData);
-      setExamEnvironmentChallenges(examEnvironmentChallengesData);
-      toast({
-        title: "Exam Saved",
-        description: "Your exam has been saved to the temporary database.",
-        status: "success",
-        duration: 1000,
-        isClosable: true,
-        position: "top-right",
-      });
-    },
-    onError(error: Error) {
-      console.error(error);
-      toast({
-        title: "Error Saving Exam",
-        description: error.message || "An error occurred saving exam.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "top-right",
-      });
-    },
-    retry: false,
-  });
 
   useEffect(() => {
     updateActivity({
@@ -277,45 +232,7 @@ function EditExam({ exam: examData }: EditExamProps) {
 
   return (
     <>
-      <Box
-        position="fixed"
-        top={3}
-        right="1rem"
-        zIndex={100}
-        bg={cardBg}
-        borderRadius="xl"
-        boxShadow="lg"
-        px={2}
-        py={2}
-        display="flex"
-        alignItems="center"
-        gap={4}
-      >
-        <Button
-          leftIcon={<Save size={18} />}
-          colorScheme="teal"
-          variant="solid"
-          px={4}
-          fontWeight="bold"
-          isLoading={handleDatabaseSave.isPending}
-          onClick={() =>
-            handleDatabaseSave.mutate({ exam, examEnvironmentChallenges })
-          }
-        >
-          Save to Database
-        </Button>
-        {/* <Button
-          leftIcon={<Save size={18} />}
-          colorScheme="teal"
-          variant="solid"
-          px={4}
-          fontWeight="bold"
-          isLoading={discardExamStateMutation.isPending}
-          onClick={() => discardExamStateMutation.mutate(exam.id)}
-        >
-          Discard Changes
-        </Button> */}
-      </Box>
+      <EditExamActions {...{ exam, examEnvironmentChallenges }} />
       <Stack spacing={8} w="full" maxW="4xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
@@ -624,6 +541,8 @@ function EditExam({ exam: examData }: EditExamProps) {
                 </Table>
               </Box>
             </Box>
+            <EditExamGenerationVariability exam={exam} />
+            <Divider my={4} borderColor="gray.600" />
             <TagConfigForm
               questionSets={exam.questionSets}
               setExam={setExam}
