@@ -30,11 +30,13 @@ export function EditExamGenerationVariability({
     queryKey: ["generated-exams", exam.id, "Staging"],
     queryFn: async () =>
       getGenerations({ examId: exam.id, databaseEnvironment: "Staging" }),
+    retry: false,
   });
   const generatedExamsProductionQuery = useQuery({
     queryKey: ["generated-exams", exam.id, "Production"],
     queryFn: async () =>
       getGenerations({ examId: exam.id, databaseEnvironment: "Production" }),
+    retry: false,
   });
 
   function calculateGenerationMetrics(
