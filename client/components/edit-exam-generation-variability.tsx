@@ -14,6 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { ExamCreatorExam } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { getGenerations } from "../utils/fetch";
 import { compare } from "../utils/question";
 
@@ -35,6 +36,151 @@ export function EditExamGenerationVariability({
     queryFn: async () =>
       getGenerations({ examId: exam.id, databaseEnvironment: "Production" }),
   });
+
+  const variabilityMetrics = useMemo(() => {
+    const generatedExamsStaging = generatedExamsStagingQuery.data;
+    const generatedExamsProduction = generatedExamsProductionQuery.data;
+
+    if (!generatedExamsStaging || !generatedExamsProduction) {
+      return {
+        totalGenerationsStaging: 0,
+        totalGenerationsProduction: 0,
+        questionVariabilityStaging: 0,
+        questionVariabilityProduction: 0,
+        questionVariabilityMaxStaging: 0,
+        questionVariabilityMaxProduction: 0,
+        questionVariabilityMinStaging: 0,
+        questionVariabilityMinProduction: 0,
+        answerVariabilityStaging: 0,
+        answerVariabilityProduction: 0,
+        answerVariabilityMaxStaging: 0,
+        answerVariabilityMaxProduction: 0,
+        answerVariabilityMinStaging: 0,
+        answerVariabilityMinProduction: 0,
+      };
+    }
+
+    const totalGenerationsStaging = generatedExamsStaging.length;
+    const totalGenerationsProduction = generatedExamsProduction.length;
+
+    // Variability is considered: (number of different) / (total)
+    // For final variability, it is: (sum of variabilities) / (number of comparisons)
+
+    // Compare all generations to each other to find variability
+    // - Compare A to B, A to C, and B to C
+    const questionsStaging = generatedExamsStaging.map((gen) =>
+      gen.questionSets.flatMap((qs) => qs.questions)
+    );
+    let questionVariabilityStaging = 0;
+    let questionVariabilityMaxStaging = 0;
+    let questionVariabilityMinStaging = 1;
+    const questionVariabilitiesStaging: number[] = compare(
+      questionsStaging,
+      (a, b) => {
+        const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
+        const v = (uniqueQuestions.size - a.length) / a.length;
+        questionVariabilityStaging += v;
+        if (v > questionVariabilityMaxStaging) {
+          questionVariabilityMaxStaging = v;
+        }
+        if (v < questionVariabilityMinStaging) {
+          questionVariabilityMinStaging = v;
+        }
+        return v;
+      }
+    );
+    questionVariabilityStaging =
+      questionVariabilityStaging / questionVariabilitiesStaging.length;
+
+    const questionsProduction = generatedExamsProduction.map((gen) =>
+      gen.questionSets.flatMap((qs) => qs.questions)
+    );
+    let questionVariabilityProduction = 0;
+    let questionVariabilityMaxProduction = 0;
+    let questionVariabilityMinProduction = 1;
+    const questionVariabilitiesProduction: number[] = compare(
+      questionsProduction,
+      (a, b) => {
+        const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
+        const v = (uniqueQuestions.size - a.length) / a.length;
+        questionVariabilityProduction += v;
+        if (v > questionVariabilityMaxProduction) {
+          questionVariabilityMaxProduction = v;
+        }
+        if (v < questionVariabilityMinProduction) {
+          questionVariabilityMinProduction = v;
+        }
+        return v;
+      }
+    );
+    questionVariabilityProduction =
+      questionVariabilityProduction / questionVariabilitiesProduction.length;
+
+    const answersStaging = generatedExamsStaging.map((gen) =>
+      gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
+    );
+    let answerVariabilityStaging = 0;
+    let answerVariabilityMaxStaging = 0;
+    let answerVariabilityMinStaging = 1;
+    const answerVariabilitiesStaging: number[] = compare(
+      answersStaging,
+      (a, b) => {
+        const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
+        const v = (uniqueAnswers.size - a.length) / a.length;
+        answerVariabilityStaging += v;
+        if (v > answerVariabilityMaxStaging) {
+          answerVariabilityMaxStaging = v;
+        }
+        if (v < answerVariabilityMinStaging) {
+          answerVariabilityMinStaging = v;
+        }
+        return v;
+      }
+    );
+    answerVariabilityStaging =
+      answerVariabilityStaging / answerVariabilitiesStaging.length;
+
+    const answersProduction = generatedExamsProduction.map((gen) =>
+      gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
+    );
+    let answerVariabilityProduction = 0;
+    let answerVariabilityMaxProduction = 0;
+    let answerVariabilityMinProduction = 1;
+    const answerVariabilitiesProduction: number[] = compare(
+      answersProduction,
+      (a, b) => {
+        const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
+        const v = (uniqueAnswers.size - a.length) / a.length;
+        answerVariabilityProduction += v;
+        if (v > answerVariabilityMaxProduction) {
+          answerVariabilityMaxProduction = v;
+        }
+        if (v < answerVariabilityMinProduction) {
+          answerVariabilityMinProduction = v;
+        }
+        return v;
+      }
+    );
+    answerVariabilityProduction =
+      answerVariabilityProduction / answerVariabilitiesProduction.length;
+
+    return {
+      totalGenerationsStaging,
+      totalGenerationsProduction,
+      questionVariabilityStaging,
+      questionVariabilityProduction,
+      questionVariabilityMaxStaging,
+      questionVariabilityMaxProduction,
+      questionVariabilityMinStaging,
+      questionVariabilityMinProduction,
+      answerVariabilityStaging,
+      answerVariabilityProduction,
+      answerVariabilityMaxStaging,
+      answerVariabilityMaxProduction,
+      answerVariabilityMinStaging,
+      answerVariabilityMinProduction,
+    };
+  }, [generatedExamsStagingQuery.data, generatedExamsProductionQuery.data]);
 
   if (
     generatedExamsStagingQuery.isPending ||
@@ -73,100 +219,22 @@ export function EditExamGenerationVariability({
     );
   }
 
-  const generatedExamsStaging = generatedExamsStagingQuery.data;
-  const generatedExamsProduction = generatedExamsProductionQuery.data;
-
-  const totalGenerationsStaging = generatedExamsStaging.length;
-  const totalGenerationsProduction = generatedExamsProduction.length;
-
-  // Variability is considered: (number of different) / (total)
-  // For final variability, it is: (sum of variabilities) / (number of comparisons)
-
-  // Compare all generations to each other to find variability
-  // - Compare A to B, A to C, and B to C
-  const questionsStaging = generatedExamsStaging.map((gen) =>
-    gen.questionSets.flatMap((qs) => qs.questions)
-  );
-  const questionVariabilitiesStaging: number[] = compare(
-    questionsStaging,
-    (a, b) => {
-      const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
-      const v = (uniqueQuestions.size - a.length) / a.length;
-      return v;
-    }
-  );
-  const questionVariabilityStaging =
-    questionVariabilitiesStaging.reduce((acc, curr) => acc + curr, 0) /
-    questionVariabilitiesStaging.length;
-
-  const questionsProduction = generatedExamsProduction.map((gen) =>
-    gen.questionSets.flatMap((qs) => qs.questions)
-  );
-  const questionVariabilitiesProduction: number[] = compare(
-    questionsProduction,
-    (a, b) => {
-      const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
-      const v = (uniqueQuestions.size - a.length) / a.length;
-      return v;
-    }
-  );
-  const questionVariabilityProduction =
-    questionVariabilitiesProduction.reduce((acc, curr) => acc + curr, 0) /
-    questionVariabilitiesProduction.length;
-
-  const questionVariabilityMaxStaging = Math.max(
-    ...questionVariabilitiesStaging
-  );
-  const questionVariabilityMaxProduction = Math.max(
-    ...questionVariabilitiesProduction
-  );
-
-  const questionVariabilityMinStaging = Math.min(
-    ...questionVariabilitiesStaging
-  );
-  const questionVariabilityMinProduction = Math.min(
-    ...questionVariabilitiesProduction
-  );
-
-  const answersStaging = generatedExamsStaging.map((gen) =>
-    gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
-  );
-  const answerVariabilitiesStaging: number[] = compare(
-    answersStaging,
-    (a, b) => {
-      const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
-      const v = (uniqueAnswers.size - a.length) / a.length;
-      return v;
-    }
-  );
-  const answerVariabilityStaging =
-    answerVariabilitiesStaging.reduce((acc, curr) => acc + curr, 0) /
-    answerVariabilitiesStaging.length;
-
-  const answersProduction = generatedExamsProduction.map((gen) =>
-    gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
-  );
-  const answerVariabilitiesProduction: number[] = compare(
-    answersProduction,
-    (a, b) => {
-      const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
-      const v = (uniqueAnswers.size - a.length) / a.length;
-      return v;
-    }
-  );
-  const answerVariabilityProduction =
-    answerVariabilitiesProduction.reduce((acc, curr) => acc + curr, 0) /
-    answerVariabilitiesProduction.length;
-
-  const answerVariabilityMaxStaging = Math.max(...answerVariabilitiesStaging);
-  const answerVariabilityMaxProduction = Math.max(
-    ...answerVariabilitiesProduction
-  );
-
-  const answerVariabilityMinStaging = Math.min(...answerVariabilitiesStaging);
-  const answerVariabilityMinProduction = Math.min(
-    ...answerVariabilitiesProduction
-  );
+  const {
+    totalGenerationsStaging,
+    totalGenerationsProduction,
+    questionVariabilityStaging,
+    questionVariabilityProduction,
+    questionVariabilityMaxStaging,
+    questionVariabilityMaxProduction,
+    questionVariabilityMinStaging,
+    questionVariabilityMinProduction,
+    answerVariabilityStaging,
+    answerVariabilityProduction,
+    answerVariabilityMaxStaging,
+    answerVariabilityMaxProduction,
+    answerVariabilityMinStaging,
+    answerVariabilityMinProduction,
+  } = variabilityMetrics;
 
   return (
     <>
