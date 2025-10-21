@@ -37,150 +37,102 @@ export function EditExamGenerationVariability({
       getGenerations({ examId: exam.id, databaseEnvironment: "Production" }),
   });
 
-  const variabilityMetrics = useMemo(() => {
-    const generatedExamsStaging = generatedExamsStagingQuery.data;
-    const generatedExamsProduction = generatedExamsProductionQuery.data;
-
-    if (!generatedExamsStaging || !generatedExamsProduction) {
+  function calculateGenerationMetrics(
+    generatedExams: Awaited<ReturnType<typeof getGenerations>> | undefined
+  ) {
+    if (!generatedExams || generatedExams.length === 0) {
       return {
-        totalGenerationsStaging: 0,
-        totalGenerationsProduction: 0,
-        questionVariabilityStaging: 0,
-        questionVariabilityProduction: 0,
-        questionVariabilityMaxStaging: 0,
-        questionVariabilityMaxProduction: 0,
-        questionVariabilityMinStaging: 0,
-        questionVariabilityMinProduction: 0,
-        answerVariabilityStaging: 0,
-        answerVariabilityProduction: 0,
-        answerVariabilityMaxStaging: 0,
-        answerVariabilityMaxProduction: 0,
-        answerVariabilityMinStaging: 0,
-        answerVariabilityMinProduction: 0,
+        totalGenerations: 0,
+        questionVariability: "-",
+        questionVariabilityMax: "-",
+        questionVariabilityMin: "-",
+        answerVariability: "-",
+        answerVariabilityMax: "-",
+        answerVariabilityMin: "-",
       };
     }
 
-    const totalGenerationsStaging = generatedExamsStaging.length;
-    const totalGenerationsProduction = generatedExamsProduction.length;
+    const totalGenerations = generatedExams.length;
 
     // Variability is considered: (number of different) / (total)
     // For final variability, it is: (sum of variabilities) / (number of comparisons)
 
     // Compare all generations to each other to find variability
     // - Compare A to B, A to C, and B to C
-    const questionsStaging = generatedExamsStaging.map((gen) =>
-      gen.questionSets.flatMap((qs) => qs.questions)
+    const questions = generatedExams.map((gen) =>
+      gen.questionSets.flatMap((qs: any) => qs.questions)
     );
-    let questionVariabilityStaging = 0;
-    let questionVariabilityMaxStaging = 0;
-    let questionVariabilityMinStaging = 1;
-    const questionVariabilitiesStaging: number[] = compare(
-      questionsStaging,
-      (a, b) => {
+    let questionVariability = 0;
+    let questionVariabilityMax = 0;
+    let questionVariabilityMin = 1;
+    const questionVariabilities: number[] = compare(
+      questions,
+      (a: any[], b: any[]) => {
         const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
         const v = (uniqueQuestions.size - a.length) / a.length;
-        questionVariabilityStaging += v;
-        if (v > questionVariabilityMaxStaging) {
-          questionVariabilityMaxStaging = v;
+        questionVariability += v;
+        if (v > questionVariabilityMax) {
+          questionVariabilityMax = v;
         }
-        if (v < questionVariabilityMinStaging) {
-          questionVariabilityMinStaging = v;
-        }
-        return v;
-      }
-    );
-    questionVariabilityStaging =
-      questionVariabilityStaging / questionVariabilitiesStaging.length;
-
-    const questionsProduction = generatedExamsProduction.map((gen) =>
-      gen.questionSets.flatMap((qs) => qs.questions)
-    );
-    let questionVariabilityProduction = 0;
-    let questionVariabilityMaxProduction = 0;
-    let questionVariabilityMinProduction = 1;
-    const questionVariabilitiesProduction: number[] = compare(
-      questionsProduction,
-      (a, b) => {
-        const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
-        const v = (uniqueQuestions.size - a.length) / a.length;
-        questionVariabilityProduction += v;
-        if (v > questionVariabilityMaxProduction) {
-          questionVariabilityMaxProduction = v;
-        }
-        if (v < questionVariabilityMinProduction) {
-          questionVariabilityMinProduction = v;
+        if (v < questionVariabilityMin) {
+          questionVariabilityMin = v;
         }
         return v;
       }
     );
-    questionVariabilityProduction =
-      questionVariabilityProduction / questionVariabilitiesProduction.length;
+    questionVariability =
+      questionVariabilities.length > 0
+        ? questionVariability / questionVariabilities.length
+        : 0;
 
-    const answersStaging = generatedExamsStaging.map((gen) =>
-      gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
+    const answers = generatedExams.map((gen) =>
+      gen.questionSets
+        .flatMap((qs: any) => qs.questions)
+        .flatMap((q: any) => q.answers)
     );
-    let answerVariabilityStaging = 0;
-    let answerVariabilityMaxStaging = 0;
-    let answerVariabilityMinStaging = 1;
-    const answerVariabilitiesStaging: number[] = compare(
-      answersStaging,
-      (a, b) => {
+    let answerVariability = 0;
+    let answerVariabilityMax = 0;
+    let answerVariabilityMin = 1;
+    const answerVariabilities: number[] = compare(
+      answers,
+      (a: any[], b: any[]) => {
         const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
         const v = (uniqueAnswers.size - a.length) / a.length;
-        answerVariabilityStaging += v;
-        if (v > answerVariabilityMaxStaging) {
-          answerVariabilityMaxStaging = v;
+        answerVariability += v;
+        if (v > answerVariabilityMax) {
+          answerVariabilityMax = v;
         }
-        if (v < answerVariabilityMinStaging) {
-          answerVariabilityMinStaging = v;
-        }
-        return v;
-      }
-    );
-    answerVariabilityStaging =
-      answerVariabilityStaging / answerVariabilitiesStaging.length;
-
-    const answersProduction = generatedExamsProduction.map((gen) =>
-      gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
-    );
-    let answerVariabilityProduction = 0;
-    let answerVariabilityMaxProduction = 0;
-    let answerVariabilityMinProduction = 1;
-    const answerVariabilitiesProduction: number[] = compare(
-      answersProduction,
-      (a, b) => {
-        const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
-        const v = (uniqueAnswers.size - a.length) / a.length;
-        answerVariabilityProduction += v;
-        if (v > answerVariabilityMaxProduction) {
-          answerVariabilityMaxProduction = v;
-        }
-        if (v < answerVariabilityMinProduction) {
-          answerVariabilityMinProduction = v;
+        if (v < answerVariabilityMin) {
+          answerVariabilityMin = v;
         }
         return v;
       }
     );
-    answerVariabilityProduction =
-      answerVariabilityProduction / answerVariabilitiesProduction.length;
+    answerVariability =
+      answerVariabilities.length > 0
+        ? answerVariability / answerVariabilities.length
+        : 0;
 
     return {
-      totalGenerationsStaging,
-      totalGenerationsProduction,
-      questionVariabilityStaging,
-      questionVariabilityProduction,
-      questionVariabilityMaxStaging,
-      questionVariabilityMaxProduction,
-      questionVariabilityMinStaging,
-      questionVariabilityMinProduction,
-      answerVariabilityStaging,
-      answerVariabilityProduction,
-      answerVariabilityMaxStaging,
-      answerVariabilityMaxProduction,
-      answerVariabilityMinStaging,
-      answerVariabilityMinProduction,
+      totalGenerations,
+      questionVariability: questionVariability.toFixed(3),
+      questionVariabilityMax: questionVariabilityMax.toFixed(3),
+      questionVariabilityMin: questionVariabilityMin.toFixed(3),
+      answerVariability: answerVariability.toFixed(3),
+      answerVariabilityMax: answerVariabilityMax.toFixed(3),
+      answerVariabilityMin: answerVariabilityMin.toFixed(3),
     };
-  }, [generatedExamsStagingQuery.data, generatedExamsProductionQuery.data]);
+  }
+
+  const stagingMetrics = useMemo(
+    () => calculateGenerationMetrics(generatedExamsStagingQuery.data),
+    [generatedExamsStagingQuery.data]
+  );
+
+  const productionMetrics = useMemo(
+    () => calculateGenerationMetrics(generatedExamsProductionQuery.data),
+    [generatedExamsProductionQuery.data]
+  );
 
   if (
     generatedExamsStagingQuery.isPending ||
@@ -219,23 +171,6 @@ export function EditExamGenerationVariability({
     );
   }
 
-  const {
-    totalGenerationsStaging,
-    totalGenerationsProduction,
-    questionVariabilityStaging,
-    questionVariabilityProduction,
-    questionVariabilityMaxStaging,
-    questionVariabilityMaxProduction,
-    questionVariabilityMinStaging,
-    questionVariabilityMinProduction,
-    answerVariabilityStaging,
-    answerVariabilityProduction,
-    answerVariabilityMaxStaging,
-    answerVariabilityMaxProduction,
-    answerVariabilityMinStaging,
-    answerVariabilityMinProduction,
-  } = variabilityMetrics;
-
   return (
     <>
       <Heading size="sm" color={accent} mt={6} mb={2}>
@@ -261,8 +196,8 @@ export function EditExamGenerationVariability({
                   Total Generations
                 </Tooltip>
               </Td>
-              <Td color="gray.100">{totalGenerationsStaging}</Td>
-              <Td color="gray.100">{totalGenerationsProduction}</Td>
+              <Td color="gray.100">{stagingMetrics.totalGenerations}</Td>
+              <Td color="gray.100">{productionMetrics.totalGenerations}</Td>
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
@@ -270,10 +205,8 @@ export function EditExamGenerationVariability({
                   Question Total
                 </Tooltip>
               </Td>
-              <Td color="gray.100">{questionVariabilityStaging.toFixed(3)}</Td>
-              <Td color="gray.100">
-                {questionVariabilityProduction.toFixed(3)}
-              </Td>
+              <Td color="gray.100">{stagingMetrics.questionVariability}</Td>
+              <Td color="gray.100">{productionMetrics.questionVariability}</Td>
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
@@ -281,11 +214,9 @@ export function EditExamGenerationVariability({
                   Question Max
                 </Tooltip>
               </Td>
+              <Td color="gray.100">{stagingMetrics.questionVariabilityMax}</Td>
               <Td color="gray.100">
-                {questionVariabilityMaxStaging.toFixed(3)}
-              </Td>
-              <Td color="gray.100">
-                {questionVariabilityMaxProduction.toFixed(3)}
+                {productionMetrics.questionVariabilityMax}
               </Td>
             </Tr>
             <Tr>
@@ -294,11 +225,9 @@ export function EditExamGenerationVariability({
                   Question Min
                 </Tooltip>
               </Td>
+              <Td color="gray.100">{stagingMetrics.questionVariabilityMin}</Td>
               <Td color="gray.100">
-                {questionVariabilityMinStaging.toFixed(3)}
-              </Td>
-              <Td color="gray.100">
-                {questionVariabilityMinProduction.toFixed(3)}
+                {productionMetrics.questionVariabilityMin}
               </Td>
             </Tr>
             <Tr>
@@ -307,8 +236,8 @@ export function EditExamGenerationVariability({
                   Answer Total
                 </Tooltip>
               </Td>
-              <Td color="gray.100">{answerVariabilityStaging.toFixed(3)}</Td>
-              <Td color="gray.100">{answerVariabilityProduction.toFixed(3)}</Td>
+              <Td color="gray.100">{stagingMetrics.answerVariability}</Td>
+              <Td color="gray.100">{productionMetrics.answerVariability}</Td>
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
@@ -316,10 +245,8 @@ export function EditExamGenerationVariability({
                   Answer Max
                 </Tooltip>
               </Td>
-              <Td color="gray.100">{answerVariabilityMaxStaging.toFixed(3)}</Td>
-              <Td color="gray.100">
-                {answerVariabilityMaxProduction.toFixed(3)}
-              </Td>
+              <Td color="gray.100">{stagingMetrics.answerVariabilityMax}</Td>
+              <Td color="gray.100">{productionMetrics.answerVariabilityMax}</Td>
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
@@ -327,10 +254,8 @@ export function EditExamGenerationVariability({
                   Answer Min
                 </Tooltip>
               </Td>
-              <Td color="gray.100">{answerVariabilityMinStaging.toFixed(3)}</Td>
-              <Td color="gray.100">
-                {answerVariabilityMinProduction.toFixed(3)}
-              </Td>
+              <Td color="gray.100">{stagingMetrics.answerVariabilityMin}</Td>
+              <Td color="gray.100">{productionMetrics.answerVariabilityMin}</Td>
             </Tr>
           </Tbody>
         </Table>
