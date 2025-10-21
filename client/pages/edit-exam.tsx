@@ -69,7 +69,7 @@ function Edit() {
 
   const bg = useColorModeValue("black", "black");
   const spinnerColor = useColorModeValue("teal.400", "teal.300");
-
+  console.log(examQuery.isPending);
   return (
     <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}

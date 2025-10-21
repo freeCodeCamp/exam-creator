@@ -14,7 +14,6 @@ import {
 } from "@chakra-ui/react";
 import { ExamCreatorExam } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { getGenerations } from "../utils/fetch";
 import { compare } from "../utils/question";
 
@@ -26,22 +25,35 @@ export function EditExamGenerationVariability({
   exam,
 }: EditExamGenerationVariabilityProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
-  const generatedExamsStagingQuery = useQuery({
+  const stagingMetricsQuery = useQuery({
     queryKey: ["generated-exams", exam.id, "Staging"],
-    queryFn: async () =>
-      getGenerations({ examId: exam.id, databaseEnvironment: "Staging" }),
+    queryFn: async () => {
+      const generatedExams = await getGenerations({
+        examId: exam.id,
+        databaseEnvironment: "Staging",
+      });
+      const metrics = calculateGenerationMetrics(generatedExams);
+      return metrics;
+    },
     retry: false,
   });
-  const generatedExamsProductionQuery = useQuery({
+  const productionMetricsQuery = useQuery({
     queryKey: ["generated-exams", exam.id, "Production"],
-    queryFn: async () =>
-      getGenerations({ examId: exam.id, databaseEnvironment: "Production" }),
+    queryFn: async () => {
+      const generatedExams = await getGenerations({
+        examId: exam.id,
+        databaseEnvironment: "Production",
+      });
+      const metrics = calculateGenerationMetrics(generatedExams);
+      return metrics;
+    },
     retry: false,
   });
 
   function calculateGenerationMetrics(
     generatedExams: Awaited<ReturnType<typeof getGenerations>> | undefined
   ) {
+    console.log("Working");
     if (!generatedExams || generatedExams.length === 0) {
       return {
         totalGenerations: 0,
@@ -62,54 +74,69 @@ export function EditExamGenerationVariability({
     // Compare all generations to each other to find variability
     // - Compare A to B, A to C, and B to C
     const questions = generatedExams.map((gen) =>
-      gen.questionSets.flatMap((qs: any) => qs.questions)
+      gen.questionSets.flatMap((qs) => qs.questions)
     );
     let questionVariability = 0;
     let questionVariabilityMax = 0;
     let questionVariabilityMin = 1;
-    const questionVariabilities: number[] = compare(
-      questions,
-      (a: any[], b: any[]) => {
-        const uniqueQuestions = new Set([...a, ...b].map((q) => q.id));
-        const v = (uniqueQuestions.size - a.length) / a.length;
-        questionVariability += v;
-        if (v > questionVariabilityMax) {
-          questionVariabilityMax = v;
-        }
-        if (v < questionVariabilityMin) {
-          questionVariabilityMin = v;
-        }
-        return v;
+    // questions: [[1,2,3],[1,2,4]] | [[1,2,3], [4,5,6]]
+    const questionVariabilities: number[] = compare(questions, (a, b) => {
+      if (a.length !== b.length) {
+        console.error("Generations have different number of questions", a, b);
       }
-    );
+      // uniqueQuestions: [1,2,3,4] | [1,2,3,4,5,6]
+      const uniqueQuestions = [];
+      for (const q of a) {
+        uniqueQuestions.push(q.id);
+      }
+      for (const q of b) {
+        if (!uniqueQuestions.includes(q.id)) {
+          uniqueQuestions.push(q.id);
+        }
+      }
+      // v: (4 - 3) / 3 = 0.333 | (6 - 3) / 3 = 1
+      // v: (unique questions) / (total questions per generation)
+      const v = (uniqueQuestions.length - a.length) / a.length;
+      questionVariability += v;
+      if (v > questionVariabilityMax) {
+        questionVariabilityMax = v;
+      }
+      if (v < questionVariabilityMin) {
+        questionVariabilityMin = v;
+      }
+      return v;
+    });
     questionVariability =
       questionVariabilities.length > 0
         ? questionVariability / questionVariabilities.length
         : 0;
 
     const answers = generatedExams.map((gen) =>
-      gen.questionSets
-        .flatMap((qs: any) => qs.questions)
-        .flatMap((q: any) => q.answers)
+      gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
     );
     let answerVariability = 0;
     let answerVariabilityMax = 0;
     let answerVariabilityMin = 1;
-    const answerVariabilities: number[] = compare(
-      answers,
-      (a: any[], b: any[]) => {
-        const uniqueAnswers = new Set([...a, ...b].map((ans) => ans));
-        const v = (uniqueAnswers.size - a.length) / a.length;
-        answerVariability += v;
-        if (v > answerVariabilityMax) {
-          answerVariabilityMax = v;
-        }
-        if (v < answerVariabilityMin) {
-          answerVariabilityMin = v;
-        }
-        return v;
+    const answerVariabilities: number[] = compare(answers, (a, b) => {
+      const uniqueAnswers = [];
+      for (const q of a) {
+        uniqueAnswers.push(q);
       }
-    );
+      for (const q of b) {
+        if (!uniqueAnswers.includes(q)) {
+          uniqueAnswers.push(q);
+        }
+      }
+      const v = (uniqueAnswers.length - a.length) / a.length;
+      answerVariability += v;
+      if (v > answerVariabilityMax) {
+        answerVariabilityMax = v;
+      }
+      if (v < answerVariabilityMin) {
+        answerVariabilityMin = v;
+      }
+      return v;
+    });
     answerVariability =
       answerVariabilities.length > 0
         ? answerVariability / answerVariabilities.length
@@ -126,20 +153,7 @@ export function EditExamGenerationVariability({
     };
   }
 
-  const stagingMetrics = useMemo(
-    () => calculateGenerationMetrics(generatedExamsStagingQuery.data),
-    [generatedExamsStagingQuery.data]
-  );
-
-  const productionMetrics = useMemo(
-    () => calculateGenerationMetrics(generatedExamsProductionQuery.data),
-    [generatedExamsProductionQuery.data]
-  );
-
-  if (
-    generatedExamsStagingQuery.isPending ||
-    generatedExamsProductionQuery.isPending
-  ) {
+  if (stagingMetricsQuery.isPending || productionMetricsQuery.isPending) {
     return (
       <>
         <Heading size="sm" color={accent} mt={6} mb={2}>
@@ -152,12 +166,9 @@ export function EditExamGenerationVariability({
       </>
     );
   }
-  if (
-    generatedExamsStagingQuery.isError ||
-    generatedExamsProductionQuery.isError
-  ) {
-    console.error(generatedExamsStagingQuery.error);
-    console.error(generatedExamsProductionQuery.error);
+  if (stagingMetricsQuery.isError || productionMetricsQuery.isError) {
+    console.error(stagingMetricsQuery.error);
+    console.error(productionMetricsQuery.error);
     return (
       <>
         <Heading size="sm" color={accent} mt={6} mb={2}>
@@ -172,6 +183,9 @@ export function EditExamGenerationVariability({
       </>
     );
   }
+
+  const stagingMetrics = stagingMetricsQuery.data;
+  const productionMetrics = productionMetricsQuery.data;
 
   return (
     <>
