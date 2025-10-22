@@ -1,4 +1,4 @@
-import { compare } from "./question";
+import { analyzeVariability, compare, findVariabilities } from "./question";
 
 // 1: Test compare function does comparisons for all sets
 //    A | B, A | C, A | D, B | C, B | D, C | D
@@ -89,3 +89,54 @@ for (let i = 0; i < results_partial.length; i++) {
     );
   }
 }
+
+// compare
+
+console.log(
+  compare(
+    [
+      ["a", "b"],
+      ["a", "c"],
+      ["d", "e"],
+      ["a", "b"],
+    ],
+    (a, b) => {
+      const s = new Set([...a, ...b]);
+      return (s.size - a.length) / a.length;
+    }
+  )
+);
+
+// variability pairs
+
+findVariabilities([
+  ["a", "b"],
+  ["a", "c"],
+  ["d", "e"],
+  ["a", "b"],
+]);
+
+// const reallyLongData = Array.from({ length: 2500 }, (_, i) => {
+//   const base = i * 10;
+//   return Array.from({ length: 10 }, (_, j) => `q${base + j}`);
+// });
+
+const reallyLongData = Array.from({ length: 2500 }, (_, i) => {
+  const base = i * 10;
+  return Array.from({ length: 50 }, (_, j) => `${base + j}`);
+});
+
+// console.log("Really long data:", reallyLongData);
+
+// console.time("variabilityPairs");
+const pairs = findVariabilities(reallyLongData);
+
+// console.timeEnd("variabilityPairs");
+
+// console.log("Variability pairs for really long data:", pairs);
+
+// console.time("meanVariability");
+const analysis = analyzeVariability(pairs);
+// const meanVariability = pairs.reduce((sum, v) => sum + v, 0) / pairs.length;
+// console.timeEnd("meanVariability");
+// console.log("Mean variability for really long data:", analysis);

@@ -156,6 +156,24 @@ export function compare<T, U>(arr: T[], cb: (a: T, b: T) => U): U[] {
   return results;
 }
 
+export function analyzeVariability(xs: number[]) {
+  let mean = 0;
+  let max = 0;
+  let min = 1;
+  for (const x of xs) {
+    mean += x;
+    if (x > max) max = x;
+    if (x < min) min = x;
+  }
+  mean = xs.length > 0 ? mean / xs.length : 0;
+
+  return {
+    mean,
+    max,
+    min,
+  };
+}
+
 export function calculateGenerationMetrics(
   generatedExams: Awaited<ReturnType<typeof getGenerations>> | undefined
 ) {
@@ -181,71 +199,25 @@ export function calculateGenerationMetrics(
   const questions = generatedExams.map((gen) =>
     gen.questionSets.flatMap((qs) => qs.questions)
   );
-  let questionVariability = 0;
-  let questionVariabilityMax = 0;
-  let questionVariabilityMin = 1;
+
+  const questionIds = questions.map((qs) => qs.map((q) => q.id));
+
   // questions: [[1,2,3],[1,2,4]] | [[1,2,3], [4,5,6]]
-  const questionVariabilities: number[] = compare(questions, (a, b) => {
-    if (a.length !== b.length) {
-      console.error("Generations have different number of questions", a, b);
-    }
-    // uniqueQuestions: [1,2,3,4] | [1,2,3,4,5,6]
-    const uniqueQuestions = [];
-    for (const q of a) {
-      uniqueQuestions.push(q.id);
-    }
-    for (const q of b) {
-      if (!uniqueQuestions.includes(q.id)) {
-        uniqueQuestions.push(q.id);
-      }
-    }
-    // v: (4 - 3) / 3 = 0.333 | (6 - 3) / 3 = 1
-    // v: (unique questions) / (total questions per generation)
-    const v = (uniqueQuestions.length - a.length) / a.length;
-    questionVariability += v;
-    if (v > questionVariabilityMax) {
-      questionVariabilityMax = v;
-    }
-    if (v < questionVariabilityMin) {
-      questionVariabilityMin = v;
-    }
-    return v;
-  });
-  questionVariability =
-    questionVariabilities.length > 0
-      ? questionVariability / questionVariabilities.length
-      : 0;
+  const {
+    mean: questionVariability,
+    max: questionVariabilityMax,
+    min: questionVariabilityMin,
+  } = analyzeVariability(findVariabilities(questionIds));
 
   const answers = generatedExams.map((gen) =>
     gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
   );
-  let answerVariability = 0;
-  let answerVariabilityMax = 0;
-  let answerVariabilityMin = 1;
-  const answerVariabilities: number[] = compare(answers, (a, b) => {
-    const uniqueAnswers = [];
-    for (const q of a) {
-      uniqueAnswers.push(q);
-    }
-    for (const q of b) {
-      if (!uniqueAnswers.includes(q)) {
-        uniqueAnswers.push(q);
-      }
-    }
-    const v = (uniqueAnswers.length - a.length) / a.length;
-    answerVariability += v;
-    if (v > answerVariabilityMax) {
-      answerVariabilityMax = v;
-    }
-    if (v < answerVariabilityMin) {
-      answerVariabilityMin = v;
-    }
-    return v;
-  });
-  answerVariability =
-    answerVariabilities.length > 0
-      ? answerVariability / answerVariabilities.length
-      : 0;
+
+  const {
+    mean: answerVariability,
+    max: answerVariabilityMax,
+    min: answerVariabilityMin,
+  } = analyzeVariability(findVariabilities(answers));
 
   return {
     totalGenerations,
@@ -256,4 +228,26 @@ export function calculateGenerationMetrics(
     answerVariabilityMax: answerVariabilityMax.toFixed(3),
     answerVariabilityMin: answerVariabilityMin.toFixed(3),
   };
+}
+
+export function findVariabilities(idArrays: string[][]) {
+  return compare(idArrays, (arr1, arr2) => {
+    if (arr1.length !== arr2.length) {
+      console.error(
+        "Generations have different number of questions",
+        arr1,
+        arr2
+      );
+    }
+
+    // Of the various ways to calculate variability, this performs much better
+    // for sets of ~50 items. Other options, e.g Set.difference, arr1.filter(x
+    // => !arr2.includes(x)) and building arrays of unique items, were much
+    // slower.
+    const unique = new Set(arr1);
+    for (const id of arr2) {
+      unique.delete(id);
+    }
+    return unique.size / arr1.length;
+  });
 }
