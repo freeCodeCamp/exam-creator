@@ -12,39 +12,34 @@ import {
   Tr,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { ExamCreatorExam } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { getGenerations } from "../utils/fetch";
 import { calculateGenerationMetrics } from "../utils/question";
 
 interface EditExamGenerationVariabilityProps {
-  exam: ExamCreatorExam;
+  generatedExamsStaging?: Awaited<ReturnType<typeof getGenerations>>;
+  generatedExamsProduction?: Awaited<ReturnType<typeof getGenerations>>;
 }
 
 export function EditExamGenerationVariability({
-  exam,
+  generatedExamsStaging,
+  generatedExamsProduction,
 }: EditExamGenerationVariabilityProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
   const stagingMetricsQuery = useQuery({
-    queryKey: ["generated-exams", exam.id, "Staging"],
+    queryKey: ["generated-exams", generatedExamsStaging, "Staging"],
+    enabled: !!generatedExamsStaging,
     queryFn: async () => {
-      const generatedExams = await getGenerations({
-        examId: exam.id,
-        databaseEnvironment: "Staging",
-      });
-      const metrics = calculateGenerationMetrics(generatedExams);
+      const metrics = calculateGenerationMetrics(generatedExamsStaging);
       return metrics;
     },
     retry: false,
   });
   const productionMetricsQuery = useQuery({
-    queryKey: ["generated-exams", exam.id, "Production"],
+    queryKey: ["generated-exams", generatedExamsProduction, "Production"],
+    enabled: !!generatedExamsProduction,
     queryFn: async () => {
-      const generatedExams = await getGenerations({
-        examId: exam.id,
-        databaseEnvironment: "Production",
-      });
-      const metrics = calculateGenerationMetrics(generatedExams);
+      const metrics = calculateGenerationMetrics(generatedExamsProduction);
       return metrics;
     },
     retry: false,

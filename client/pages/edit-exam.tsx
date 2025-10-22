@@ -36,7 +36,11 @@ import type { ExamCreatorExam, ExamEnvironmentChallenge } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { QuestionForm } from "../components/question-form";
-import { getExamById, getExamChallengeByExamId } from "../utils/fetch";
+import {
+  getExamById,
+  getExamChallengeByExamId,
+  getGenerations,
+} from "../utils/fetch";
 import { TagConfigForm } from "../components/tag-config-form";
 import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
@@ -69,7 +73,6 @@ function Edit() {
 
   const bg = useColorModeValue("black", "black");
   const spinnerColor = useColorModeValue("teal.400", "teal.300");
-  console.log(examQuery.isPending);
   return (
     <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}
@@ -183,6 +186,25 @@ function EditExam({ exam: examData }: EditExamProps) {
   const [searchIds, setSearchIds] = useState<string[]>([]);
   const [prereqInput, setPrereqInput] = useState("");
   const [challengeInput, setChallengeInput] = useState("");
+
+  const generatedExamsStagingQuery = useQuery({
+    queryKey: ["generated-exams", exam.id, "Staging"],
+    queryFn: () =>
+      getGenerations({
+        examId: exam.id,
+        databaseEnvironment: "Staging",
+      }),
+    retry: false,
+  });
+  const generatedExamsProductionQuery = useQuery({
+    queryKey: ["generated-exams", exam.id, "Production"],
+    queryFn: () =>
+      getGenerations({
+        examId: exam.id,
+        databaseEnvironment: "Production",
+      }),
+    retry: false,
+  });
 
   useEffect(() => {
     updateActivity({
@@ -541,7 +563,10 @@ function EditExam({ exam: examData }: EditExamProps) {
                 </Table>
               </Box>
             </Box>
-            <EditExamGenerationVariability exam={exam} />
+            <EditExamGenerationVariability
+              generatedExamsStaging={generatedExamsStagingQuery.data}
+              generatedExamsProduction={generatedExamsProductionQuery.data}
+            />
             <Divider my={4} borderColor="gray.600" />
             <TagConfigForm
               questionSets={exam.questionSets}
@@ -644,6 +669,8 @@ function EditExam({ exam: examData }: EditExamProps) {
                 searchIds={searchIds}
                 questionSets={exam.questionSets}
                 setExam={setExam}
+                generatedExamsStagingQuery={generatedExamsStagingQuery}
+                generatedExamsProductionQuery={generatedExamsProductionQuery}
               />
             </Box>
           </form>

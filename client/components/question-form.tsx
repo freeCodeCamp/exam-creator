@@ -436,12 +436,16 @@ type QuestionFormProps = {
   searchIds: string[];
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  generatedExamsStagingQuery: any;
+  generatedExamsProductionQuery: any;
 };
 
 export function QuestionForm({
   searchIds,
   questionSets,
   setExam,
+  generatedExamsStagingQuery,
+  generatedExamsProductionQuery,
 }: QuestionFormProps) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
 
