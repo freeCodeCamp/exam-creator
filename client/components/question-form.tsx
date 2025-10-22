@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   ExamCreatorExam,
   type ExamEnvironmentMultipleChoiceQuestion,
   type ExamEnvironmentQuestionSet,
+  type ExamEnvironmentGeneratedExam,
   // type ExamEnvironmentQuestionType,
 } from "@prisma/client";
 import {
@@ -32,11 +33,24 @@ import {
 } from "../utils/question";
 import { QuestionAccordion } from "./accordian";
 
+type QuestionStatus = {
+  inStaging: boolean;
+  inProduction: boolean;
+  stagingCount: number;
+  productionCount: number;
+  totalCount: number;
+};
+
+type QuestionSetStatus = QuestionStatus;
+
 type MultipleChoiceFormProps = {
   question: ExamEnvironmentMultipleChoiceQuestion;
   questionSet: ExamEnvironmentQuestionSet;
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  borderColor?: string;
+  borderStyle?: string;
+  borderWidth?: string;
 };
 
 export function MultipleChoiceForm({
@@ -44,6 +58,9 @@ export function MultipleChoiceForm({
   questionSet,
   questionSets,
   setExam,
+  borderColor = "gray.700",
+  borderStyle = "solid",
+  borderWidth = "1px",
 }: MultipleChoiceFormProps) {
   const audioInputRef = useRef<HTMLInputElement>(null);
   const [isAudioVisible, setIsAudioVisible] = useState(false);
@@ -85,7 +102,15 @@ export function MultipleChoiceForm({
   const accent = useColorModeValue("teal.400", "teal.300");
 
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
+    <Box
+      bg={cardBg}
+      borderRadius="lg"
+      p={4}
+      mb={4}
+      borderWidth={borderWidth}
+      borderColor={borderColor}
+      borderStyle={borderStyle}
+    >
       <Text fontWeight="bold" color={accent} mb={2} id={question.id}>
         Multiple Choice Form
       </Text>
@@ -341,12 +366,20 @@ type DialogueFormProps = {
   questionSet: ExamEnvironmentQuestionSet;
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined;
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined;
+  isLoading: boolean;
+  hasGeneratedExams: boolean;
 };
 
 export function DialogueForm({
   questionSet,
   questionSets,
   setExam,
+  stagingExams,
+  productionExams,
+  isLoading,
+  hasGeneratedExams,
 }: DialogueFormProps) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
@@ -394,17 +427,32 @@ export function DialogueForm({
           Remove Dialogue
         </Button>
         {questionSet.questions.map((question, index) => {
+          const questionStatus = getQuestionStatus(
+            question.id,
+            stagingExams,
+            productionExams
+          );
+          const questionBorderStyle = getBorderStyle(
+            questionStatus,
+            isLoading,
+            hasGeneratedExams
+          );
+
           return (
             <QuestionAccordion
               key={question.id}
               title={`Question ${index + 1}`}
               subtitle={question.text}
+              {...questionBorderStyle}
             >
               <MultipleChoiceForm
                 question={question}
                 questionSet={questionSet}
                 questionSets={questionSets}
                 setExam={setExam}
+                borderColor={questionBorderStyle.borderColor}
+                borderStyle={questionBorderStyle.borderStyle}
+                borderWidth={questionBorderStyle.borderWidth}
               />
             </QuestionAccordion>
           );
@@ -432,6 +480,115 @@ export function DialogueForm({
   );
 }
 
+function getQuestionStatus(
+  questionId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionStatus {
+  const stagingCount =
+    stagingExams?.filter((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.id === questionId)
+      )
+    ).length ?? 0;
+
+  const productionCount =
+    productionExams?.filter((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.id === questionId)
+      )
+    ).length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+function getQuestionSetStatus(
+  questionSetId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionSetStatus {
+  const stagingCount =
+    stagingExams?.filter((exam) =>
+      exam.questionSets.some((qs) => qs.id === questionSetId)
+    ).length ?? 0;
+
+  const productionCount =
+    productionExams?.filter((exam) =>
+      exam.questionSets.some((qs) => qs.id === questionSetId)
+    ).length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+function getBorderStyle(
+  status: QuestionStatus,
+  isLoading: boolean,
+  hasGeneratedExams: boolean
+): {
+  borderColor: string;
+  borderStyle: string;
+  borderWidth: string;
+  generationCount?: number;
+  isLoading: boolean;
+} {
+  if (isLoading) {
+    return {
+      borderColor: "blue.400",
+      borderStyle: "dashed",
+      borderWidth: "3px",
+      isLoading: true,
+    };
+  }
+
+  if (status.inProduction) {
+    return {
+      borderColor: "green.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.productionCount,
+      isLoading: false,
+    };
+  }
+
+  if (status.inStaging) {
+    return {
+      borderColor: "yellow.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.stagingCount,
+      isLoading: false,
+    };
+  }
+
+  if (hasGeneratedExams) {
+    return {
+      borderColor: "red.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      isLoading: false,
+    };
+  }
+
+  return {
+    borderColor: "gray.700",
+    borderStyle: "solid",
+    borderWidth: "1px",
+    isLoading: false,
+  };
+}
+
 type QuestionFormProps = {
   searchIds: string[];
   questionSets: ExamEnvironmentQuestionSet[];
@@ -448,6 +605,20 @@ export function QuestionForm({
   generatedExamsProductionQuery,
 }: QuestionFormProps) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
+
+  const isLoading =
+    generatedExamsStagingQuery.isPending ||
+    generatedExamsProductionQuery.isPending;
+
+  const stagingExams = generatedExamsStagingQuery.data;
+  const productionExams = generatedExamsProductionQuery.data;
+
+  const hasGeneratedExams = useMemo(() => {
+    return (
+      (stagingExams && stagingExams.length > 0) ||
+      (productionExams && productionExams.length > 0)
+    );
+  }, [stagingExams, productionExams]);
 
   return (
     <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
@@ -477,31 +648,63 @@ export function QuestionForm({
                   });
                   return null;
                 }
+
+                const questionStatus = getQuestionStatus(
+                  question.id,
+                  stagingExams,
+                  productionExams
+                );
+                const questionBorderStyle = getBorderStyle(
+                  questionStatus,
+                  isLoading,
+                  hasGeneratedExams
+                );
+
                 return (
                   <QuestionAccordion
                     key={qt.id}
                     title={`Question Set ${qt.id}`}
                     subtitle={question.text}
+                    {...questionBorderStyle}
                   >
                     <MultipleChoiceForm
                       question={question}
                       questionSet={qt}
                       questionSets={questionSets}
                       setExam={setExam}
+                      borderColor={questionBorderStyle.borderColor}
+                      borderStyle={questionBorderStyle.borderStyle}
+                      borderWidth={questionBorderStyle.borderWidth}
                     />
                   </QuestionAccordion>
                 );
               case "Dialogue":
+                const setStatus = getQuestionSetStatus(
+                  qt.id,
+                  stagingExams,
+                  productionExams
+                );
+                const setBorderStyle = getBorderStyle(
+                  setStatus,
+                  isLoading,
+                  hasGeneratedExams
+                );
+
                 return (
                   <QuestionAccordion
                     key={qt.id}
                     title={`Dialogue Question Set ${qt.id}`}
                     subtitle={`${qt.context ?? "none"}`}
+                    {...setBorderStyle}
                   >
                     <DialogueForm
                       questionSet={qt}
                       questionSets={questionSets}
                       setExam={setExam}
+                      stagingExams={stagingExams}
+                      productionExams={productionExams}
+                      isLoading={isLoading}
+                      hasGeneratedExams={hasGeneratedExams}
                     />
                   </QuestionAccordion>
                 );
