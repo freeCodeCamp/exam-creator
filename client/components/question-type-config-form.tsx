@@ -1,5 +1,4 @@
 import {
-  ExamCreatorExam,
   type ExamEnvironmentConfig,
   type ExamEnvironmentQuestionSet,
   type ExamEnvironmentQuestionType,
@@ -20,13 +19,13 @@ import {
 
 type QuestionTypeConfigFormProps = {
   questionSets: ExamEnvironmentQuestionSet[];
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  setConfig: (partialConfig: Partial<ExamEnvironmentConfig>) => void;
   config: ExamEnvironmentConfig;
 };
 
 export function QuestionTypeConfigForm({
   questionSets,
-  setExam,
+  setConfig,
   config,
 }: QuestionTypeConfigFormProps) {
   const [selectedQuestionType, setSelectedQuestionType] =
@@ -160,20 +159,17 @@ export function QuestionTypeConfigForm({
             size="sm"
             onClick={() => {
               if (!selectedQuestionType) return;
-              setExam({
-                config: {
-                  ...config,
-                  questionSets: [
-                    ...config.questionSets,
-                    {
-                      type: selectedQuestionType,
-                      numberOfSet,
-                      numberOfQuestions,
-                      numberOfCorrectAnswers,
-                      numberOfIncorrectAnswers,
-                    },
-                  ],
-                },
+              setConfig({
+                questionSets: [
+                  ...config.questionSets,
+                  {
+                    type: selectedQuestionType,
+                    numberOfSet,
+                    numberOfQuestions,
+                    numberOfCorrectAnswers,
+                    numberOfIncorrectAnswers,
+                  },
+                ],
               });
               setIsCreatingQuestionTypeConfig(false);
             }}

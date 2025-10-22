@@ -12,27 +12,20 @@ import {
   Avatar,
   Tooltip,
   HStack,
-  SimpleGrid,
-  Badge,
   Divider,
-  Input,
-  NumberInput,
-  NumberInputField,
-  FormLabel,
-  FormControl,
-  IconButton,
   Spinner,
-  Checkbox,
   Table,
   Thead,
   Tr,
   Th,
   Tbody,
   Td,
-  FormErrorMessage,
 } from "@chakra-ui/react";
-import { ObjectId } from "bson";
-import type { ExamCreatorExam, ExamEnvironmentChallenge } from "@prisma/client";
+import type {
+  ExamCreatorExam,
+  ExamEnvironmentChallenge,
+  ExamEnvironmentConfig,
+} from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { QuestionForm } from "../components/question-form";
@@ -53,6 +46,8 @@ import {
 import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
 import { EditExamGenerationVariability } from "../components/edit-exam-generation-variability";
+import { EditExamConfig } from "../components/edit-exam-config";
+import { ConfigView } from "../components/config-view";
 
 function Edit() {
   const { id } = useParams({ from: "/exams/$id" });
@@ -169,6 +164,14 @@ function examReducer(state: ExamCreatorExam, action: Partial<ExamCreatorExam>) {
   return newState;
 }
 
+function configReducer(
+  state: ExamEnvironmentConfig,
+  action: Partial<ExamEnvironmentConfig>
+) {
+  const newState = { ...state, ...action };
+  return newState;
+}
+
 interface EditExamProps {
   exam: ExamCreatorExam;
 }
@@ -176,18 +179,21 @@ interface EditExamProps {
 function EditExam({ exam: examData }: EditExamProps) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const [exam, setExam] = useReducer(examReducer, examData);
+  const [config, setConfig] = useReducer(configReducer, exam.config);
+  const [questionSets, setQuestionSets] = useState(exam.questionSets);
+
+  const [searchIds, setSearchIds] = useState<string[]>([]);
+
   const examEnvironmentChallengesQuery = useQuery({
     queryKey: ["exam-challenge", exam.id],
     queryFn: () => getExamChallengeByExamId(exam.id),
     retry: false,
     refetchOnWindowFocus: false,
   });
+
   const [examEnvironmentChallenges, setExamEnvironmentChallenges] = useState<
     Omit<ExamEnvironmentChallenge, "id">[]
   >(examEnvironmentChallengesQuery.data || []);
-  const [searchIds, setSearchIds] = useState<string[]>([]);
-  const [prereqInput, setPrereqInput] = useState("");
-  const [challengeInput, setChallengeInput] = useState("");
 
   const generatedExamsStagingQuery = useQuery({
     queryKey: ["generated-exams", exam.id, "Staging"],
@@ -258,7 +264,9 @@ function EditExam({ exam: examData }: EditExamProps) {
 
   return (
     <>
-      <EditExamActions {...{ exam, examEnvironmentChallenges }} />
+      <EditExamActions
+        {...{ exam, config, questionSets, examEnvironmentChallenges }}
+      />
       <Stack spacing={8} w="full" maxW="4xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
@@ -274,265 +282,17 @@ function EditExam({ exam: examData }: EditExamProps) {
               e.preventDefault();
             }}
           >
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mb={4}>
-              <FormControl>
-                <FormLabel color="gray.300">Exam Name</FormLabel>
-                <Input
-                  type="text"
-                  placeholder="Exam Name..."
-                  value={exam.config.name}
-                  onChange={(e) =>
-                    setExam({
-                      config: {
-                        ...exam.config,
-                        name: e.target.value,
-                      },
-                    })
-                  }
-                  bg="gray.700"
-                  color="gray.100"
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel color="gray.300">Accessibility Note</FormLabel>
-                <Input
-                  type="text"
-                  placeholder="Accessibility Note..."
-                  value={exam.config.note}
-                  onChange={(e) =>
-                    setExam({
-                      config: {
-                        ...exam.config,
-                        note: e.target.value,
-                      },
-                    })
-                  }
-                  bg="gray.700"
-                  color="gray.100"
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel color="gray.300">Total Time [s]</FormLabel>
-                <NumberInput
-                  value={exam.config.totalTimeInS}
-                  onChange={(_, value) =>
-                    setExam({
-                      config: {
-                        ...exam.config,
-                        totalTimeInS: value,
-                      },
-                    })
-                  }
-                  min={0}
-                >
-                  <NumberInputField bg="gray.700" color="gray.100" />
-                </NumberInput>
-              </FormControl>
-              <FormControl>
-                <FormLabel color="gray.300">
-                  Retake (Cooldown) Time [s]
-                </FormLabel>
-                <NumberInput
-                  value={exam.config.retakeTimeInS}
-                  onChange={(_, value) =>
-                    setExam({
-                      config: {
-                        ...exam.config,
-                        retakeTimeInS: value,
-                      },
-                    })
-                  }
-                  min={0}
-                >
-                  <NumberInputField bg="gray.700" color="gray.100" />
-                </NumberInput>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel color="gray.300">Prerequisites</FormLabel>
-                <Input
-                  type="text"
-                  placeholder="Add ObjectID and press Enter"
-                  bg="gray.700"
-                  color="gray.100"
-                  value={prereqInput || ""}
-                  onChange={(e) => setPrereqInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const value = prereqInput?.trim();
-                      if (
-                        value &&
-                        ObjectId.isValid(value) &&
-                        !exam.prerequisites.includes(value)
-                      ) {
-                        setExam({
-                          prerequisites: [...exam.prerequisites, value],
-                        });
-                        setPrereqInput("");
-                      }
-                    }
-                  }}
-                  mb={2}
-                />
-                <Box
-                  bg="gray.700"
-                  borderRadius="md"
-                  px={2}
-                  py={1}
-                  minH="40px"
-                  maxH="120px"
-                  overflowY="auto"
-                  display="flex"
-                  flexWrap="wrap"
-                  alignItems="flex-start"
-                >
-                  {exam.prerequisites?.map((id, idx) => (
-                    <Badge
-                      key={id}
-                      colorScheme="teal"
-                      variant="solid"
-                      mr={2}
-                      mb={1}
-                      px={2}
-                      py={1}
-                      borderRadius="md"
-                      display="flex"
-                      alignItems="center"
-                    >
-                      <span style={{ marginRight: 6 }}>{id}</span>
-                      <IconButton
-                        aria-label="Remove prerequisite"
-                        icon={<span>✕</span>}
-                        size="xs"
-                        colorScheme="red"
-                        variant="ghost"
-                        ml={1}
-                        onClick={() => {
-                          setExam({
-                            prerequisites: exam.prerequisites.filter(
-                              (_, i) => i !== idx
-                            ),
-                          });
-                        }}
-                      />
-                    </Badge>
-                  ))}
-                </Box>
-                <Text color="gray.400" fontSize="xs" mt={1}>
-                  Enter a 24-character hex ObjectID and press Enter to add.
-                  Click ✕ to remove.
-                </Text>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel color="gray.300">Related Challenge IDs</FormLabel>
-                {examEnvironmentChallengesQuery.isError && (
-                  <FormErrorMessage>
-                    Error loading challenges:{" "}
-                    {examEnvironmentChallengesQuery.error.message}
-                  </FormErrorMessage>
-                )}
-                <Input
-                  type="text"
-                  placeholder="Add ObjectID and press Enter"
-                  bg="gray.700"
-                  color="gray.100"
-                  value={challengeInput || ""}
-                  disabled={
-                    examEnvironmentChallengesQuery.isPending ||
-                    examEnvironmentChallengesQuery.isError
-                  }
-                  onChange={(e) => setChallengeInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const value = challengeInput?.trim();
-                      if (
-                        value &&
-                        ObjectId.isValid(value) &&
-                        !examEnvironmentChallenges.some(
-                          (ch) => ch.challengeId === value
-                        )
-                      ) {
-                        setExamEnvironmentChallenges((prev) => [
-                          ...prev,
-                          { examId: exam.id, challengeId: value, version: 1 },
-                        ]);
-                        setChallengeInput("");
-                      }
-                    }
-                  }}
-                  mb={2}
-                />
-                <Box
-                  bg="gray.700"
-                  borderRadius="md"
-                  px={2}
-                  py={1}
-                  minH="40px"
-                  maxH="120px"
-                  overflowY="auto"
-                  display="flex"
-                  flexWrap="wrap"
-                  alignItems="flex-start"
-                >
-                  {examEnvironmentChallengesQuery.isPending ? (
-                    <Spinner color={accent} size="md" />
-                  ) : (
-                    examEnvironmentChallenges.map(({ challengeId }, idx) => (
-                      <Badge
-                        key={challengeId}
-                        colorScheme="teal"
-                        variant="solid"
-                        mr={2}
-                        mb={1}
-                        px={2}
-                        py={1}
-                        borderRadius="md"
-                        display="flex"
-                        alignItems="center"
-                      >
-                        <span style={{ marginRight: 6 }}>{challengeId}</span>
-                        <IconButton
-                          aria-label="Remove challenge id"
-                          icon={<span>✕</span>}
-                          size="xs"
-                          colorScheme="red"
-                          variant="ghost"
-                          ml={1}
-                          onClick={() => {
-                            setExamEnvironmentChallenges((prev) =>
-                              prev.filter((_, i) => i !== idx)
-                            );
-                          }}
-                        />
-                      </Badge>
-                    ))
-                  )}
-                </Box>
-                <Text color="gray.400" fontSize="xs" mt={1}>
-                  Enter a 24-character hex ObjectID and press Enter to add.
-                  Click ✕ to remove.
-                </Text>
-              </FormControl>
-              <FormControl>
-                <FormLabel color="gray.300">Deprecated</FormLabel>
-                <Checkbox
-                  isChecked={exam.deprecated}
-                  onChange={(e) =>
-                    setExam({
-                      deprecated: e.target.checked,
-                    })
-                  }
-                  bg="gray.700"
-                  color="gray.100"
-                  colorScheme="red"
-                >
-                  Deprecated
-                </Checkbox>
-              </FormControl>
-            </SimpleGrid>
+            <EditExamConfig
+              {...{
+                exam,
+                setExam,
+                config,
+                setConfig,
+                examEnvironmentChallengesQuery,
+                examEnvironmentChallenges,
+                setExamEnvironmentChallenges,
+              }}
+            />
             <Divider my={4} borderColor="gray.600" />
             <Heading size="md" color={accent} mb={2} id="current-configs-main">
               Configure Question Distribution
@@ -573,14 +333,14 @@ function EditExam({ exam: examData }: EditExamProps) {
             />
             <Divider my={4} borderColor="gray.600" />
             <TagConfigForm
-              questionSets={exam.questionSets}
-              setExam={setExam}
-              config={exam.config}
+              questionSets={questionSets}
+              setConfig={setConfig}
+              config={config}
             />
             <QuestionTypeConfigForm
-              questionSets={exam.questionSets}
-              setExam={setExam}
-              config={exam.config}
+              questionSets={questionSets}
+              setConfig={setConfig}
+              config={config}
             />
             <Heading size="sm" color={accent} mt={6} mb={2}>
               Current Configs
@@ -589,77 +349,8 @@ function EditExam({ exam: examData }: EditExamProps) {
               These are the current configs which the algorithm will select
               random questions from:
             </Text>
-            {exam.config.tags?.map((tagConfig, index) => (
-              <Box key={index} className="tag-config-container" mb={2}>
-                <Text fontWeight="bold" color="gray.100">
-                  Config {index + 1} ({tagConfig.numberOfQuestions} Questions)
-                </Text>
-                {tagConfig.group.map((tag, inner) => (
-                  <Badge
-                    key={inner}
-                    colorScheme="teal"
-                    variant="subtle"
-                    mr={1}
-                    mb={1}
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-                <IconButton
-                  aria-label="Remove"
-                  icon={<span>✕</span>}
-                  size="xs"
-                  ml={2}
-                  colorScheme="red"
-                  variant="ghost"
-                  onClick={() => {
-                    setExam({
-                      config: {
-                        ...exam.config,
-                        tags: exam.config.tags.filter((_, i) => i !== index),
-                      },
-                    });
-                  }}
-                />
-              </Box>
-            ))}
-            <Divider my={4} borderColor="gray.600" />
-            {exam.config.questionSets.map((qt, index) => (
-              <Box key={index} className="tag-config-container" mb={2}>
-                <Text fontWeight="bold" color="gray.100">
-                  {qt.type} Questions
-                </Text>
-                <Text color="gray.300" fontSize="sm">
-                  Number of Type: {qt.numberOfSet}
-                </Text>
-                <Text color="gray.300" fontSize="sm">
-                  Number of Questions: {qt.numberOfQuestions}
-                </Text>
-                <Text color="gray.300" fontSize="sm">
-                  Number of Correct Answers: {qt.numberOfCorrectAnswers}
-                </Text>
-                <Text color="gray.300" fontSize="sm">
-                  Number of Incorrect Answers: {qt.numberOfIncorrectAnswers}
-                </Text>
-                <Button
-                  size="xs"
-                  colorScheme="red"
-                  mt={1}
-                  onClick={() =>
-                    setExam({
-                      config: {
-                        ...exam.config,
-                        questionSets: exam.config.questionSets.filter(
-                          (_, i) => i !== index
-                        ),
-                      },
-                    })
-                  }
-                >
-                  Remove
-                </Button>
-              </Box>
-            ))}
+            <ConfigView {...{ config, setConfig }} />
+
             <Divider my={4} borderColor="gray.600" />
             <Heading size="md" color={accent} mt={8} mb={2} id="exam-questions">
               Exam Questions
@@ -671,8 +362,8 @@ function EditExam({ exam: examData }: EditExamProps) {
             <Box bg="gray.700" borderRadius="lg" p={4} mt={2}>
               <QuestionForm
                 searchIds={searchIds}
-                questionSets={exam.questionSets}
-                setExam={setExam}
+                questionSets={questionSets}
+                setQuestionSets={setQuestionSets}
                 generatedExamsStagingQuery={generatedExamsStagingQuery}
                 generatedExamsProductionQuery={generatedExamsProductionQuery}
               />

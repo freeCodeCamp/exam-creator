@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
-  ExamCreatorExam,
   type ExamEnvironmentMultipleChoiceQuestion,
   type ExamEnvironmentQuestionSet,
   type ExamEnvironmentGeneratedExam,
@@ -48,7 +47,7 @@ type MultipleChoiceFormProps = {
   question: ExamEnvironmentMultipleChoiceQuestion;
   questionSet: ExamEnvironmentQuestionSet;
   questionSets: ExamEnvironmentQuestionSet[];
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  setQuestionSets: (qs: ExamEnvironmentQuestionSet[]) => void;
   borderColor?: string;
   borderStyle?: string;
   borderWidth?: string;
@@ -62,7 +61,7 @@ export function MultipleChoiceForm({
   question,
   questionSet,
   questionSets,
-  setExam,
+  setQuestionSets,
   borderColor = "gray.700",
   borderStyle = "solid",
   borderWidth = "1px",
@@ -133,7 +132,7 @@ export function MultipleChoiceForm({
                 deprecated: e.target.checked,
               },
               questionSets,
-              setExam
+              setQuestionSets
             );
           }}
           color="gray.300"
@@ -153,7 +152,7 @@ export function MultipleChoiceForm({
                 context: e.target.value,
               },
               questionSets,
-              setExam
+              setQuestionSets
             )
           }
           bg="gray.700"
@@ -170,7 +169,7 @@ export function MultipleChoiceForm({
                 text: e.target.value,
               },
               questionSets,
-              setExam
+              setQuestionSets
             );
           }}
           bg="gray.700"
@@ -189,7 +188,7 @@ export function MultipleChoiceForm({
                 tags,
               },
               questionSets,
-              setExam
+              setQuestionSets
             );
           }}
           bg="gray.700"
@@ -213,7 +212,7 @@ export function MultipleChoiceForm({
                 audio,
               },
               questionSets,
-              setExam
+              setQuestionSets
             );
           }}
           bg="gray.700"
@@ -245,7 +244,7 @@ export function MultipleChoiceForm({
                 audio,
               },
               questionSets,
-              setExam
+              setQuestionSets
             );
           }}
           bg="gray.700"
@@ -259,7 +258,7 @@ export function MultipleChoiceForm({
           alignSelf="flex-start"
           onClick={(e) => {
             e.preventDefault();
-            remove_question(question, questionSets, setExam);
+            remove_question(question, questionSets, setQuestionSets);
           }}
         >
           Remove Question
@@ -381,7 +380,7 @@ export function MultipleChoiceForm({
                       ),
                     },
                     questionSets,
-                    setExam
+                    setQuestionSets
                   );
                 }}
                 bg="gray.800"
@@ -406,7 +405,7 @@ export function MultipleChoiceForm({
                         ),
                       },
                       questionSets,
-                      setExam
+                      setQuestionSets
                     );
                   }}
                 >
@@ -428,7 +427,7 @@ export function MultipleChoiceForm({
                         ),
                       },
                       questionSets,
-                      setExam
+                      setQuestionSets
                     );
                   }}
                 />
@@ -449,7 +448,7 @@ export function MultipleChoiceForm({
                   answers: [...question.answers, default_question_answer()],
                 },
                 questionSets,
-                setExam
+                setQuestionSets
               );
             }}
           >
@@ -464,7 +463,7 @@ export function MultipleChoiceForm({
 type DialogueFormProps = {
   questionSet: ExamEnvironmentQuestionSet;
   questionSets: ExamEnvironmentQuestionSet[];
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  setQuestionSets: (qs: ExamEnvironmentQuestionSet[]) => void;
   stagingExams: ExamEnvironmentGeneratedExam[] | undefined;
   productionExams: ExamEnvironmentGeneratedExam[] | undefined;
   isLoading: boolean;
@@ -474,7 +473,7 @@ type DialogueFormProps = {
 export function DialogueForm({
   questionSet,
   questionSets,
-  setExam,
+  setQuestionSets,
   stagingExams,
   productionExams,
   isLoading,
@@ -502,7 +501,7 @@ export function DialogueForm({
                 context: e.target.value,
               },
               questionSets,
-              setExam
+              setQuestionSets
             )
           }
           bg="gray.700"
@@ -516,11 +515,9 @@ export function DialogueForm({
           alignSelf="flex-start"
           onClick={(e) => {
             e.preventDefault();
-            setExam({
-              questionSets: questionSets.filter(
-                (qt) => qt.id !== questionSet.id
-              ),
-            });
+            setQuestionSets(
+              questionSets.filter((qt) => qt.id !== questionSet.id)
+            );
           }}
         >
           Remove Dialogue
@@ -548,7 +545,7 @@ export function DialogueForm({
                 question={question}
                 questionSet={questionSet}
                 questionSets={questionSets}
-                setExam={setExam}
+                setQuestionSets={setQuestionSets}
                 borderColor={questionBorderStyle.borderColor}
                 borderStyle={questionBorderStyle.borderStyle}
                 borderWidth={questionBorderStyle.borderWidth}
@@ -572,7 +569,7 @@ export function DialogueForm({
                 questions: [...questionSet.questions, default_question()],
               },
               questionSets,
-              setExam
+              setQuestionSets
             );
           }}
         >
@@ -741,7 +738,7 @@ function getBorderStyle(
 type QuestionFormProps = {
   searchIds: string[];
   questionSets: ExamEnvironmentQuestionSet[];
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  setQuestionSets: (qs: ExamEnvironmentQuestionSet[]) => void;
   generatedExamsStagingQuery: UseQueryResult<
     ExamEnvironmentGeneratedExam[],
     Error
@@ -755,7 +752,7 @@ type QuestionFormProps = {
 export function QuestionForm({
   searchIds,
   questionSets,
-  setExam,
+  setQuestionSets,
   generatedExamsStagingQuery,
   generatedExamsProductionQuery,
 }: QuestionFormProps) {
@@ -800,9 +797,7 @@ export function QuestionForm({
                 const question = qt.questions.at(0);
                 if (!question) {
                   // Remove question type
-                  setExam({
-                    questionSets: questionSets.filter((q) => q.id !== qt.id),
-                  });
+                  setQuestionSets(questionSets.filter((q) => q.id !== qt.id));
                   return null;
                 }
 
@@ -828,7 +823,7 @@ export function QuestionForm({
                       question={question}
                       questionSet={qt}
                       questionSets={questionSets}
-                      setExam={setExam}
+                      setQuestionSets={setQuestionSets}
                       borderColor={questionBorderStyle.borderColor}
                       borderStyle={questionBorderStyle.borderStyle}
                       borderWidth={questionBorderStyle.borderWidth}
@@ -861,7 +856,7 @@ export function QuestionForm({
                     <DialogueForm
                       questionSet={qt}
                       questionSets={questionSets}
-                      setExam={setExam}
+                      setQuestionSets={setQuestionSets}
                       stagingExams={stagingExams}
                       productionExams={productionExams}
                       isLoading={isLoading}
@@ -878,12 +873,10 @@ export function QuestionForm({
             size="sm"
             onClick={(e) => {
               e.preventDefault();
-              setExam({
-                questionSets: [
-                  ...questionSets,
-                  new_question_type("MultipleChoice"),
-                ],
-              });
+              setQuestionSets([
+                ...questionSets,
+                new_question_type("MultipleChoice"),
+              ]);
             }}
           >
             Add Multiple Choice Question
@@ -894,9 +887,7 @@ export function QuestionForm({
             size="sm"
             onClick={(e) => {
               e.preventDefault();
-              setExam({
-                questionSets: [...questionSets, new_question_type("Dialogue")],
-              });
+              setQuestionSets([...questionSets, new_question_type("Dialogue")]);
             }}
           >
             Add Dialogue Question

@@ -1,6 +1,5 @@
 import type {
   ExamEnvironmentConfig,
-  ExamCreatorExam,
   ExamEnvironmentQuestionSet,
 } from "@prisma/client";
 import { useState } from "react";
@@ -22,13 +21,13 @@ import { X } from "lucide-react";
 
 type TagConfigFormProps = {
   questionSets: ExamEnvironmentQuestionSet[];
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  setConfig: (partialConfig: Partial<ExamEnvironmentConfig>) => void;
   config: ExamEnvironmentConfig;
 };
 
 export function TagConfigForm({
   questionSets,
-  setExam,
+  setConfig,
   config,
 }: TagConfigFormProps) {
   const [isCreatingTagConfig, setIsCreatingTagConfig] = useState(false);
@@ -161,17 +160,14 @@ export function TagConfigForm({
             colorScheme="teal"
             size="sm"
             onClick={() => {
-              setExam({
-                config: {
-                  ...config,
-                  tags: [
-                    ...config.tags,
-                    {
-                      group: selectedTags,
-                      numberOfQuestions: selectedQuestionAmount,
-                    },
-                  ],
-                },
+              setConfig({
+                tags: [
+                  ...config.tags,
+                  {
+                    group: selectedTags,
+                    numberOfQuestions: selectedQuestionAmount,
+                  },
+                ],
               });
               resetTagConfig();
             }}

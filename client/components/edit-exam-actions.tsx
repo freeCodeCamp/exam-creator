@@ -7,17 +7,26 @@ import {
 } from "@chakra-ui/react";
 import { CodeXml, Save } from "lucide-react";
 import { putExamById, putExamEnvironmentChallenges } from "../utils/fetch";
-import { ExamCreatorExam, ExamEnvironmentChallenge } from "@prisma/client";
+import {
+  ExamCreatorExam,
+  ExamEnvironmentChallenge,
+  ExamEnvironmentConfig,
+  ExamEnvironmentQuestionSet,
+} from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
 import { GenerateModal } from "./generate-modal";
 
 interface EditExamActionsProps {
   exam: ExamCreatorExam;
+  config: ExamEnvironmentConfig;
+  questionSets: ExamEnvironmentQuestionSet[];
   examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[];
 }
 
 export function EditExamActions({
   exam,
+  config,
+  questionSets,
   examEnvironmentChallenges,
 }: EditExamActionsProps) {
   const toast = useToast();
@@ -31,12 +40,16 @@ export function EditExamActions({
     mutationFn: ({
       exam,
       examEnvironmentChallenges,
+      config,
+      questionSets,
     }: {
       exam: ExamCreatorExam;
       examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[];
+      config: ExamEnvironmentConfig;
+      questionSets: ExamEnvironmentQuestionSet[];
     }) => {
       return Promise.all([
-        putExamById(exam),
+        putExamById({ ...exam, config, questionSets }),
         putExamEnvironmentChallenges(exam.id, examEnvironmentChallenges),
       ]);
     },
@@ -92,7 +105,12 @@ export function EditExamActions({
         fontWeight="bold"
         isLoading={handleDatabaseSave.isPending}
         onClick={() =>
-          handleDatabaseSave.mutate({ exam, examEnvironmentChallenges })
+          handleDatabaseSave.mutate({
+            exam,
+            config,
+            questionSets,
+            examEnvironmentChallenges,
+          })
         }
       >
         Save to Database

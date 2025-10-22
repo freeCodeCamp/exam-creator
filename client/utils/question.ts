@@ -1,6 +1,5 @@
 import type {
   ExamEnvironmentAnswer,
-  ExamCreatorExam,
   ExamEnvironmentMultipleChoiceQuestion,
   ExamEnvironmentQuestionSet,
   ExamEnvironmentQuestionType,
@@ -35,13 +34,13 @@ export function defaultQuestion(): ExamEnvironmentMultipleChoiceQuestion {
 export function change_question_type(
   updatedQuestionSet: ExamEnvironmentQuestionSet,
   questionSets: ExamEnvironmentQuestionSet[],
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void
+  setQuestionSets: (qs: ExamEnvironmentQuestionSet[]) => void
 ) {
-  setExam({
-    questionSets: questionSets.map((qt) =>
+  setQuestionSets(
+    questionSets.map((qt) =>
       qt.id === updatedQuestionSet.id ? updatedQuestionSet : qt
-    ),
-  });
+    )
+  );
 }
 export function default_question_audio(): NonNullable<
   ExamEnvironmentMultipleChoiceQuestion["audio"]
@@ -55,40 +54,38 @@ export function default_question_audio(): NonNullable<
 export function change_question(
   updated_question: ExamEnvironmentMultipleChoiceQuestion,
   questionSets: ExamEnvironmentQuestionSet[],
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void
+  setQuestionSets: (qs: ExamEnvironmentQuestionSet[]) => void
 ) {
-  setExam({
-    questionSets: questionSets.map((qt) => ({
+  setQuestionSets(
+    questionSets.map((qt) => ({
       ...qt,
       questions: qt.questions.map((q) =>
         q.id === updated_question.id ? updated_question : q
       ),
-    })),
-  });
+    }))
+  );
 }
 
 export function remove_question(
   question: ExamEnvironmentMultipleChoiceQuestion,
   questionSets: ExamEnvironmentQuestionSet[],
-  setExam: (partialExam: Partial<ExamCreatorExam>) => void
+  setQuestionSets: (qs: ExamEnvironmentQuestionSet[]) => void
 ) {
   // If question is only in question_type, remove question_type
   const question_type = questionSets.find((qt) =>
     qt.questions.some((q) => q.id === question.id)
   );
   if (question_type?.questions.length === 1) {
-    setExam({
-      questionSets: questionSets.filter((qt) => qt.id !== question_type.id),
-    });
+    setQuestionSets(questionSets.filter((qt) => qt.id !== question_type.id));
     return;
   }
 
-  setExam({
-    questionSets: questionSets.map((qt) => ({
+  setQuestionSets(
+    questionSets.map((qt) => ({
       ...qt,
       questions: qt.questions.filter((q) => q.id !== question.id),
-    })),
-  });
+    }))
+  );
 }
 
 export function default_question_answer(): ExamEnvironmentAnswer {
