@@ -1,7 +1,7 @@
 {
   "name": "exam-creator",
   "private": true,
-  "version": "2.3.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -34,6 +34,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vitejs/plugin-react": "5.0.4",
+    "babel-plugin-react-compiler": "^1.0.0",
     "prisma": "6.17.1",
     "typescript": "5.9.3",
     "vite": "npm:rolldown-vite@latest"

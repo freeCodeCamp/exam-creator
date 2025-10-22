@@ -5,7 +5,11 @@ import prism from "vite-plugin-prismjs";
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
     prism({
       languages: [
         "markup",

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### React Compiler
+
+- use `babel-plugin-react-compiler` for auto memoization of components
+
 ### Bugs
 
 - query caching is not 100% working
