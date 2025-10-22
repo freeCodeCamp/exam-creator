@@ -1,48 +1,51 @@
 {
-	"name": "Exam Creator",
-	"build": {
-		"context": ".",
-		"dockerfile": "Dockerfile"
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"rust-lang.rust-analyzer",
-				"tamasfe.even-better-toml",
-				"serayuzgur.crates",
-				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode",
-				"bradlc.vscode-tailwindcss",
-				"Prisma.prisma"
-			],
-			"settings": {
-				"rust-analyzer.checkOnSave.command": "clippy",
-				"editor.formatOnSave": true,
-				"[rust]": {
-					"editor.defaultFormatter": "rust-lang.rust-analyzer"
-				},
-				"[typescript]": {
-					"editor.defaultFormatter": "esbenp.prettier-vscode"
-				},
-				"[typescriptreact]": {
-					"editor.defaultFormatter": "esbenp.prettier-vscode"
-				},
-				"[json]": {
-					"editor.defaultFormatter": "esbenp.prettier-vscode"
-				}
-			}
-		}
-	},
-	"forwardPorts": [8080, 5173],
-	"portsAttributes": {
-		"8080": {
-			"label": "Backend Server",
-			"onAutoForward": "notify"
-		},
-		"5173": {
-			"label": "Vite Dev Server",
-			"onAutoForward": "notify"
-		}
-	},
-	"postCreateCommand": "bun install && cargo fetch"
+  "name": "Exam Creator",
+  "build": {
+    "context": ".",
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "fill-labs.dependi",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "Prisma.prisma"
+      ],
+      "settings": {
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "editor.formatOnSave": true,
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[json]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      }
+    }
+  },
+  "forwardPorts": [3001, 1420],
+  "portsAttributes": {
+    "3001": {
+      "label": "Backend Server",
+      "onAutoForward": "notify"
+    },
+    "1420": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "bun install && cargo fetch",
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/vscode/.cargo/bin:/home/vscode/.bun/bin"
+  }
 }
