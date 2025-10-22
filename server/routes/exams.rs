@@ -333,9 +333,18 @@ async fn put_generations_by_exam_id(
 
     // 2. Spawn a background task to do the generation, with a 10s timeout
     tokio::spawn(async move {
+        let generation_start = std::time::Instant::now();
+        let generation_timeout = std::time::Duration::from_secs(10);
+
         let generation_future = async {
             for i in 0..count {
                 loop {
+                    // Check timeout within the retry loop
+                    if generation_start.elapsed() > generation_timeout {
+                        tracing::warn!("Exam generation timed out after 10 seconds.");
+                        return;
+                    }
+
                     match generate::generate_exam(exam_input.clone()) {
                         Ok(generated_exam) => {
                             if let Err(e) =
@@ -371,13 +380,7 @@ async fn put_generations_by_exam_id(
             }
         };
 
-        if tokio::time::timeout(std::time::Duration::from_secs(10), generation_future)
-            .await
-            .is_err()
-        {
-            tracing::warn!("Exam generation timed out after 10 seconds.");
-            // Dropping the sender here will close the stream on the client side.
-        }
+        generation_future.await;
         // The sender `tx` is dropped when the task finishes or times out, closing the stream.
     });
 
