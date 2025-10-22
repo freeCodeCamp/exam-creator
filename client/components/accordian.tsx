@@ -11,6 +11,7 @@ import {
   IconButton,
   Flex,
   Badge,
+  HStack,
 } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -24,6 +25,9 @@ type AccordionProps = {
   borderWidth?: string;
   generationCount?: number;
   isLoading?: boolean;
+  dualBorder?: boolean;
+  stagingCount?: number;
+  productionCount?: number;
 };
 
 const rotate = keyframes`
@@ -40,6 +44,9 @@ export function QuestionAccordion({
   borderWidth = "1px",
   generationCount,
   isLoading = false,
+  dualBorder = false,
+  stagingCount,
+  productionCount,
 }: AccordionProps) {
   const { isOpen, onToggle } = useDisclosure();
 
@@ -74,8 +81,50 @@ export function QuestionAccordion({
         borderStyle={borderStyle}
         position="relative"
         zIndex={1}
+        sx={
+          dualBorder
+            ? {
+                boxShadow: `0 0 0 3px #ECC94B, 0 0 0 6px #48BB78`,
+                borderWidth: "0",
+              }
+            : undefined
+        }
       >
-        {generationCount !== undefined && generationCount > 0 && (
+        {dualBorder &&
+        stagingCount !== undefined &&
+        productionCount !== undefined ? (
+          <HStack
+            position="absolute"
+            top="-10px"
+            left="50%"
+            transform="translateX(-50%)"
+            spacing={1}
+            zIndex={1}
+          >
+            <Badge
+              colorScheme="yellow"
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="md"
+              bg="yellow.500"
+              color="white"
+            >
+              S: {stagingCount}
+            </Badge>
+            <Badge
+              colorScheme="green"
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="md"
+              bg="green.500"
+              color="white"
+            >
+              P: {productionCount}
+            </Badge>
+          </HStack>
+        ) : generationCount !== undefined && generationCount > 0 ? (
           <Badge
             position="absolute"
             top="-10px"
@@ -104,7 +153,7 @@ export function QuestionAccordion({
           >
             {generationCount} {generationCount === 1 ? "exam" : "exams"}
           </Badge>
-        )}
+        ) : null}
         <CardHeader
           px={4}
           py={3}

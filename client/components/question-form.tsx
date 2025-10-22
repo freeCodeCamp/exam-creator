@@ -286,33 +286,77 @@ export function MultipleChoiceForm({
               bg="gray.700"
               borderRadius="md"
               position="relative"
-              borderWidth={answerBorderStyle.borderWidth}
+              borderWidth={
+                answerBorderStyle.dualBorder
+                  ? "0"
+                  : answerBorderStyle.borderWidth
+              }
               borderColor={answerBorderStyle.borderColor}
               borderStyle={answerBorderStyle.borderStyle}
-            >
-              {answerBorderStyle.generationCount !== undefined &&
-                answerBorderStyle.generationCount > 0 && (
-                  <Box
-                    position="absolute"
-                    top="-8px"
-                    right="8px"
-                    bg={
-                      answerBorderStyle.borderColor === "green.400"
-                        ? "green.500"
-                        : answerBorderStyle.borderColor === "yellow.400"
-                        ? "yellow.500"
-                        : "red.500"
+              sx={
+                answerBorderStyle.dualBorder
+                  ? {
+                      boxShadow: `0 0 0 2px #ECC94B, 0 0 0 4px #48BB78`,
                     }
+                  : undefined
+              }
+            >
+              {answerBorderStyle.dualBorder &&
+              answerBorderStyle.stagingCount !== undefined &&
+              answerBorderStyle.productionCount !== undefined ? (
+                <HStack
+                  position="absolute"
+                  top="-8px"
+                  right="8px"
+                  spacing={1}
+                  zIndex={1}
+                >
+                  <Box
+                    bg="yellow.500"
                     color="white"
                     fontSize="xs"
-                    px={2}
+                    px={1.5}
                     py={0.5}
                     borderRadius="md"
                     fontWeight="bold"
                   >
-                    {answerBorderStyle.generationCount}
+                    S:{answerBorderStyle.stagingCount}
                   </Box>
-                )}
+                  <Box
+                    bg="green.500"
+                    color="white"
+                    fontSize="xs"
+                    px={1.5}
+                    py={0.5}
+                    borderRadius="md"
+                    fontWeight="bold"
+                  >
+                    P:{answerBorderStyle.productionCount}
+                  </Box>
+                </HStack>
+              ) : answerBorderStyle.generationCount !== undefined &&
+                answerBorderStyle.generationCount > 0 ? (
+                <Box
+                  position="absolute"
+                  top="-8px"
+                  right="8px"
+                  bg={
+                    answerBorderStyle.borderColor === "green.400"
+                      ? "green.500"
+                      : answerBorderStyle.borderColor === "yellow.400"
+                      ? "yellow.500"
+                      : "red.500"
+                  }
+                  color="white"
+                  fontSize="xs"
+                  px={2}
+                  py={0.5}
+                  borderRadius="md"
+                  fontWeight="bold"
+                >
+                  {answerBorderStyle.generationCount}
+                </Box>
+              ) : null}
               <Box
                 className="answer-markdown"
                 color="gray.300"
@@ -628,6 +672,9 @@ function getBorderStyle(
   borderWidth: string;
   generationCount?: number;
   isLoading: boolean;
+  dualBorder?: boolean;
+  stagingCount?: number;
+  productionCount?: number;
 } {
   if (isLoading) {
     return {
@@ -638,6 +685,19 @@ function getBorderStyle(
     };
   }
 
+  if (status.inProduction && status.inStaging) {
+    return {
+      borderColor: "green.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.productionCount + status.stagingCount,
+      isLoading: false,
+      dualBorder: true,
+      stagingCount: status.stagingCount,
+      productionCount: status.productionCount,
+    };
+  }
+
   if (status.inProduction) {
     return {
       borderColor: "green.400",
@@ -645,6 +705,7 @@ function getBorderStyle(
       borderWidth: "3px",
       generationCount: status.productionCount,
       isLoading: false,
+      productionCount: status.productionCount,
     };
   }
 
@@ -655,6 +716,7 @@ function getBorderStyle(
       borderWidth: "3px",
       generationCount: status.stagingCount,
       isLoading: false,
+      stagingCount: status.stagingCount,
     };
   }
 
