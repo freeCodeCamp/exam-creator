@@ -2,6 +2,41 @@
 
 ## [Unreleased]
 
+### Bugs
+
+- query caching is not 100% working
+  - often the query function is re-running
+- `isPending` and `isFetching` does not lead to loader/spinner
+  - queries halt rendering second time around
+
+### Generation Variability
+
+- Variability
+  - difference in number / total
+- How to handle comparisons between 2+ generations
+  - [x] How common is a question (e.g. in 10% of generations)
+  - [x] Maximum question variability and minimum question variability
+  - [x] Maximum answer variability and minimum answer variability
+- Show variability in Exam Page
+- [x] highlight sets/questions/answers that are not in any generations
+
+For the sets A and B, the variability is the ratio of the size of the symmetric difference to the size of the union:
+
+$$
+\text{variability} = \frac{|A \Delta B|}{|A \cup B|} = \frac{|A - B| + |B - A|}{|A \cup B|}
+$$
+
+> NOTE:
+> Generations have to be the same size.
+
+### Changed
+
+- client: move generation button to within exam edit page
+
+### Fixed
+
+- client: stop refetching queries on window focus
+
 ## [2.3.0] - 2025-10-18
 
 ### Added

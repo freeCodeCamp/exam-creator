@@ -26,6 +26,7 @@ import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { examsRoute } from "./exams";
 import { moderationsRoute } from "./moderations";
 import { LandingCard } from "../components/landing-card";
+// import { generationsRoute } from "./generations";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
@@ -46,6 +47,7 @@ export function Landing() {
 
   const { users: usersOnAttempts } = useUsersOnPath("/attempt");
   const { users: usersOnExams } = useUsersOnPath("/exam");
+  // const { users: usersOnGenerations } = useUsersOnPath("/generation");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>

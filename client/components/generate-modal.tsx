@@ -20,6 +20,7 @@ import {
   Stack,
   Progress,
   useToast,
+  Select,
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { putGenerateExam } from "../utils/fetch";
@@ -27,22 +28,20 @@ import { putGenerateExam } from "../utils/fetch";
 interface GenerateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedExamIds: string[];
-  databaseEnvironment: "staging" | "production";
+  examId: string;
 }
 
-export function GenerateModal({
-  isOpen,
-  onClose,
-  selectedExamIds,
-  databaseEnvironment,
-}: GenerateModalProps) {
+export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
   const [val, setVal] = useState("");
   const [count, setCount] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<Record<string, number>>({});
+  const [progress, setProgress] = useState(0);
+  const [databaseEnvironment, setDatabaseEnvironment] = useState<
+    "Staging" | "Production"
+  >("Staging");
   const abortRef = useRef<AbortController | null>(null);
+
   const toast = useToast();
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -52,9 +51,7 @@ export function GenerateModal({
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      const init: Record<string, number> = {};
-      for (const id of selectedExamIds) init[id] = 0;
-      setProgress(init);
+      setProgress(0);
       setError(null);
       setIsGenerating(false);
       setCount(1);
@@ -63,7 +60,7 @@ export function GenerateModal({
       abortRef.current?.abort();
       abortRef.current = null;
     }
-  }, [isOpen, selectedExamIds]);
+  }, [isOpen, examId]);
 
   function clampCount(n: number) {
     if (Number.isNaN(n)) return 1;
@@ -115,32 +112,22 @@ export function GenerateModal({
     abortRef.current = ac;
 
     try {
-      await Promise.all(
-        selectedExamIds.map(async (examId) => {
-          const stream = await putGenerateExam({
-            examId,
-            count,
-            databaseEnvironment,
-          });
-          let latest = 0;
-          for await (const msg of iterateJsonLines(stream)) {
-            // Server sends { count: i (0-based), examId }
-            const soFar =
-              typeof msg.count === "number" ? msg.count + 1 : latest + 1;
-            latest = soFar;
-            setProgress((prev) => ({ ...prev, [examId]: soFar }));
-          }
-          // Ensure we mark complete if stream ended without last line
-          // Stream can timeout before all generations are done
-          // setProgress((prev) => ({
-          //   ...prev,
-          //   [examId]: Math.max(prev[examId] ?? 0, count),
-          // }));
-        })
-      );
-      const isAllExamsGenerated = selectedExamIds.every(
-        (id) => (progress[id] ?? 0) >= count
-      );
+      const stream = await putGenerateExam({
+        examId,
+        count,
+        databaseEnvironment,
+      });
+      let latest = 0;
+      for await (const msg of iterateJsonLines(stream)) {
+        // Server sends { count: i (0-based), examId }
+        const soFar =
+          typeof msg.count === "number" ? msg.count + 1 : latest + 1;
+        latest = soFar;
+        setProgress(soFar);
+      }
+      // Ensure we mark complete if stream ended without last line
+      // Stream can timeout before all generations are done
+      const isAllExamsGenerated = latest >= count;
 
       if (!isAllExamsGenerated) {
         toast({
@@ -206,36 +193,47 @@ export function GenerateModal({
               exams?
             </Text>
           )}
-          {Object.keys(progress).length > 0 && (
-            <Stack mt={3} spacing={3}>
-              {selectedExamIds.map((id) => (
-                <Stack key={id} spacing={1}>
-                  <Text fontSize="sm" color="gray.300">
-                    {id}
-                  </Text>
-                  <Progress
-                    size="sm"
-                    colorScheme="yellow"
-                    value={progress[id] ?? 0}
-                    max={count}
-                    hasStripe
-                    isAnimated
-                  />
-                  <Text fontSize="xs" color="gray.400">
-                    {progress[id] ?? 0}/{count}
-                  </Text>
-                </Stack>
-              ))}
+          <Stack mt={3} spacing={3}>
+            <Stack key={examId} spacing={1}>
+              <Text fontSize="sm" color="gray.300">
+                {examId}
+              </Text>
+              <Progress
+                size="sm"
+                colorScheme="yellow"
+                value={progress ?? 0}
+                max={count}
+                hasStripe
+                isAnimated
+              />
+              <Text fontSize="xs" color="gray.400">
+                {progress ?? 0}/{count}
+              </Text>
             </Stack>
-          )}
+          </Stack>
           {error && (
             <Text mt={3} color="red.300">
               {error}
             </Text>
           )}
+          <FormControl isDisabled={isGenerating}>
+            <FormLabel>Database Environment</FormLabel>
+            <Select
+              value={databaseEnvironment}
+              isRequired
+              onChange={(e) => {
+                const value = e.currentTarget.value as "Staging" | "Production";
+                setDatabaseEnvironment(value);
+              }}
+            >
+              <option value="Staging">Staging</option>
+              <option value="Production">Production</option>
+            </Select>
+          </FormControl>
 
           <FormControl
             isInvalid={val !== `generate ${databaseEnvironment}`}
+            isDisabled={isGenerating}
             mt={4}
           >
             <FormLabel>Confirmation</FormLabel>
@@ -245,7 +243,7 @@ export function GenerateModal({
             </FormHelperText>
           </FormControl>
 
-          <FormControl mt={4}>
+          <FormControl mt={4} isDisabled={isGenerating}>
             <FormLabel>Number of Generations</FormLabel>
             <NumberInput
               min={1}
@@ -295,7 +293,8 @@ export function GenerateModal({
             }}
             isDisabled={
               val !== `generate ${databaseEnvironment}` ||
-              selectedExamIds.length === 0 ||
+              !examId ||
+              isGenerating ||
               count < 1 ||
               count > 100
             }

@@ -55,7 +55,6 @@ import {
   SeedProductionModal,
   SeedStagingModal,
 } from "../components/seed-modal";
-import { GenerateModal } from "../components/generate-modal";
 import { useUsersOnPath } from "../hooks/use-users-on-path";
 
 export function Exams() {
@@ -77,22 +76,13 @@ export function Exams() {
     onOpen: productionOnOpen,
     onClose: productionOnClose,
   } = useDisclosure();
-  const {
-    isOpen: generateStagingIsOpen,
-    onOpen: generateStagingOnOpen,
-    onClose: generateStagingOnClose,
-  } = useDisclosure();
-  const {
-    isOpen: generateProductionIsOpen,
-    onOpen: generateProductionOnOpen,
-    onClose: generateProductionOnClose,
-  } = useDisclosure();
 
   const examsQuery = useQuery({
     queryKey: ["exams"],
     enabled: !!user,
     queryFn: () => getExams(),
     retry: false,
+    refetchOnWindowFocus: false,
   });
   const createExamMutation = useMutation({
     mutationFn: () => postExam(),
@@ -417,38 +407,6 @@ export function Exams() {
                   >
                     Seed to Production
                   </MenuItem>
-                  <MenuItem
-                    as={Button}
-                    backgroundColor="gray.800"
-                    borderRadius={0}
-                    boxShadow="md"
-                    color={"white"}
-                    colorScheme="green"
-                    fontWeight="bold"
-                    isDisabled={selectedExams.size === 0}
-                    justifyContent={"flex-start"}
-                    leftIcon={<CodeXml size={18} />}
-                    onClick={generateStagingOnOpen}
-                    _hover={{ bg: "green.500" }}
-                  >
-                    Generate to Staging (Beta)
-                  </MenuItem>
-                  <MenuItem
-                    as={Button}
-                    backgroundColor="gray.800"
-                    borderRadius={0}
-                    boxShadow="md"
-                    color={"white"}
-                    colorScheme="green"
-                    fontWeight="bold"
-                    isDisabled={selectedExams.size === 0}
-                    justifyContent={"flex-start"}
-                    leftIcon={<CodeXml size={18} />}
-                    onClick={generateProductionOnOpen}
-                    _hover={{ bg: "green.500" }}
-                  >
-                    Generate to Production (Beta)
-                  </MenuItem>
                   {/* TODO: Probably never going to create such functionality */}
                   <MenuItem
                     as={Button}
@@ -508,18 +466,6 @@ export function Exams() {
         onClose={productionOnClose}
         handleSeedSelectedToProduction={handleSeedSelectedToProduction}
         seedExamToProductionMutation={seedExamToProductionMutation}
-      />
-      <GenerateModal
-        isOpen={generateProductionIsOpen || generateStagingIsOpen}
-        onClose={
-          generateProductionIsOpen
-            ? generateProductionOnClose
-            : generateStagingOnClose
-        }
-        selectedExamIds={[...selectedExams]}
-        databaseEnvironment={
-          generateProductionIsOpen ? "production" : "staging"
-        }
       />
     </Box>
   );

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   ExamCreatorExam,
   type ExamEnvironmentMultipleChoiceQuestion,
   type ExamEnvironmentQuestionSet,
+  type ExamEnvironmentGeneratedExam,
   // type ExamEnvironmentQuestionType,
 } from "@prisma/client";
 import {
@@ -31,12 +32,30 @@ import {
   remove_question,
 } from "../utils/question";
 import { QuestionAccordion } from "./accordian";
+import { UseQueryResult } from "@tanstack/react-query";
+
+type QuestionStatus = {
+  inStaging: boolean;
+  inProduction: boolean;
+  stagingCount: number;
+  productionCount: number;
+  totalCount: number;
+};
+
+type QuestionSetStatus = QuestionStatus;
 
 type MultipleChoiceFormProps = {
   question: ExamEnvironmentMultipleChoiceQuestion;
   questionSet: ExamEnvironmentQuestionSet;
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  borderColor?: string;
+  borderStyle?: string;
+  borderWidth?: string;
+  stagingExams?: ExamEnvironmentGeneratedExam[] | undefined;
+  productionExams?: ExamEnvironmentGeneratedExam[] | undefined;
+  isLoading?: boolean;
+  hasGeneratedExams?: boolean;
 };
 
 export function MultipleChoiceForm({
@@ -44,6 +63,13 @@ export function MultipleChoiceForm({
   questionSet,
   questionSets,
   setExam,
+  borderColor = "gray.700",
+  borderStyle = "solid",
+  borderWidth = "1px",
+  stagingExams,
+  productionExams,
+  isLoading = false,
+  hasGeneratedExams = false,
 }: MultipleChoiceFormProps) {
   const audioInputRef = useRef<HTMLInputElement>(null);
   const [isAudioVisible, setIsAudioVisible] = useState(false);
@@ -85,7 +111,15 @@ export function MultipleChoiceForm({
   const accent = useColorModeValue("teal.400", "teal.300");
 
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
+    <Box
+      bg={cardBg}
+      borderRadius="lg"
+      p={4}
+      mb={4}
+      borderWidth={borderWidth}
+      borderColor={borderColor}
+      borderStyle={borderStyle}
+    >
       <Text fontWeight="bold" color={accent} mb={2} id={question.id}>
         Multiple Choice Form
       </Text>
@@ -233,47 +267,111 @@ export function MultipleChoiceForm({
         <Text fontWeight="bold" color={accent} mt={4}>
           Answers
         </Text>
-        {question.answers.map((answer) => (
-          <Box key={answer.id} mb={3} p={2} bg="gray.700" borderRadius="md">
+        {question.answers.map((answer) => {
+          const answerStatus = getAnswerStatus(
+            answer.id,
+            stagingExams,
+            productionExams
+          );
+          const answerBorderStyle = getBorderStyle(
+            answerStatus,
+            isLoading,
+            hasGeneratedExams
+          );
+
+          return (
             <Box
-              className="answer-markdown"
-              color="gray.300"
-              mb={1}
-              dangerouslySetInnerHTML={{ __html: parseMarkdown(answer.text) }}
-            />
-            <Textarea
-              placeholder="Answer..."
-              rows={2}
-              value={answer.text}
-              onChange={(e) => {
-                const updated_answer = {
-                  ...answer,
-                  text: e.target.value,
-                };
-                change_question(
-                  {
-                    ...question,
-                    answers: question.answers.map((a) =>
-                      a.id === answer.id ? updated_answer : a
-                    ),
-                  },
-                  questionSets,
-                  setExam
-                );
-              }}
-              bg="gray.800"
-              color="gray.100"
-              mb={2}
-            />
-            <HStack justify="space-between">
-              <Checkbox
-                colorScheme="teal"
-                color="gray.400"
-                isChecked={answer.isCorrect}
+              key={answer.id}
+              mb={3}
+              p={2}
+              bg="gray.700"
+              borderRadius="md"
+              position="relative"
+              borderWidth={
+                answerBorderStyle.dualBorder
+                  ? "0"
+                  : answerBorderStyle.borderWidth
+              }
+              borderColor={answerBorderStyle.borderColor}
+              borderStyle={answerBorderStyle.borderStyle}
+              sx={
+                answerBorderStyle.dualBorder
+                  ? {
+                      boxShadow: `0 0 0 2px #ECC94B, 0 0 0 4px #48BB78`,
+                    }
+                  : undefined
+              }
+            >
+              {answerBorderStyle.dualBorder &&
+              answerBorderStyle.stagingCount !== undefined &&
+              answerBorderStyle.productionCount !== undefined ? (
+                <HStack
+                  position="absolute"
+                  top="-8px"
+                  right="8px"
+                  spacing={1}
+                  zIndex={1}
+                >
+                  <Box
+                    bg="yellow.500"
+                    color="white"
+                    fontSize="xs"
+                    px={1.5}
+                    py={0.5}
+                    borderRadius="md"
+                    fontWeight="bold"
+                  >
+                    S:{answerBorderStyle.stagingCount}
+                  </Box>
+                  <Box
+                    bg="green.500"
+                    color="white"
+                    fontSize="xs"
+                    px={1.5}
+                    py={0.5}
+                    borderRadius="md"
+                    fontWeight="bold"
+                  >
+                    P:{answerBorderStyle.productionCount}
+                  </Box>
+                </HStack>
+              ) : answerBorderStyle.generationCount !== undefined &&
+                answerBorderStyle.generationCount > 0 ? (
+                <Box
+                  position="absolute"
+                  top="-8px"
+                  right="8px"
+                  bg={
+                    answerBorderStyle.borderColor === "green.400"
+                      ? "green.500"
+                      : answerBorderStyle.borderColor === "yellow.400"
+                      ? "yellow.500"
+                      : "red.500"
+                  }
+                  color="white"
+                  fontSize="xs"
+                  px={2}
+                  py={0.5}
+                  borderRadius="md"
+                  fontWeight="bold"
+                >
+                  {answerBorderStyle.generationCount}
+                </Box>
+              ) : null}
+              <Box
+                className="answer-markdown"
+                color="gray.300"
+                mb={1}
+                dangerouslySetInnerHTML={{ __html: parseMarkdown(answer.text) }}
+              />
+              <Textarea
+                placeholder="Answer..."
+                rows={2}
+                value={answer.text}
                 onChange={(e) => {
                   const updated_answer = {
                     ...answer,
-                    isCorrect: e.target.checked,
+                    text: e.target.value,
                   };
                   change_question(
                     {
@@ -286,32 +384,58 @@ export function MultipleChoiceForm({
                     setExam
                   );
                 }}
-              >
-                Correct
-              </Checkbox>
-              <IconButton
-                aria-label="Remove answer"
-                icon={<X size={16} />}
-                size="xs"
-                colorScheme="red"
-                variant="ghost"
-                onClick={(e) => {
-                  e.preventDefault();
-                  change_question(
-                    {
-                      ...question,
-                      answers: question.answers.filter(
-                        (a) => a.id !== answer.id
-                      ),
-                    },
-                    questionSets,
-                    setExam
-                  );
-                }}
+                bg="gray.800"
+                color="gray.100"
+                mb={2}
               />
-            </HStack>
-          </Box>
-        ))}
+              <HStack justify="space-between">
+                <Checkbox
+                  colorScheme="teal"
+                  color="gray.400"
+                  isChecked={answer.isCorrect}
+                  onChange={(e) => {
+                    const updated_answer = {
+                      ...answer,
+                      isCorrect: e.target.checked,
+                    };
+                    change_question(
+                      {
+                        ...question,
+                        answers: question.answers.map((a) =>
+                          a.id === answer.id ? updated_answer : a
+                        ),
+                      },
+                      questionSets,
+                      setExam
+                    );
+                  }}
+                >
+                  Correct
+                </Checkbox>
+                <IconButton
+                  aria-label="Remove answer"
+                  icon={<X size={16} />}
+                  size="xs"
+                  colorScheme="red"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    change_question(
+                      {
+                        ...question,
+                        answers: question.answers.filter(
+                          (a) => a.id !== answer.id
+                        ),
+                      },
+                      questionSets,
+                      setExam
+                    );
+                  }}
+                />
+              </HStack>
+            </Box>
+          );
+        })}
         <HStack>
           <Button
             leftIcon={<Plus size={16} />}
@@ -341,12 +465,20 @@ type DialogueFormProps = {
   questionSet: ExamEnvironmentQuestionSet;
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined;
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined;
+  isLoading: boolean;
+  hasGeneratedExams: boolean;
 };
 
 export function DialogueForm({
   questionSet,
   questionSets,
   setExam,
+  stagingExams,
+  productionExams,
+  isLoading,
+  hasGeneratedExams,
 }: DialogueFormProps) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
@@ -394,17 +526,36 @@ export function DialogueForm({
           Remove Dialogue
         </Button>
         {questionSet.questions.map((question, index) => {
+          const questionStatus = getQuestionStatus(
+            question.id,
+            stagingExams,
+            productionExams
+          );
+          const questionBorderStyle = getBorderStyle(
+            questionStatus,
+            isLoading,
+            hasGeneratedExams
+          );
+
           return (
             <QuestionAccordion
               key={question.id}
               title={`Question ${index + 1}`}
               subtitle={question.text}
+              {...questionBorderStyle}
             >
               <MultipleChoiceForm
                 question={question}
                 questionSet={questionSet}
                 questionSets={questionSets}
                 setExam={setExam}
+                borderColor={questionBorderStyle.borderColor}
+                borderStyle={questionBorderStyle.borderStyle}
+                borderWidth={questionBorderStyle.borderWidth}
+                stagingExams={stagingExams}
+                productionExams={productionExams}
+                isLoading={isLoading}
+                hasGeneratedExams={hasGeneratedExams}
               />
             </QuestionAccordion>
           );
@@ -432,18 +583,199 @@ export function DialogueForm({
   );
 }
 
+function getAnswerStatus(
+  answerId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionStatus {
+  const stagingCount =
+    stagingExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.answers.some((a) => a === answerId))
+      )
+    )?.length ?? 0;
+
+  const productionCount =
+    productionExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.answers.some((a) => a === answerId))
+      )
+    )?.length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+function getQuestionStatus(
+  questionId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionStatus {
+  const stagingCount =
+    stagingExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.id === questionId)
+      )
+    )?.length ?? 0;
+
+  const productionCount =
+    productionExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.id === questionId)
+      )
+    )?.length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+function getQuestionSetStatus(
+  questionSetId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionSetStatus {
+  const stagingCount =
+    stagingExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) => qs.id === questionSetId)
+    )?.length ?? 0;
+
+  const productionCount =
+    productionExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) => qs.id === questionSetId)
+    )?.length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+function getBorderStyle(
+  status: QuestionStatus,
+  isLoading: boolean,
+  hasGeneratedExams: boolean
+): {
+  borderColor: string;
+  borderStyle: string;
+  borderWidth: string;
+  generationCount?: number;
+  isLoading: boolean;
+  dualBorder?: boolean;
+  stagingCount?: number;
+  productionCount?: number;
+} {
+  if (isLoading) {
+    return {
+      borderColor: "blue.400",
+      borderStyle: "dashed",
+      borderWidth: "3px",
+      isLoading: true,
+    };
+  }
+
+  if (status.inProduction && status.inStaging) {
+    return {
+      borderColor: "green.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.productionCount + status.stagingCount,
+      isLoading: false,
+      dualBorder: true,
+      stagingCount: status.stagingCount,
+      productionCount: status.productionCount,
+    };
+  }
+
+  if (status.inProduction) {
+    return {
+      borderColor: "green.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.productionCount,
+      isLoading: false,
+      productionCount: status.productionCount,
+    };
+  }
+
+  if (status.inStaging) {
+    return {
+      borderColor: "yellow.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.stagingCount,
+      isLoading: false,
+      stagingCount: status.stagingCount,
+    };
+  }
+
+  if (hasGeneratedExams) {
+    return {
+      borderColor: "red.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      isLoading: false,
+    };
+  }
+
+  return {
+    borderColor: "gray.700",
+    borderStyle: "solid",
+    borderWidth: "1px",
+    isLoading: false,
+  };
+}
+
 type QuestionFormProps = {
   searchIds: string[];
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
+  generatedExamsStagingQuery: UseQueryResult<
+    ExamEnvironmentGeneratedExam[],
+    Error
+  >;
+  generatedExamsProductionQuery: UseQueryResult<
+    ExamEnvironmentGeneratedExam[],
+    Error
+  >;
 };
 
 export function QuestionForm({
   searchIds,
   questionSets,
   setExam,
+  generatedExamsStagingQuery,
+  generatedExamsProductionQuery,
 }: QuestionFormProps) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
+
+  const isLoading =
+    generatedExamsStagingQuery.isFetching ||
+    generatedExamsProductionQuery.isFetching ||
+    generatedExamsStagingQuery.isPending ||
+    generatedExamsProductionQuery.isPending;
+
+  const stagingExams = generatedExamsStagingQuery.data;
+  const productionExams = generatedExamsProductionQuery.data;
+
+  const hasGeneratedExams = useMemo(() => {
+    return !!(
+      (stagingExams && stagingExams.length > 0) ||
+      (productionExams && productionExams.length > 0)
+    );
+  }, [stagingExams, productionExams]);
 
   return (
     <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
@@ -473,31 +805,67 @@ export function QuestionForm({
                   });
                   return null;
                 }
+
+                const questionStatus = getQuestionStatus(
+                  question.id,
+                  stagingExams,
+                  productionExams
+                );
+                const questionBorderStyle = getBorderStyle(
+                  questionStatus,
+                  isLoading,
+                  hasGeneratedExams
+                );
+
                 return (
                   <QuestionAccordion
                     key={qt.id}
                     title={`Question Set ${qt.id}`}
                     subtitle={question.text}
+                    {...questionBorderStyle}
                   >
                     <MultipleChoiceForm
                       question={question}
                       questionSet={qt}
                       questionSets={questionSets}
                       setExam={setExam}
+                      borderColor={questionBorderStyle.borderColor}
+                      borderStyle={questionBorderStyle.borderStyle}
+                      borderWidth={questionBorderStyle.borderWidth}
+                      stagingExams={stagingExams}
+                      productionExams={productionExams}
+                      isLoading={isLoading}
+                      hasGeneratedExams={hasGeneratedExams}
                     />
                   </QuestionAccordion>
                 );
               case "Dialogue":
+                const setStatus = getQuestionSetStatus(
+                  qt.id,
+                  stagingExams,
+                  productionExams
+                );
+                const setBorderStyle = getBorderStyle(
+                  setStatus,
+                  isLoading,
+                  hasGeneratedExams
+                );
+
                 return (
                   <QuestionAccordion
                     key={qt.id}
                     title={`Dialogue Question Set ${qt.id}`}
                     subtitle={`${qt.context ?? "none"}`}
+                    {...setBorderStyle}
                   >
                     <DialogueForm
                       questionSet={qt}
                       questionSets={questionSets}
                       setExam={setExam}
+                      stagingExams={stagingExams}
+                      productionExams={productionExams}
+                      isLoading={isLoading}
+                      hasGeneratedExams={hasGeneratedExams}
                     />
                   </QuestionAccordion>
                 );

@@ -9,6 +9,7 @@ import { marked } from "marked";
 import { ObjectId } from "bson";
 import { markedHighlight } from "marked-highlight";
 import Prism from "prismjs";
+import { getGenerations } from "./fetch";
 
 export function new_question_type(
   t: ExamEnvironmentQuestionType
@@ -142,4 +143,111 @@ export function parseMarkdown(markdown: unknown): string {
       console.error("received unknown type of markdown", markdown);
       return "unknown";
   }
+}
+
+export function compare<T, U>(arr: T[], cb: (a: T, b: T) => U): U[] {
+  const results: U[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    for (let j = i + 1; j < arr.length; j++) {
+      results.push(cb(arr[i], arr[j]));
+    }
+  }
+
+  return results;
+}
+
+export function analyzeVariability(xs: number[]) {
+  let mean = 0;
+  let max = 0;
+  let min = 1;
+  for (const x of xs) {
+    mean += x;
+    if (x > max) max = x;
+    if (x < min) min = x;
+  }
+  mean = xs.length > 0 ? mean / xs.length : 0;
+
+  return {
+    mean,
+    max,
+    min,
+  };
+}
+
+export function calculateGenerationMetrics(
+  generatedExams: Awaited<ReturnType<typeof getGenerations>> | undefined
+) {
+  if (!generatedExams || generatedExams.length === 0) {
+    return {
+      totalGenerations: 0,
+      questionVariability: "-",
+      questionVariabilityMax: "-",
+      questionVariabilityMin: "-",
+      answerVariability: "-",
+      answerVariabilityMax: "-",
+      answerVariabilityMin: "-",
+    };
+  }
+
+  const totalGenerations = generatedExams.length;
+
+  // Variability is considered: (number of different) / (total)
+  // For final variability, it is: (sum of variabilities) / (number of comparisons)
+
+  // Compare all generations to each other to find variability
+  // - Compare A to B, A to C, and B to C
+  const questions = generatedExams.map((gen) =>
+    gen.questionSets.flatMap((qs) => qs.questions)
+  );
+
+  const questionIds = questions.map((qs) => qs.map((q) => q.id));
+
+  // questions: [[1,2,3],[1,2,4]] | [[1,2,3], [4,5,6]]
+  const {
+    mean: questionVariability,
+    max: questionVariabilityMax,
+    min: questionVariabilityMin,
+  } = analyzeVariability(findVariabilities(questionIds));
+
+  const answers = generatedExams.map((gen) =>
+    gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
+  );
+
+  const {
+    mean: answerVariability,
+    max: answerVariabilityMax,
+    min: answerVariabilityMin,
+  } = analyzeVariability(findVariabilities(answers));
+
+  return {
+    totalGenerations,
+    questionVariability: questionVariability.toFixed(3),
+    questionVariabilityMax: questionVariabilityMax.toFixed(3),
+    questionVariabilityMin: questionVariabilityMin.toFixed(3),
+    answerVariability: answerVariability.toFixed(3),
+    answerVariabilityMax: answerVariabilityMax.toFixed(3),
+    answerVariabilityMin: answerVariabilityMin.toFixed(3),
+  };
+}
+
+export function findVariabilities(idArrays: string[][]) {
+  return compare(idArrays, (arr1, arr2) => {
+    if (arr1.length !== arr2.length) {
+      console.error(
+        "Generations have different number of questions",
+        arr1,
+        arr2
+      );
+    }
+
+    // Of the various ways to calculate variability, this performs much better
+    // for sets of ~50 items. Other options, e.g Set.difference, arr1.filter(x
+    // => !arr2.includes(x)) and building arrays of unique items, were much
+    // slower.
+    const unique = new Set(arr1);
+    for (const id of arr2) {
+      unique.delete(id);
+    }
+    return unique.size / arr1.length;
+  });
 }

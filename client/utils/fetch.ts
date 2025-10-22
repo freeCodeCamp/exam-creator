@@ -3,6 +3,7 @@ import type {
   ExamEnvironmentChallenge,
   ExamEnvironmentExamModeration,
   ExamEnvironmentExamModerationStatus,
+  ExamEnvironmentGeneratedExam,
 } from "@prisma/client";
 import type {
   Attempt,
@@ -111,9 +112,8 @@ export async function getExamById(examId: string): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const res = await fetch(`/mocks/exams.json`);
-    const exams: ExamCreatorExam[] = deserializeToPrisma(await res.json());
-    const exam = exams.find((exam) => exam.id === examId)!;
+    const res = await fetch(`/mocks/api/exams/${examId}.json`);
+    const exam: ExamCreatorExam = deserializeToPrisma(await res.json());
     return exam;
   }
 
@@ -177,10 +177,42 @@ export async function postExam(): Promise<ExamCreatorExam> {
   return deserialized;
 }
 
+interface GetGenerationsArg {
+  examId: ExamCreatorExam["id"];
+  databaseEnvironment: "Staging" | "Production";
+}
+
+export async function getGenerations({
+  examId,
+  databaseEnvironment,
+}: GetGenerationsArg): Promise<ExamEnvironmentGeneratedExam[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    const res = await fetch(
+      `/mocks/api/exams/${examId}/generations/staging.json`
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load mock generations: ${res.status} - ${res.statusText}`
+      );
+    }
+
+    const generations: ExamEnvironmentGeneratedExam[] = await res.json();
+    return deserializeToPrisma(generations);
+  }
+
+  const res = await authorizedFetch(
+    `/api/exams/${examId}/generations/${databaseEnvironment}`
+  );
+  const json = await res.json();
+  return deserializeToPrisma(json);
+}
+
 export interface PutGenerateExam {
   examId: ExamCreatorExam["id"];
   count: number;
-  databaseEnvironment: "staging" | "production";
+  databaseEnvironment: "Staging" | "Production";
 }
 
 /**
@@ -222,7 +254,7 @@ export async function putGenerateExam({
   }
 
   const res = await authorizedFetch(
-    `/api/generations/exams/${examId}/${databaseEnvironment}`,
+    `/api/exams/${examId}/generations/${databaseEnvironment}`,
     {
       method: "PUT",
       body: JSON.stringify({ count }),
