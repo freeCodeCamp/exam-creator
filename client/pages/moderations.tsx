@@ -74,7 +74,6 @@ export function Moderations() {
   }, []);
 
   function handleFilterChange(status: ExamEnvironmentExamModerationStatus) {
-    console.log("Filter changed to:", status);
     setFilter(status);
   }
 

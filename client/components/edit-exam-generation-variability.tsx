@@ -34,8 +34,6 @@ export function EditExamGenerationVariability({
     ],
     enabled: !!generatedExamsStaging,
     queryFn: async () => {
-      console.log("Query function rerunning...");
-      console.log(generatedExamsStaging);
       const metrics = calculateGenerationMetrics(generatedExamsStaging);
       return metrics;
     },
@@ -56,8 +54,6 @@ export function EditExamGenerationVariability({
     retry: false,
     refetchOnWindowFocus: false,
   });
-
-  console.log(stagingMetricsQuery);
 
   if (
     stagingMetricsQuery.isPending ||
@@ -106,7 +102,6 @@ export function EditExamGenerationVariability({
       <Text color="gray.300" mb={2}>
         This is the analysis of the exam generations:
       </Text>
-      {/* TODO */}
       <Box overflowX="auto" borderRadius="md" bg="black" p={2}>
         <Table variant="simple" size="sm" colorScheme="teal">
           <Thead>
