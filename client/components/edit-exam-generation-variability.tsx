@@ -27,25 +27,44 @@ export function EditExamGenerationVariability({
 }: EditExamGenerationVariabilityProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
   const stagingMetricsQuery = useQuery({
-    queryKey: ["generated-exams", generatedExamsStaging, "Staging"],
+    queryKey: [
+      "generation-metrics",
+      generatedExamsStaging?.at?.(0)?.examId,
+      "Staging",
+    ],
     enabled: !!generatedExamsStaging,
     queryFn: async () => {
+      console.log("Query function rerunning...");
+      console.log(generatedExamsStaging);
       const metrics = calculateGenerationMetrics(generatedExamsStaging);
       return metrics;
     },
     retry: false,
+    refetchOnWindowFocus: false,
   });
   const productionMetricsQuery = useQuery({
-    queryKey: ["generated-exams", generatedExamsProduction, "Production"],
+    queryKey: [
+      "generation-metrics",
+      generatedExamsProduction?.at?.(0)?.examId,
+      "Production",
+    ],
     enabled: !!generatedExamsProduction,
     queryFn: async () => {
       const metrics = calculateGenerationMetrics(generatedExamsProduction);
       return metrics;
     },
     retry: false,
+    refetchOnWindowFocus: false,
   });
 
-  if (stagingMetricsQuery.isPending || productionMetricsQuery.isPending) {
+  console.log(stagingMetricsQuery);
+
+  if (
+    stagingMetricsQuery.isPending ||
+    productionMetricsQuery.isPending ||
+    stagingMetricsQuery.isFetching ||
+    productionMetricsQuery.isFetching
+  ) {
     return (
       <>
         <Heading size="sm" color={accent} mt={6} mb={2}>

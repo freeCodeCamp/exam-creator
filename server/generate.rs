@@ -26,6 +26,7 @@ struct QuestionSetConfigWithQuestions {
     question_sets: Vec<ExamEnvironmentQuestionSet>,
 }
 
+// TODO: BUG - if no exam is ever generated, then the global stream timeout never happens
 const TIMEOUT_IN_MS: u64 = 5_000;
 
 /// Generates an exam for the user, based on the exam configuration.

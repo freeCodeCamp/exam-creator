@@ -65,6 +65,7 @@ function Edit() {
     enabled: !!user,
     queryFn: () => getExamById(id!),
     retry: false,
+    refetchOnWindowFocus: false,
     // TODO: This does not work, because it overwrites the current edit before a save
     //       Somehow, the client must always PUT before GET
     //       Potentially, a PATCH request must be used with only the changed data to prevent unwanted overwrites
@@ -179,6 +180,7 @@ function EditExam({ exam: examData }: EditExamProps) {
     queryKey: ["exam-challenge", exam.id],
     queryFn: () => getExamChallengeByExamId(exam.id),
     retry: false,
+    refetchOnWindowFocus: false,
   });
   const [examEnvironmentChallenges, setExamEnvironmentChallenges] = useState<
     Omit<ExamEnvironmentChallenge, "id">[]
@@ -195,6 +197,7 @@ function EditExam({ exam: examData }: EditExamProps) {
         databaseEnvironment: "Staging",
       }),
     retry: false,
+    refetchOnWindowFocus: false,
   });
   const generatedExamsProductionQuery = useQuery({
     queryKey: ["generated-exams", exam.id, "Production"],
@@ -204,6 +207,7 @@ function EditExam({ exam: examData }: EditExamProps) {
         databaseEnvironment: "Production",
       }),
     retry: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

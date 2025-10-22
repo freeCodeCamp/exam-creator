@@ -82,6 +82,7 @@ export function Exams() {
     enabled: !!user,
     queryFn: () => getExams(),
     retry: false,
+    refetchOnWindowFocus: false,
   });
   const createExamMutation = useMutation({
     mutationFn: () => postExam(),

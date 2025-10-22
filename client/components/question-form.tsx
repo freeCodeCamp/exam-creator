@@ -32,6 +32,7 @@ import {
   remove_question,
 } from "../utils/question";
 import { QuestionAccordion } from "./accordian";
+import { UseQueryResult } from "@tanstack/react-query";
 
 type QuestionStatus = {
   inStaging: boolean;
@@ -588,18 +589,18 @@ function getAnswerStatus(
   productionExams: ExamEnvironmentGeneratedExam[] | undefined
 ): QuestionStatus {
   const stagingCount =
-    stagingExams?.filter((exam) =>
+    stagingExams?.filter?.((exam) =>
       exam.questionSets.some((qs) =>
         qs.questions.some((q) => q.answers.some((a) => a === answerId))
       )
-    ).length ?? 0;
+    )?.length ?? 0;
 
   const productionCount =
-    productionExams?.filter((exam) =>
+    productionExams?.filter?.((exam) =>
       exam.questionSets.some((qs) =>
         qs.questions.some((q) => q.answers.some((a) => a === answerId))
       )
-    ).length ?? 0;
+    )?.length ?? 0;
 
   return {
     inStaging: stagingCount > 0,
@@ -616,18 +617,18 @@ function getQuestionStatus(
   productionExams: ExamEnvironmentGeneratedExam[] | undefined
 ): QuestionStatus {
   const stagingCount =
-    stagingExams?.filter((exam) =>
+    stagingExams?.filter?.((exam) =>
       exam.questionSets.some((qs) =>
         qs.questions.some((q) => q.id === questionId)
       )
-    ).length ?? 0;
+    )?.length ?? 0;
 
   const productionCount =
-    productionExams?.filter((exam) =>
+    productionExams?.filter?.((exam) =>
       exam.questionSets.some((qs) =>
         qs.questions.some((q) => q.id === questionId)
       )
-    ).length ?? 0;
+    )?.length ?? 0;
 
   return {
     inStaging: stagingCount > 0,
@@ -644,14 +645,14 @@ function getQuestionSetStatus(
   productionExams: ExamEnvironmentGeneratedExam[] | undefined
 ): QuestionSetStatus {
   const stagingCount =
-    stagingExams?.filter((exam) =>
+    stagingExams?.filter?.((exam) =>
       exam.questionSets.some((qs) => qs.id === questionSetId)
-    ).length ?? 0;
+    )?.length ?? 0;
 
   const productionCount =
-    productionExams?.filter((exam) =>
+    productionExams?.filter?.((exam) =>
       exam.questionSets.some((qs) => qs.id === questionSetId)
-    ).length ?? 0;
+    )?.length ?? 0;
 
   return {
     inStaging: stagingCount > 0,
@@ -741,8 +742,14 @@ type QuestionFormProps = {
   searchIds: string[];
   questionSets: ExamEnvironmentQuestionSet[];
   setExam: (partialExam: Partial<ExamCreatorExam>) => void;
-  generatedExamsStagingQuery: any;
-  generatedExamsProductionQuery: any;
+  generatedExamsStagingQuery: UseQueryResult<
+    ExamEnvironmentGeneratedExam[],
+    Error
+  >;
+  generatedExamsProductionQuery: UseQueryResult<
+    ExamEnvironmentGeneratedExam[],
+    Error
+  >;
 };
 
 export function QuestionForm({
@@ -755,6 +762,8 @@ export function QuestionForm({
   const cardBg = useColorModeValue("gray.800", "gray.800");
 
   const isLoading =
+    generatedExamsStagingQuery.isFetching ||
+    generatedExamsProductionQuery.isFetching ||
     generatedExamsStagingQuery.isPending ||
     generatedExamsProductionQuery.isPending;
 
@@ -762,7 +771,7 @@ export function QuestionForm({
   const productionExams = generatedExamsProductionQuery.data;
 
   const hasGeneratedExams = useMemo(() => {
-    return (
+    return !!(
       (stagingExams && stagingExams.length > 0) ||
       (productionExams && productionExams.length > 0)
     );
