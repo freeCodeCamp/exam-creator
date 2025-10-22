@@ -249,7 +249,7 @@ function EditExam({ exam: examData }: EditExamProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
 
   // { [type]: { numberOfSet: number, numberOfQuestions: number } }
-  const questionsBySet = exam.questionSets.reduce((acc, qs) => {
+  const questionsBySet = questionSets.reduce((acc, qs) => {
     if (qs.type in acc) {
       acc[qs.type].numberOfSet += 1;
       acc[qs.type].numberOfQuestions += qs.questions.length;
