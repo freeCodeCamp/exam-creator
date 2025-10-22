@@ -9,6 +9,7 @@ import { marked } from "marked";
 import { ObjectId } from "bson";
 import { markedHighlight } from "marked-highlight";
 import Prism from "prismjs";
+import { getGenerations } from "./fetch";
 
 export function new_question_type(
   t: ExamEnvironmentQuestionType
@@ -153,4 +154,106 @@ export function compare<T, U>(arr: T[], cb: (a: T, b: T) => U): U[] {
   }
 
   return results;
+}
+
+export function calculateGenerationMetrics(
+  generatedExams: Awaited<ReturnType<typeof getGenerations>> | undefined
+) {
+  if (!generatedExams || generatedExams.length === 0) {
+    return {
+      totalGenerations: 0,
+      questionVariability: "-",
+      questionVariabilityMax: "-",
+      questionVariabilityMin: "-",
+      answerVariability: "-",
+      answerVariabilityMax: "-",
+      answerVariabilityMin: "-",
+    };
+  }
+
+  const totalGenerations = generatedExams.length;
+
+  // Variability is considered: (number of different) / (total)
+  // For final variability, it is: (sum of variabilities) / (number of comparisons)
+
+  // Compare all generations to each other to find variability
+  // - Compare A to B, A to C, and B to C
+  const questions = generatedExams.map((gen) =>
+    gen.questionSets.flatMap((qs) => qs.questions)
+  );
+  let questionVariability = 0;
+  let questionVariabilityMax = 0;
+  let questionVariabilityMin = 1;
+  // questions: [[1,2,3],[1,2,4]] | [[1,2,3], [4,5,6]]
+  const questionVariabilities: number[] = compare(questions, (a, b) => {
+    if (a.length !== b.length) {
+      console.error("Generations have different number of questions", a, b);
+    }
+    // uniqueQuestions: [1,2,3,4] | [1,2,3,4,5,6]
+    const uniqueQuestions = [];
+    for (const q of a) {
+      uniqueQuestions.push(q.id);
+    }
+    for (const q of b) {
+      if (!uniqueQuestions.includes(q.id)) {
+        uniqueQuestions.push(q.id);
+      }
+    }
+    // v: (4 - 3) / 3 = 0.333 | (6 - 3) / 3 = 1
+    // v: (unique questions) / (total questions per generation)
+    const v = (uniqueQuestions.length - a.length) / a.length;
+    questionVariability += v;
+    if (v > questionVariabilityMax) {
+      questionVariabilityMax = v;
+    }
+    if (v < questionVariabilityMin) {
+      questionVariabilityMin = v;
+    }
+    return v;
+  });
+  questionVariability =
+    questionVariabilities.length > 0
+      ? questionVariability / questionVariabilities.length
+      : 0;
+
+  const answers = generatedExams.map((gen) =>
+    gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
+  );
+  let answerVariability = 0;
+  let answerVariabilityMax = 0;
+  let answerVariabilityMin = 1;
+  const answerVariabilities: number[] = compare(answers, (a, b) => {
+    const uniqueAnswers = [];
+    for (const q of a) {
+      uniqueAnswers.push(q);
+    }
+    for (const q of b) {
+      if (!uniqueAnswers.includes(q)) {
+        uniqueAnswers.push(q);
+      }
+    }
+    const v = (uniqueAnswers.length - a.length) / a.length;
+    answerVariability += v;
+    if (v > answerVariabilityMax) {
+      answerVariabilityMax = v;
+    }
+    if (v < answerVariabilityMin) {
+      answerVariabilityMin = v;
+    }
+    return v;
+  });
+  answerVariability =
+    answerVariabilities.length > 0
+      ? answerVariability / answerVariabilities.length
+      : 0;
+
+  return {
+    totalGenerations,
+    questionVariability: questionVariability.toFixed(3),
+    questionVariabilityMax: questionVariabilityMax.toFixed(3),
+    questionVariabilityMin: questionVariabilityMin.toFixed(3),
+    answerVariability: answerVariability.toFixed(3),
+    answerVariabilityMax: answerVariabilityMax.toFixed(3),
+    answerVariabilityMin: answerVariabilityMin.toFixed(3),
+  };
 }
