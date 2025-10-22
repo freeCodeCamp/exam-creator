@@ -51,6 +51,10 @@ type MultipleChoiceFormProps = {
   borderColor?: string;
   borderStyle?: string;
   borderWidth?: string;
+  stagingExams?: ExamEnvironmentGeneratedExam[] | undefined;
+  productionExams?: ExamEnvironmentGeneratedExam[] | undefined;
+  isLoading?: boolean;
+  hasGeneratedExams?: boolean;
 };
 
 export function MultipleChoiceForm({
@@ -61,6 +65,10 @@ export function MultipleChoiceForm({
   borderColor = "gray.700",
   borderStyle = "solid",
   borderWidth = "1px",
+  stagingExams,
+  productionExams,
+  isLoading = false,
+  hasGeneratedExams = false,
 }: MultipleChoiceFormProps) {
   const audioInputRef = useRef<HTMLInputElement>(null);
   const [isAudioVisible, setIsAudioVisible] = useState(false);
@@ -258,47 +266,67 @@ export function MultipleChoiceForm({
         <Text fontWeight="bold" color={accent} mt={4}>
           Answers
         </Text>
-        {question.answers.map((answer) => (
-          <Box key={answer.id} mb={3} p={2} bg="gray.700" borderRadius="md">
+        {question.answers.map((answer) => {
+          const answerStatus = getAnswerStatus(
+            answer.id,
+            stagingExams,
+            productionExams
+          );
+          const answerBorderStyle = getBorderStyle(
+            answerStatus,
+            isLoading,
+            hasGeneratedExams
+          );
+
+          return (
             <Box
-              className="answer-markdown"
-              color="gray.300"
-              mb={1}
-              dangerouslySetInnerHTML={{ __html: parseMarkdown(answer.text) }}
-            />
-            <Textarea
-              placeholder="Answer..."
-              rows={2}
-              value={answer.text}
-              onChange={(e) => {
-                const updated_answer = {
-                  ...answer,
-                  text: e.target.value,
-                };
-                change_question(
-                  {
-                    ...question,
-                    answers: question.answers.map((a) =>
-                      a.id === answer.id ? updated_answer : a
-                    ),
-                  },
-                  questionSets,
-                  setExam
-                );
-              }}
-              bg="gray.800"
-              color="gray.100"
-              mb={2}
-            />
-            <HStack justify="space-between">
-              <Checkbox
-                colorScheme="teal"
-                color="gray.400"
-                isChecked={answer.isCorrect}
+              key={answer.id}
+              mb={3}
+              p={2}
+              bg="gray.700"
+              borderRadius="md"
+              position="relative"
+              borderWidth={answerBorderStyle.borderWidth}
+              borderColor={answerBorderStyle.borderColor}
+              borderStyle={answerBorderStyle.borderStyle}
+            >
+              {answerBorderStyle.generationCount !== undefined &&
+                answerBorderStyle.generationCount > 0 && (
+                  <Box
+                    position="absolute"
+                    top="-8px"
+                    right="8px"
+                    bg={
+                      answerBorderStyle.borderColor === "green.400"
+                        ? "green.500"
+                        : answerBorderStyle.borderColor === "yellow.400"
+                        ? "yellow.500"
+                        : "red.500"
+                    }
+                    color="white"
+                    fontSize="xs"
+                    px={2}
+                    py={0.5}
+                    borderRadius="md"
+                    fontWeight="bold"
+                  >
+                    {answerBorderStyle.generationCount}
+                  </Box>
+                )}
+              <Box
+                className="answer-markdown"
+                color="gray.300"
+                mb={1}
+                dangerouslySetInnerHTML={{ __html: parseMarkdown(answer.text) }}
+              />
+              <Textarea
+                placeholder="Answer..."
+                rows={2}
+                value={answer.text}
                 onChange={(e) => {
                   const updated_answer = {
                     ...answer,
-                    isCorrect: e.target.checked,
+                    text: e.target.value,
                   };
                   change_question(
                     {
@@ -311,32 +339,58 @@ export function MultipleChoiceForm({
                     setExam
                   );
                 }}
-              >
-                Correct
-              </Checkbox>
-              <IconButton
-                aria-label="Remove answer"
-                icon={<X size={16} />}
-                size="xs"
-                colorScheme="red"
-                variant="ghost"
-                onClick={(e) => {
-                  e.preventDefault();
-                  change_question(
-                    {
-                      ...question,
-                      answers: question.answers.filter(
-                        (a) => a.id !== answer.id
-                      ),
-                    },
-                    questionSets,
-                    setExam
-                  );
-                }}
+                bg="gray.800"
+                color="gray.100"
+                mb={2}
               />
-            </HStack>
-          </Box>
-        ))}
+              <HStack justify="space-between">
+                <Checkbox
+                  colorScheme="teal"
+                  color="gray.400"
+                  isChecked={answer.isCorrect}
+                  onChange={(e) => {
+                    const updated_answer = {
+                      ...answer,
+                      isCorrect: e.target.checked,
+                    };
+                    change_question(
+                      {
+                        ...question,
+                        answers: question.answers.map((a) =>
+                          a.id === answer.id ? updated_answer : a
+                        ),
+                      },
+                      questionSets,
+                      setExam
+                    );
+                  }}
+                >
+                  Correct
+                </Checkbox>
+                <IconButton
+                  aria-label="Remove answer"
+                  icon={<X size={16} />}
+                  size="xs"
+                  colorScheme="red"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    change_question(
+                      {
+                        ...question,
+                        answers: question.answers.filter(
+                          (a) => a.id !== answer.id
+                        ),
+                      },
+                      questionSets,
+                      setExam
+                    );
+                  }}
+                />
+              </HStack>
+            </Box>
+          );
+        })}
         <HStack>
           <Button
             leftIcon={<Plus size={16} />}
@@ -453,6 +507,10 @@ export function DialogueForm({
                 borderColor={questionBorderStyle.borderColor}
                 borderStyle={questionBorderStyle.borderStyle}
                 borderWidth={questionBorderStyle.borderWidth}
+                stagingExams={stagingExams}
+                productionExams={productionExams}
+                isLoading={isLoading}
+                hasGeneratedExams={hasGeneratedExams}
               />
             </QuestionAccordion>
           );
@@ -478,6 +536,34 @@ export function DialogueForm({
       </Stack>
     </Box>
   );
+}
+
+function getAnswerStatus(
+  answerId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionStatus {
+  const stagingCount =
+    stagingExams?.filter((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.answers.some((a) => a === answerId))
+      )
+    ).length ?? 0;
+
+  const productionCount =
+    productionExams?.filter((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.answers.some((a) => a === answerId))
+      )
+    ).length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
 }
 
 function getQuestionStatus(
@@ -675,6 +761,10 @@ export function QuestionForm({
                       borderColor={questionBorderStyle.borderColor}
                       borderStyle={questionBorderStyle.borderStyle}
                       borderWidth={questionBorderStyle.borderWidth}
+                      stagingExams={stagingExams}
+                      productionExams={productionExams}
+                      isLoading={isLoading}
+                      hasGeneratedExams={hasGeneratedExams}
                     />
                   </QuestionAccordion>
                 );
