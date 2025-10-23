@@ -185,7 +185,7 @@ export function QuestionAccordion({
           </Flex>
         </CardHeader>
         <Collapse in={isOpen}>
-          <CardBody pt={0}>{children}</CardBody>
+          {isOpen && <CardBody pt={0}>{children}</CardBody>}
         </Collapse>
       </Card>
     </Box>
