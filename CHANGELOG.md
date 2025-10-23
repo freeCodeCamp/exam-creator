@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Chore
+
+- use bun image instead of node
+
 ## [3.0.0] - 2025-10-23
 
 ### Added

@@ -1,8 +1,5 @@
-FROM node:22 AS frontend_builder
+FROM oven/bun:1 AS frontend_builder
 WORKDIR /app
-
-# Install Bun
-RUN npm install -g bun
 
 # Copy dependency information first for better caching
 COPY package.json bun.lock ./
@@ -13,7 +10,7 @@ COPY prisma/ prisma/
 COPY prisma.config.ts .
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN bunx prisma generate
 
 # Copy the rest of the frontend files
 COPY tsconfig.json vite.config.ts index.html ./
