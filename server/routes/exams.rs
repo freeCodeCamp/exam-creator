@@ -15,6 +15,7 @@ use tokio_stream::wrappers::ReceiverStream;
 use tracing::{info, instrument};
 
 use crate::{
+    config,
     database::{Database, prisma},
     errors::Error,
     generate,
@@ -403,4 +404,28 @@ async fn put_generations_by_exam_id(
 
     // 5. Return the stream as the response body immediately.
     Ok(StreamBodyAs::json_nl(stream))
+}
+
+#[instrument(skip_all, err(Debug))]
+pub async fn post_validate_config_by_exam_id(
+    _auth_user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(exam_id): Path<ObjectId>,
+) -> Result<(), Error> {
+    let exam_creator_exam = state
+        .production_database
+        .exam_creator_exam
+        .find_one(doc! { "_id": exam_id })
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("exam non-existent: {exam_id}"),
+        ))?;
+
+    let res = config::validate_config(&exam_creator_exam);
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::InvalidConfig(StatusCode::BAD_REQUEST, e)),
+    }
 }

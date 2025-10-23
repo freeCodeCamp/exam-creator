@@ -162,6 +162,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             get(routes::exams::get_generations_by_exam_id_with_database_environment)
                 .put(routes::exams::put_generations_by_exam_id_with_database_environment),
         )
+        .route(
+            "/api/exams/{exam_id}/config/validate",
+            post(routes::exams::post_validate_config_by_exam_id),
+        )
         .route("/api/attempts", get(routes::attempts::get_attempts))
         .route(
             "/api/attempts/{attempt_id}",

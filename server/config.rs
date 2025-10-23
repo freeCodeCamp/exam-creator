@@ -322,3 +322,126 @@ pub fn construct_attempt(
 
     attempt
 }
+
+/// Validate Exam Config:
+/// - `config.name` is not empty
+/// - `config.passing_percent` is between 0 and 100
+/// - `config.tags` is solvable
+/// - `config.question_sets` is solvable
+///
+/// A "solvable" config means that there are enough sets, questions, and answers to satisfy the constraints
+pub fn validate_config(exam: &prisma::ExamCreatorExam) -> Result<(), String> {
+    let config = &exam.config;
+    let question_sets = &exam.question_sets;
+
+    if config.name.is_empty() {
+        return Err("Config name is empty".into());
+    }
+
+    if config.passing_percent < 0.0 || config.passing_percent > 100.0 {
+        return Err("Config passing percent must be between 0.0 and 100.0".into());
+    }
+
+    // For each tag config, generate a map of (tag config, number of questions satisfying tag)
+    // If any tag config `number_of_questions` > available questions with that tag, return error
+    for tag_config in &config.tags {
+        let mut available_questions = 0;
+        for question_set in question_sets {
+            for question in &question_set.questions {
+                let group = &tag_config.group;
+                // if `question.tags` includes all of `group`, then it satisfies the tag config
+                if group.iter().all(|tag| question.tags.contains(tag)) {
+                    available_questions += 1;
+                }
+            }
+        }
+        if available_questions < tag_config.number_of_questions as usize {
+            return Err(format!(
+                "Not enough questions for tag config: {:?}. Available: {}, Required: {}",
+                tag_config, available_questions, tag_config.number_of_questions
+            ));
+        }
+    }
+
+    // For each question set config, ensure there are enough question sets of that type
+    for qs_config in &config.question_sets {
+        let available_question_sets = question_sets
+            .iter()
+            .filter(|qs| qs._type == qs_config._type)
+            .count();
+        if available_question_sets < qs_config.number_of_set as usize {
+            return Err(format!(
+                "Not enough question sets for question set config: {:?}. Available: {}, Required: {}",
+                qs_config, available_question_sets, qs_config.number_of_set
+            ));
+        }
+    }
+
+    // For each `config.question_sets.number_of_questions`, ensure there are enough questions in the question sets of that type
+    // Tally the total number of questions for a given type
+    // Also, ensure for each question_set config, there exists a question set of that type with enough questions
+    for qs_config in &config.question_sets {
+        let mut total_questions = 0;
+        let mut has_enough_in_single_set = false;
+        for question_set in question_sets
+            .iter()
+            .filter(|qs| qs._type == qs_config._type)
+        {
+            let num_questions_in_set = question_set.questions.len();
+            total_questions += num_questions_in_set;
+            if num_questions_in_set >= qs_config.number_of_questions as usize {
+                has_enough_in_single_set = true;
+            }
+        }
+        if total_questions
+            < qs_config.number_of_set as usize * qs_config.number_of_questions as usize
+        {
+            return Err(format!(
+                "Not enough questions overall for question set config: {:?}. Available: {}, Required: {}",
+                qs_config,
+                total_questions,
+                qs_config.number_of_set * qs_config.number_of_questions
+            ));
+        }
+        if !has_enough_in_single_set {
+            return Err(format!(
+                "No single question set has enough questions for question set config: {:?}",
+                qs_config
+            ));
+        }
+    }
+
+    // For each `config.question_sets.number_of_correct_answers` and `number_of_incorrect_answers`, ensure there are enough answers in the question sets of that type
+    for qs_config in &config.question_sets {
+        for question_set in question_sets
+            .iter()
+            .filter(|qs| qs._type == qs_config._type)
+        {
+            for question in &question_set.questions {
+                let num_correct_answers = question.answers.iter().filter(|a| a.is_correct).count();
+                let num_incorrect_answers =
+                    question.answers.iter().filter(|a| !a.is_correct).count();
+                if num_correct_answers < qs_config.number_of_correct_answers as usize {
+                    return Err(format!(
+                        "Not enough correct answers for question {:?} in question set {:?}. Available: {}, Required: {}",
+                        question.id,
+                        question_set.id,
+                        num_correct_answers,
+                        qs_config.number_of_correct_answers
+                    ));
+                }
+                if num_incorrect_answers < qs_config.number_of_incorrect_answers as usize {
+                    return Err(format!(
+                        "Not enough incorrect answers for question {:?} in question set {:?}. Available: {}, Required: {}",
+                        question.id,
+                        question_set.id,
+                        num_incorrect_answers,
+                        qs_config.number_of_incorrect_answers
+                    ));
+                }
+            }
+        }
+    }
+
+    Ok(())
+}

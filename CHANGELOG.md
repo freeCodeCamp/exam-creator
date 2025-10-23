@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-10-24
+
 ### Chore
 
 - use bun image instead of node
+
+### Added
+
+- server: on save exam, call endpoint to validate exam config
+- client: if generation fails (timesout without any generations), show error messages
+- server: stream all generation error messages to client
 
 ## [3.0.0] - 2025-10-23
 

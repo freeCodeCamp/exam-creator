@@ -7,6 +7,8 @@ pub enum Error {
     Server(StatusCode, String),
     #[error("{1}")]
     Generation(StatusCode, String),
+    #[error("{1}")]
+    InvalidConfig(StatusCode, String),
     // Froms
     #[error("{0}")]
     MongoDB(#[from] mongodb::error::Error),
@@ -40,6 +42,7 @@ impl From<Error> for StatusCode {
         match error {
             Error::Server(c, _) => c,
             Error::Generation(c, _) => c,
+            Error::InvalidConfig(c, _) => c,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

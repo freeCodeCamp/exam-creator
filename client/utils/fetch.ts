@@ -271,6 +271,22 @@ export async function putGenerateExam({
   return res.body;
 }
 
+export async function postValidateConfigByExamId(
+  examId: ExamCreatorExam["id"]
+): Promise<Response> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return new Response();
+  }
+
+  const res = await authorizedFetch(`/api/exams/${examId}/config/validate`, {
+    method: "POST",
+  });
+
+  return res;
+}
+
 export async function getUsers(): Promise<User[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);

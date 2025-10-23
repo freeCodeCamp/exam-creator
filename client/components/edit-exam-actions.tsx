@@ -6,7 +6,11 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { CodeXml, Save } from "lucide-react";
-import { putExamById, putExamEnvironmentChallenges } from "../utils/fetch";
+import {
+  postValidateConfigByExamId,
+  putExamById,
+  putExamEnvironmentChallenges,
+} from "../utils/fetch";
 import {
   ExamCreatorExam,
   ExamEnvironmentChallenge,
@@ -38,6 +42,22 @@ export function EditExamActions({
     onClose: generateOnClose,
   } = useDisclosure();
 
+  const invalidConfigMutation = useMutation({
+    mutationFn: async (examId: string) => {
+      await postValidateConfigByExamId(examId);
+    },
+    onError(error) {
+      toast({
+        title: "Invalid Exam Configuration",
+        description: error.message,
+        status: "error",
+        duration: null,
+        isClosable: true,
+        position: "bottom",
+      });
+    },
+  });
+
   const handleDatabaseSave = useMutation({
     mutationFn: ({
       exam,
@@ -65,6 +85,7 @@ export function EditExamActions({
         ["exam-challenges", exam.id],
         deserializeToPrisma(examEnvironmentChallengesData)
       );
+      invalidConfigMutation.mutate(exam.id);
       toast({
         title: "Exam Saved",
         description: "Your exam has been saved to the temporary database.",
@@ -87,6 +108,7 @@ export function EditExamActions({
     },
     retry: false,
   });
+
   const cardBg = useColorModeValue("gray.900", "gray.900");
   return (
     <Box
