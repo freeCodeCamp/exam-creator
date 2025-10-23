@@ -15,6 +15,8 @@ import {
 } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
 import { GenerateModal } from "./generate-modal";
+import { deserializeToPrisma } from "../utils/serde";
+import { queryClient } from "../contexts";
 
 interface EditExamActionsProps {
   exam: ExamCreatorExam;
@@ -53,11 +55,16 @@ export function EditExamActions({
         putExamEnvironmentChallenges(exam.id, examEnvironmentChallenges),
       ]);
     },
-    // onSuccess([examData, examEnvironmentChallengesData]) {
-    onSuccess() {
-      // TODO: Probably necessary if "co-edit" (live) feature is re-enabled
-      // setExam(examData);
-      // setExamEnvironmentChallenges(examEnvironmentChallengesData);
+    onSuccess([examData, examEnvironmentChallengesData]) {
+      // Update upstream queries cache with new data
+      queryClient.setQueryData(
+        ["exam", exam.id],
+        deserializeToPrisma(examData)
+      );
+      queryClient.setQueryData(
+        ["exam-challenges", exam.id],
+        deserializeToPrisma(examEnvironmentChallengesData)
+      );
       toast({
         title: "Exam Saved",
         description: "Your exam has been saved to the temporary database.",

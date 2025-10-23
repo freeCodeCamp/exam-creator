@@ -24,6 +24,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { putGenerateExam } from "../utils/fetch";
+import { queryClient } from "../contexts";
 
 interface GenerateModalProps {
   isOpen: boolean;
@@ -146,6 +147,9 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
           isClosable: true,
         });
       }
+      await queryClient.refetchQueries({
+        queryKey: ["generated-exams", examId, databaseEnvironment],
+      });
     } catch (e: unknown) {
       console.error(e);
       if (e instanceof DOMException && e.name === "AbortError") {

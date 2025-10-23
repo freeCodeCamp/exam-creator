@@ -12,54 +12,71 @@ import {
   Tr,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { getGenerations } from "../utils/fetch";
 import { calculateGenerationMetrics } from "../utils/question";
+import { useEffect } from "react";
 
 interface EditExamGenerationVariabilityProps {
-  generatedExamsStaging?: Awaited<ReturnType<typeof getGenerations>>;
-  generatedExamsProduction?: Awaited<ReturnType<typeof getGenerations>>;
+  examId: string;
+  generatedExamsStagingData?: Awaited<ReturnType<typeof getGenerations>>;
+  generatedExamsProductionData?: Awaited<ReturnType<typeof getGenerations>>;
 }
 
 export function EditExamGenerationVariability({
-  generatedExamsStaging,
-  generatedExamsProduction,
+  examId,
+  generatedExamsStagingData,
+  generatedExamsProductionData,
 }: EditExamGenerationVariabilityProps) {
   const accent = useColorModeValue("teal.400", "teal.300");
-  const stagingMetricsQuery = useQuery({
-    queryKey: [
-      "generation-metrics",
-      generatedExamsStaging?.at?.(0)?.examId,
-      "Staging",
-    ],
-    enabled: !!generatedExamsStaging,
-    queryFn: async () => {
+  const stagingMetricsMutation = useMutation({
+    mutationKey: ["generation-metrics", examId, "Staging"],
+    mutationFn: async ({
+      generatedExamsStaging,
+    }: {
+      generatedExamsStaging: typeof generatedExamsStagingData;
+    }) => {
       const metrics = calculateGenerationMetrics(generatedExamsStaging);
       return metrics;
     },
     retry: false,
-    refetchOnWindowFocus: false,
   });
-  const productionMetricsQuery = useQuery({
-    queryKey: [
-      "generation-metrics",
-      generatedExamsProduction?.at?.(0)?.examId,
-      "Production",
-    ],
-    enabled: !!generatedExamsProduction,
-    queryFn: async () => {
+  const productionMetricsMutation = useMutation({
+    mutationKey: ["generation-metrics", examId, "Production"],
+    mutationFn: async ({
+      generatedExamsProduction,
+    }: {
+      generatedExamsProduction: typeof generatedExamsProductionData;
+    }) => {
       const metrics = calculateGenerationMetrics(generatedExamsProduction);
       return metrics;
     },
     retry: false,
-    refetchOnWindowFocus: false,
   });
 
+  useEffect(() => {
+    if (generatedExamsStagingData) {
+      stagingMetricsMutation.mutate({
+        generatedExamsStaging: generatedExamsStagingData,
+      });
+    }
+  }, [examId, generatedExamsStagingData]);
+
+  useEffect(() => {
+    if (generatedExamsProductionData) {
+      productionMetricsMutation.mutate({
+        generatedExamsProduction: generatedExamsProductionData,
+      });
+    }
+  }, [examId, generatedExamsProductionData]);
+
+  const stagingMetrics = stagingMetricsMutation.data;
+  const productionMetrics = productionMetricsMutation.data;
   if (
-    stagingMetricsQuery.isPending ||
-    productionMetricsQuery.isPending ||
-    stagingMetricsQuery.isFetching ||
-    productionMetricsQuery.isFetching
+    stagingMetricsMutation.isPending ||
+    productionMetricsMutation.isPending ||
+    stagingMetrics === undefined ||
+    productionMetrics === undefined
   ) {
     return (
       <>
@@ -73,9 +90,9 @@ export function EditExamGenerationVariability({
       </>
     );
   }
-  if (stagingMetricsQuery.isError || productionMetricsQuery.isError) {
-    console.error(stagingMetricsQuery.error);
-    console.error(productionMetricsQuery.error);
+  if (stagingMetricsMutation.isError || productionMetricsMutation.isError) {
+    console.error(stagingMetricsMutation.error);
+    console.error(productionMetricsMutation.error);
     return (
       <>
         <Heading size="sm" color={accent} mt={6} mb={2}>
@@ -90,9 +107,6 @@ export function EditExamGenerationVariability({
       </>
     );
   }
-
-  const stagingMetrics = stagingMetricsQuery.data;
-  const productionMetrics = productionMetricsQuery.data;
 
   return (
     <>

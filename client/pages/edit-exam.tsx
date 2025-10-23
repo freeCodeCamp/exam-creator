@@ -185,7 +185,7 @@ function EditExam({ exam: examData }: EditExamProps) {
   const [searchIds, setSearchIds] = useState<string[]>([]);
 
   const examEnvironmentChallengesQuery = useQuery({
-    queryKey: ["exam-challenge", exam.id],
+    queryKey: ["exam-challenges", exam.id],
     queryFn: () => getExamChallengeByExamId(exam.id),
     retry: false,
     refetchOnWindowFocus: false,
@@ -236,15 +236,6 @@ function EditExam({ exam: examData }: EditExamProps) {
     }
   }, [examEnvironmentChallengesQuery.data]);
 
-  // const discardExamStateMutation = useMutation({
-  //   mutationFn: (examId: ExamCreatorExam["id"]) => {
-  //     return discardExamStateById(accessToken!, examId);
-  //   },
-  //   onSuccess(data, _variables, _context) {
-  //     setExam(data);
-  //   },
-  // });
-
   const cardBg = useColorModeValue("gray.900", "gray.900");
   const accent = useColorModeValue("teal.400", "teal.300");
 
@@ -265,7 +256,12 @@ function EditExam({ exam: examData }: EditExamProps) {
   return (
     <>
       <EditExamActions
-        {...{ exam, config, questionSets, examEnvironmentChallenges }}
+        {...{
+          exam,
+          config,
+          questionSets,
+          examEnvironmentChallenges,
+        }}
       />
       <Stack spacing={8} w="full" maxW="4xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
@@ -328,8 +324,9 @@ function EditExam({ exam: examData }: EditExamProps) {
               </Box>
             </Box>
             <EditExamGenerationVariability
-              generatedExamsStaging={generatedExamsStagingQuery.data}
-              generatedExamsProduction={generatedExamsProductionQuery.data}
+              examId={exam.id}
+              generatedExamsStagingData={generatedExamsStagingQuery.data}
+              generatedExamsProductionData={generatedExamsProductionQuery.data}
             />
             <Divider my={4} borderColor="gray.600" />
             <TagConfigForm
