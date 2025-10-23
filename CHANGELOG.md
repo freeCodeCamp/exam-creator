@@ -2,16 +2,15 @@
 
 ## [Unreleased]
 
+## [3.0.0] - 2025-10-23
+
+### Added
+
+- client: generations info with improved cache refetching
+
 ### React Compiler
 
 - use `babel-plugin-react-compiler` for auto memoization of components
-
-### Bugs
-
-- query caching is not 100% working
-  - often the query function is re-running
-- `isPending` and `isFetching` does not lead to loader/spinner
-  - queries halt rendering second time around
 
 ### Generation Variability
 
