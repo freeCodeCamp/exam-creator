@@ -37,6 +37,9 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
   const [count, setCount] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generationAlgorithmErrors, setGenerationAlgorithmErrors] = useState<
+    string[]
+  >([]);
   const [progress, setProgress] = useState(0);
   const [databaseEnvironment, setDatabaseEnvironment] = useState<
     "Staging" | "Production"
@@ -54,6 +57,7 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
     if (isOpen) {
       setProgress(0);
       setError(null);
+      setGenerationAlgorithmErrors([]);
       setIsGenerating(false);
       setCount(1);
       abortRef.current = new AbortController();
@@ -108,6 +112,7 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
   async function startGeneration() {
     setIsGenerating(true);
     setError(null);
+    setGenerationAlgorithmErrors([]);
 
     const ac = new AbortController();
     abortRef.current = ac;
@@ -119,18 +124,26 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
         databaseEnvironment,
       });
       let latest = 0;
+      const genErrors: string[] = [];
       for await (const msg of iterateJsonLines(stream)) {
-        // Server sends { count: i (0-based), examId }
-        const soFar =
-          typeof msg.count === "number" ? msg.count + 1 : latest + 1;
+        // Server sends { count: i (1-based), examId, error?: string | null }
+        const soFar = msg.count;
         latest = soFar;
         setProgress(soFar);
+        const error = msg.error;
+        if (error) {
+          genErrors.push(error);
+        }
       }
       // Ensure we mark complete if stream ended without last line
       // Stream can timeout before all generations are done
       const isAllExamsGenerated = latest >= count;
 
       if (!isAllExamsGenerated) {
+        if (latest === 0) {
+          const uniqueErrors = Array.from(new Set(genErrors));
+          setGenerationAlgorithmErrors(uniqueErrors);
+        }
         toast({
           title: `Generation Timeout in ${databaseEnvironment}`,
           description: `Generation process timed out before all exams could be generated. Please try again.`,
@@ -174,6 +187,7 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
         setCount(1);
         setIsGenerating(false);
         setError(null);
+        setGenerationAlgorithmErrors([]);
         onClose();
       }}
     >
@@ -219,6 +233,18 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
             <Text mt={3} color="red.300">
               {error}
             </Text>
+          )}
+          {generationAlgorithmErrors.length > 0 && (
+            <Stack mt={3} spacing={2}>
+              <Text color="orange.300">
+                Some errors occurred during generation:
+              </Text>
+              {generationAlgorithmErrors.map((err, idx) => (
+                <Text key={idx} color="orange.200" fontSize="sm">
+                  - {err}
+                </Text>
+              ))}
+            </Stack>
           )}
           <FormControl isDisabled={isGenerating}>
             <FormLabel>Database Environment</FormLabel>

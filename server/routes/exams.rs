@@ -287,6 +287,7 @@ pub struct PutGenerateExamResponse {
     pub count: i16,
     #[serde(rename = "examId")]
     pub exam_id: ObjectId,
+    pub error: Option<String>,
 }
 
 /// Generate an exam based on the exam configuration
@@ -360,7 +361,11 @@ async fn put_generations_by_exam_id(
 
                             info!("Successfully generated exam: {}", generated_exam.id);
 
-                            let res = PutGenerateExamResponse { count: i, exam_id };
+                            let res = PutGenerateExamResponse {
+                                count: i + 1,
+                                exam_id,
+                                error: None,
+                            };
 
                             // 3. Send the result through the channel.
                             // If the client disconnects, `send` will fail, and we break the loop.
@@ -373,7 +378,16 @@ async fn put_generations_by_exam_id(
                         }
                         Err(e) => {
                             tracing::debug!("Failed to generate exam: {:?}", e);
-                            // break;
+                            let res = PutGenerateExamResponse {
+                                count: i,
+                                exam_id,
+                                error: Some(e.to_string()),
+                            };
+
+                            if tx.send(res).await.is_err() {
+                                tracing::warn!("Client disconnected, stopping exam generation.");
+                                break;
+                            }
                         }
                     }
                 }
