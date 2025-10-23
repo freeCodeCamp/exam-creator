@@ -1,5 +1,6 @@
 import type {
   ExamEnvironmentAnswer,
+  ExamEnvironmentGeneratedExam,
   ExamEnvironmentMultipleChoiceQuestion,
   ExamEnvironmentQuestionSet,
   ExamEnvironmentQuestionType,
@@ -9,6 +10,7 @@ import { ObjectId } from "bson";
 import { markedHighlight } from "marked-highlight";
 import Prism from "prismjs";
 import { getGenerations } from "./fetch";
+import { QuestionSetStatus, QuestionStatus } from "../types";
 
 export function new_question_type(
   t: ExamEnvironmentQuestionType
@@ -247,4 +249,159 @@ export function findVariabilities(idArrays: string[][]) {
     }
     return unique.size / arr1.length;
   });
+}
+
+export function getAnswerStatus(
+  answerId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionStatus {
+  const stagingCount =
+    stagingExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.answers.some((a) => a === answerId))
+      )
+    )?.length ?? 0;
+
+  const productionCount =
+    productionExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.answers.some((a) => a === answerId))
+      )
+    )?.length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+export function getQuestionStatus(
+  questionId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionStatus {
+  const stagingCount =
+    stagingExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.id === questionId)
+      )
+    )?.length ?? 0;
+
+  const productionCount =
+    productionExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) =>
+        qs.questions.some((q) => q.id === questionId)
+      )
+    )?.length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+export function getQuestionSetStatus(
+  questionSetId: string,
+  stagingExams: ExamEnvironmentGeneratedExam[] | undefined,
+  productionExams: ExamEnvironmentGeneratedExam[] | undefined
+): QuestionSetStatus {
+  const stagingCount =
+    stagingExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) => qs.id === questionSetId)
+    )?.length ?? 0;
+
+  const productionCount =
+    productionExams?.filter?.((exam) =>
+      exam.questionSets.some((qs) => qs.id === questionSetId)
+    )?.length ?? 0;
+
+  return {
+    inStaging: stagingCount > 0,
+    inProduction: productionCount > 0,
+    stagingCount,
+    productionCount,
+    totalCount: Math.max(stagingCount, productionCount),
+  };
+}
+
+export function getBorderStyle(
+  status: QuestionStatus,
+  isLoading: boolean,
+  hasGeneratedExams: boolean
+): {
+  borderColor: string;
+  borderStyle: string;
+  borderWidth: string;
+  generationCount?: number;
+  isLoading: boolean;
+  dualBorder?: boolean;
+  stagingCount?: number;
+  productionCount?: number;
+} {
+  if (isLoading) {
+    return {
+      borderColor: "blue.400",
+      borderStyle: "dashed",
+      borderWidth: "3px",
+      isLoading: true,
+    };
+  }
+
+  if (status.inProduction && status.inStaging) {
+    return {
+      borderColor: "green.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.productionCount + status.stagingCount,
+      isLoading: false,
+      dualBorder: true,
+      stagingCount: status.stagingCount,
+      productionCount: status.productionCount,
+    };
+  }
+
+  if (status.inProduction) {
+    return {
+      borderColor: "green.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.productionCount,
+      isLoading: false,
+      productionCount: status.productionCount,
+    };
+  }
+
+  if (status.inStaging) {
+    return {
+      borderColor: "yellow.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      generationCount: status.stagingCount,
+      isLoading: false,
+      stagingCount: status.stagingCount,
+    };
+  }
+
+  if (hasGeneratedExams) {
+    return {
+      borderColor: "red.400",
+      borderStyle: "solid",
+      borderWidth: "3px",
+      isLoading: false,
+    };
+  }
+
+  return {
+    borderColor: "gray.700",
+    borderStyle: "solid",
+    borderWidth: "1px",
+    isLoading: false,
+  };
 }

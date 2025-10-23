@@ -55,3 +55,13 @@ export type Attempt = Omit<ExamCreatorExam, "questionSets"> & {
 // };
 
 // export type Exam = OmitId<EnvExam>;
+
+export type QuestionStatus = {
+  inStaging: boolean;
+  inProduction: boolean;
+  stagingCount: number;
+  productionCount: number;
+  totalCount: number;
+};
+
+export type QuestionSetStatus = QuestionStatus;
