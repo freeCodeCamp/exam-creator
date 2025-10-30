@@ -18,7 +18,7 @@ use oauth2::{
 };
 use reqwest::Client;
 use tower_sessions::Session;
-use tracing::info;
+use tracing::{error, info};
 use url::Url;
 
 use crate::{database::prisma, errors::Error, state::ServerState};
@@ -139,8 +139,8 @@ pub async fn github_handler(
             Ok(_insert_result) => {
                 info!("Camperbot user inserted into database");
             }
-            Err(_e) => {
-                info!("Camperbot user already found in database");
+            Err(e) => {
+                error!("{:?}", e);
             }
         }
     }
@@ -153,7 +153,7 @@ pub async fn github_handler(
         .await?
         .ok_or(Error::Server(
             StatusCode::UNAUTHORIZED,
-            format!("user non-existant: {email}"),
+            format!("user non-existent: {email}"),
         ))?;
 
     // Update user picture
