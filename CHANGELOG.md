@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Refactor
+
+- client: use `window.setTimeout` instead of `setTimeout` for correct type in browser
+- server: add docs for env vars
+- server: log error for mock auth user insertion
+
 ## [3.1.0] - 2025-10-24
 
 ### Chore
