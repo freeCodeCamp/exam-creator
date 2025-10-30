@@ -167,7 +167,8 @@ impl EnvVars {
                 .parse()
                 .expect("REQUEST_TIMEOUT_IN_MS to be valid unsigned integer"),
             Err(_e) => {
-                let default_request_timeout = 5_000;
+                // Note: This could cause the generation stream to end early
+                let default_request_timeout = 11_000;
                 warn!("REQUEST_TIMEOUT_IN_MS not set. Defaulting to {default_request_timeout}");
                 default_request_timeout
             }
