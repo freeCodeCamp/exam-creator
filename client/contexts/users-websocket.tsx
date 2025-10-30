@@ -94,8 +94,7 @@ export function UsersWebSocketProvider({
 
   const updateActivity = useCallback((activity: Activity) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    // @ts-expect-error Nodejs type used for some reason
-    debounceRef.current = setTimeout(() => {
+    debounceRef.current = window.setTimeout(() => {
       const jsonActivity = {
         ...activity,
         page: activity.page.pathname,
