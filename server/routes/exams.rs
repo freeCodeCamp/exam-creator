@@ -108,7 +108,7 @@ pub async fn get_exam_by_id(
         .await?
         .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
-            format!("exam non-existant: {exam_id}"),
+            format!("exam non-existent: {exam_id}"),
         ))?;
     info!("Found exam {exam_id} in database");
 
@@ -177,7 +177,7 @@ pub async fn put_exam_by_id_to_staging(
         .await?
         .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
-            format!("exam non-existant: {exam_id}"),
+            format!("exam non-existent: {exam_id}"),
         ))?;
     info!("Found exam {exam_id} in production database");
 
@@ -237,7 +237,7 @@ pub async fn put_exam_by_id_to_production(
         .await?
         .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
-            format!("exam non-existant: {exam_id}"),
+            format!("exam non-existent: {exam_id}"),
         ))?;
     info!("Found exam {exam_id} in production database");
 
