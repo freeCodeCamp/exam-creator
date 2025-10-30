@@ -119,7 +119,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             ACCEPT,
             ORIGIN,
             X_CONTENT_TYPE_OPTIONS,
-            ORIGIN,
             SET_COOKIE,
         ])
         .allow_credentials(true)
@@ -214,7 +213,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route_service("/login", ServeFile::new("dist/index.html"))
         .layer(cors)
         .layer(session_layer)
-        .layer(TimeoutLayer::new(std::time::Duration::from_secs(
+        .layer(TimeoutLayer::new(std::time::Duration::from_millis(
             env_vars.request_timeout_in_ms,
         )))
         .layer(RequestBodyLimitLayer::new(env_vars.request_body_size_limit))
