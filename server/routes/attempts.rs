@@ -28,7 +28,7 @@ pub async fn get_attempts(
     let database = database_environment(&server_state, &exam_creator_user);
     let mut exam_attempts = database
         .exam_attempt
-        // Not the practice exam
+        // Find all attempts except for the ones created for the practice exam
         .find(doc! { "examId": { "$ne": "674819431ed2e8ac8d170f5e"}})
         .await?;
 
@@ -43,7 +43,7 @@ pub async fn get_attempts(
             .find(|e| e.id == exam_attempt.exam_id)
             .ok_or(Error::Server(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("exam non-existant: {}", exam_attempt.exam_id),
+                format!("exam non-existent: {}", exam_attempt.exam_id),
             ))?;
 
         let attempt = config::construct_attempt(&exam, &exam_attempt);
@@ -66,7 +66,7 @@ pub async fn get_attempt_by_id(
         .await?
         .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
-            format!("attempt non-existant: {attempt_id}"),
+            format!("attempt non-existent: {attempt_id}"),
         ))?;
 
     let exam = database
@@ -75,7 +75,7 @@ pub async fn get_attempt_by_id(
         .await?
         .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
-            format!("exam non-existant: {}", exam_attempt.exam_id),
+            format!("exam non-existent: {}", exam_attempt.exam_id),
         ))?;
 
     let attempt = config::construct_attempt(&exam, &exam_attempt);
@@ -120,7 +120,7 @@ pub async fn patch_moderation_status_by_attempt_id(
     if update_result.matched_count == 0 {
         return Err(Error::Server(
             StatusCode::BAD_REQUEST,
-            format!("Moderation record non-existant for attempt: {}", attempt_id),
+            format!("Moderation record non-existent for attempt: {}", attempt_id),
         ));
     }
 
