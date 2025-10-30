@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### TODO
+
+- Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
+
 ### Refactor
 
 - client: use `window.setTimeout` instead of `setTimeout` for correct type in browser
