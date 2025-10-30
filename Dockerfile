@@ -32,7 +32,24 @@ COPY --from=frontend_builder /app/dist /app/dist
 # Build application
 RUN cargo build --release
 
-FROM gcr.io/distroless/cc-debian12 AS runtime
+# FROM gcr.io/distroless/cc-debian12 AS runtime
+FROM debian:bookworm-slim AS runtime
+# Install runtime dependencies for Rust binary (OpenSSL for reqwest/oauth2/mongodb)
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+        openssl \
+        ca-certificates && \
+    apt-get autoremove -y && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Metadata labels for container management and documentation
+LABEL org.opencontainers.image.title="Exam Creator" \
+      org.opencontainers.image.description="Rust Axum + React application for exam creation and management" \
+      org.opencontainers.image.source="https://github.com/freeCodeCamp/exam-creator" \
+      org.opencontainers.image.vendor="exam-creator" \
+      org.opencontainers.image.licenses="BSD-3-Clause"
+
 # Copy the compiled application from the builder stage
 COPY --from=builder /app/target/release/server /server
 # Copy static assets from the 'dist' directory

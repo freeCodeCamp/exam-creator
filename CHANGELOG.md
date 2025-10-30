@@ -6,11 +6,21 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.2.0] - 2025-10-30
+
 ### Refactor
 
 - client: use `window.setTimeout` instead of `setTimeout` for correct type in browser
 - server: add docs for env vars
 - server: log error for mock auth user insertion
+
+### Fixed
+
+- server: use request timeout, set to `11s` to account for generation stream of `10s`
+
+### Chore
+
+- use bookworm image for GH CI build and release
 
 ## [3.1.0] - 2025-10-24
 

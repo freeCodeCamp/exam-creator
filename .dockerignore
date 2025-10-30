@@ -1,29 +1,38 @@
 # Git
-
 .git
 .github
 
-# Node.js, Bun, frontend
-
+# Build artifacts
 target/
+dist/
+node_modules/
 
 # Shuttle deployment
-
 .shuttle/
 Shuttle.toml
 
 # Environment files
-
-# Deployment environment/service should have a way to add env vars
-
-\*.env
+*.env
 sample.env
 
 # Documentation
-
 README.md
 CONTRIBUTING.md
+CHANGELOG.md
+AGENTS.md
+LICENSE
 
 # Docker files
-
 Dockerfile
+.dockerignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Development files
+.devcontainer/
+.editorconfig
