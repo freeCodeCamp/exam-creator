@@ -9,17 +9,33 @@ use crate::database::prisma;
 
 #[derive(Clone, Debug)]
 pub struct EnvVars {
+    /// Allowed origins for CORS
+    ///
+    /// ALLOWED_ORIGINS=http://localhost:3000,https://myapp.com
     pub allowed_origins: Vec<HeaderValue>,
+    /// Cookie key for signing cookies
+    ///
+    /// Must be 64 bytes
     pub cookie_key: String,
+    /// GitHub OAuth Client ID
     pub github_client_id: String,
+    /// GitHub OAuth Client Secret
     pub github_client_secret: String,
+    /// GitHub OAuth Redirect URL
     pub github_redirect_url: String,
+    /// Whether to use mock authentication
     pub mock_auth: bool,
+    /// MongoDB URI for production database
     pub mongodb_uri_production: String,
+    /// MongoDB URI for staging database
     pub mongodb_uri_staging: String,
+    /// Port to run the server on
     pub port: u16,
+    /// Request body size limit in bytes
     pub request_body_size_limit: usize,
+    /// Request timeout in milliseconds
     pub request_timeout_in_ms: u64,
+    /// Session TTL in seconds
     pub session_ttl_in_s: u64,
 }
 
