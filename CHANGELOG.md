@@ -6,6 +6,11 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+### Fixed
+
+- on page refresh, remain on same page instead of redirecting to `/`
+- client: show loader on protected routes while auth is being checked
+
 ## [3.2.0] - 2025-10-30
 
 ### Refactor
