@@ -202,7 +202,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route("/status/ping", get(routes::get_status_ping))
         .route("/ws/exam/{exam_id}", any(extractor::ws_handler_exam))
         .route("/ws/users", any(extractor::ws_handler_users))
-        .fallback_service(ServeDir::new("dist"))
         .route_service("/", ServeFile::new("dist/index.html"))
         .route_service("/auth/callback/github", ServeFile::new("dist/index.html"))
         .route_service("/moderations", ServeFile::new("dist/index.html"))
@@ -211,6 +210,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route_service("/exams", ServeFile::new("dist/index.html"))
         .route_service("/exams/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/login", ServeFile::new("dist/index.html"))
+        .fallback_service(ServeDir::new("dist"))
         .layer(cors)
         .layer(session_layer)
         .layer(TimeoutLayer::new(std::time::Duration::from_millis(
