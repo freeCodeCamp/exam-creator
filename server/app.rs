@@ -144,7 +144,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .redirect(reqwest::redirect::Policy::none())
         .build()?;
 
-    let app = if cfg!(debug_assertions) {
+    let app = if cfg!(debug_assertions) && env_vars.mock_auth {
         warn!("Debug assertions are enabled; adding dev login route.");
         Router::new().route("/auth/login/dev", post(routes::auth::post_dev_login))
     } else {
