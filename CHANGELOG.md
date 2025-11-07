@@ -11,6 +11,10 @@
 - on page refresh, remain on same page instead of redirecting to `/`
 - client: show loader on protected routes while auth is being checked
 
+### Added
+
+- dev: ability to signup and login as multiple users
+
 ## [3.2.0] - 2025-10-30
 
 ### Refactor

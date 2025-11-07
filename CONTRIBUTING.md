@@ -28,6 +28,8 @@ cp sample.env .env
 
 ```bash
 bun run build
+# Use development log in for multiple users
+bun run build --mode development
 ```
 
 3. Start the server:

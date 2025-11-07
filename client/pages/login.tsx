@@ -18,6 +18,14 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 
+// If MOCK_AUTH == true, import and render DevSignInOptions
+let DevSignInOptions: React.FC = () => null;
+if (import.meta.env.MODE === "development") {
+  DevSignInOptions = (await import("../components/dev-sign-in-options"))
+    .DevSignInOptions;
+}
+console.log(import.meta.env.DEV);
+
 export function Login() {
   const navigate = useNavigate();
   const search = useSearch({ from: loginRoute.fullPath });
@@ -84,6 +92,7 @@ export function Login() {
               >
                 Login with GitHub
               </Button>
+              <DevSignInOptions />
             </>
           )}
         </Stack>

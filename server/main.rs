@@ -7,7 +7,6 @@ mod generate;
 mod routes;
 mod state;
 
-#[cfg(feature = "docker")]
 #[tokio::main]
 async fn main() {
     use tracing::info;

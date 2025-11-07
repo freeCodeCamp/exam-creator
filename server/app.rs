@@ -25,6 +25,7 @@ use tower_http::{
 };
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::info;
+use tracing::warn;
 
 use crate::errors::Error;
 use crate::{
@@ -143,7 +144,14 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .redirect(reqwest::redirect::Policy::none())
         .build()?;
 
-    let app = Router::new()
+    let app = if cfg!(debug_assertions) {
+        warn!("Debug assertions are enabled; adding dev login route.");
+        Router::new().route("/auth/login/dev", post(routes::auth::post_dev_login))
+    } else {
+        Router::new()
+    };
+
+    let app = app
         .route("/api/exams", get(routes::exams::get_exams))
         .route("/api/exams", post(routes::exams::post_exam))
         .route("/api/exams/{exam_id}", get(routes::exams::get_exam_by_id))

@@ -1,6 +1,6 @@
 [package]
 name = "server"
-version = "3.2.0"
+version = "3.3.0"
 edition = "2024"
 publish = false
 
@@ -11,7 +11,7 @@ name = "server"
 [dependencies]
 axum = { version = "0.8", features = ["macros", "ws"] }
 axum-extra = { version = "0.10", features = ["cookie-private", "typed-header"] }
-axum-streams = { version = "0.23", features = ["json"] }
+axum-streams = { version = "0.24.0", features = ["json"] }
 bson = { version = "3", features = ["chrono-0_4", "serde_with-3", "serde"] }
 chrono = "0.4"
 dotenvy = "0.15"
@@ -46,7 +46,3 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2"
 uuid = { version = "1", features = ["v4", "serde"] }
-
-[features]
-default = ["docker"]
-docker = []
