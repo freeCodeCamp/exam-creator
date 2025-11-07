@@ -439,7 +439,7 @@ export async function getModerations({
     return deserializeToPrisma(moderations);
   }
 
-  const url = new URL("/api/moderations", window.location.href);
+  const url = new URL("/api/attempts", window.location.href);
   if (status) {
     url.searchParams.set("status", status);
   }
@@ -470,7 +470,7 @@ export async function getModerationById(
     return deserializeToPrisma(moderation);
   }
 
-  const res = await authorizedFetch(`/api/moderations/${moderationId}`);
+  const res = await authorizedFetch(`/api/attempts/${moderationId}`);
   const json = await res.json();
   const deserialized = deserializeToPrisma<ExamEnvironmentExamModeration>(json);
   return deserialized;
@@ -500,24 +500,24 @@ export async function patchModerationStatusByAttemptId({
   });
 }
 
-export async function getAttempts(): Promise<Attempt[]> {
-  if (import.meta.env.VITE_MOCK_DATA === "true") {
-    await delayForTesting(300);
-    const res = await fetch("/mocks/attempts.json");
-    if (!res.ok) {
-      throw new Error(
-        `Failed to load mock attempts: ${res.status} - ${res.statusText}`
-      );
-    }
-    const attempts = await res.json();
-    return deserializeToPrisma(attempts);
-  }
+// export async function getAttempts(): Promise<Attempt[]> {
+//   if (import.meta.env.VITE_MOCK_DATA === "true") {
+//     await delayForTesting(300);
+//     const res = await fetch("/mocks/attempts.json");
+//     if (!res.ok) {
+//       throw new Error(
+//         `Failed to load mock attempts: ${res.status} - ${res.statusText}`
+//       );
+//     }
+//     const attempts = await res.json();
+//     return deserializeToPrisma(attempts);
+//   }
 
-  const res = await authorizedFetch("/api/attempts");
-  const json = await res.json();
-  const deserialized = deserializeToPrisma<Attempt[]>(json);
-  return deserialized;
-}
+//   const res = await authorizedFetch("/api/attempts");
+//   const json = await res.json();
+//   const deserialized = deserializeToPrisma<Attempt[]>(json);
+//   return deserialized;
+// }
 
 export async function getAttemptById(attemptId: string): Promise<Attempt> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {

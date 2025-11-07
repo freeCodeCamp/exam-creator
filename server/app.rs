@@ -173,7 +173,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             "/api/exams/{exam_id}/config/validate",
             post(routes::exams::post_validate_config_by_exam_id),
         )
-        .route("/api/attempts", get(routes::attempts::get_attempts))
+        // .route("/api/attempts", get(routes::attempts::get_attempts))
         .route(
             "/api/attempts/{attempt_id}",
             get(routes::attempts::get_attempt_by_id),
@@ -182,10 +182,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             "/api/attempts/{attempt_id}/moderation",
             patch(routes::attempts::patch_moderation_status_by_attempt_id),
         )
-        .route(
-            "/api/moderations",
-            get(routes::moderations::get_moderations),
-        )
+        .route("/api/attempts", get(routes::moderations::get_moderations))
         .route(
             "/api/exam-challenges/{exam_id}",
             get(routes::exam_challenge::get_exam_challenges)
@@ -212,7 +209,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route("/ws/users", any(extractor::ws_handler_users))
         .route_service("/", ServeFile::new("dist/index.html"))
         .route_service("/auth/callback/github", ServeFile::new("dist/index.html"))
-        .route_service("/moderations", ServeFile::new("dist/index.html"))
         .route_service("/attempts", ServeFile::new("dist/index.html"))
         .route_service("/attempts/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/exams", ServeFile::new("dist/index.html"))

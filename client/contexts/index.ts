@@ -2,7 +2,7 @@ import { createRouter } from "@tanstack/react-router";
 import { QueryClient } from "@tanstack/react-query";
 
 import { authCallbackGithubRoute } from "../pages/auth-callback-github";
-import { moderationsRoute } from "../pages/moderations";
+import { attemptsRoute } from "../pages/attempts";
 import { editAttemptRoute } from "../pages/edit-attempt";
 import { editExamRoute } from "../pages/edit-exam";
 import { examsRoute } from "../pages/exams";
@@ -14,7 +14,7 @@ export const queryClient = new QueryClient();
 
 export const routeTree = rootRoute.addChildren([
   authCallbackGithubRoute,
-  moderationsRoute,
+  attemptsRoute,
   editAttemptRoute,
   editExamRoute,
   examsRoute,

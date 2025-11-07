@@ -35,7 +35,7 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
   // Find users currently editing/viewing this attempt
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === `/moderation/${moderation.id}`;
+    return usersPath === `/attempts/${moderation.examAttemptId}`;
   });
 
   return (
@@ -94,7 +94,7 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
             </Badge>
           </Flex>
           <Tooltip label={`Moderation ID`} hasArrow>
-            <Text color="gray.400" fontSize="sm">
+            <Text color="gray.400" fontSize="sm" width={"fit-content"}>
               {moderation.id}
             </Text>
           </Tooltip>

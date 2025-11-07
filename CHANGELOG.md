@@ -6,6 +6,8 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.3.0] - 2025-11-07
+
 ### Fixed
 
 - on page refresh, remain on same page instead of redirecting to `/`
@@ -14,6 +16,10 @@
 ### Added
 
 - dev: ability to signup and login as multiple users
+
+### Changed
+
+- renamed `moderations/` route to `attempts/`
 
 ## [3.2.0] - 2025-10-30
 

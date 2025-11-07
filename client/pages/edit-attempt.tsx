@@ -39,7 +39,7 @@ import {
   getAttemptById,
   patchModerationStatusByAttemptId,
 } from "../utils/fetch";
-import { moderationsRoute } from "./moderations";
+import { attemptsRoute } from "./attempts";
 import { Attempt } from "../types";
 
 function Edit() {
@@ -70,7 +70,7 @@ function Edit() {
           colorScheme="teal"
           variant="outline"
           size="sm"
-          onClick={() => navigate({ to: moderationsRoute.to })}
+          onClick={() => navigate({ to: attemptsRoute.to })}
         >
           Back to Attempts
         </Button>
@@ -183,7 +183,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
     retry: false,
     onSuccess: () => {
       // Navigate back to moderations page
-      navigate({ to: moderationsRoute.to });
+      navigate({ to: attemptsRoute.to });
     },
     onError: (error: any) => {
       alert(`Error submitting moderation: ${error.message}`);

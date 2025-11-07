@@ -24,9 +24,8 @@ import {
 import { AuthContext } from "../contexts/auth";
 import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { examsRoute } from "./exams";
-import { moderationsRoute } from "./moderations";
+import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
-// import { generationsRoute } from "./generations";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
@@ -45,9 +44,8 @@ export function Landing() {
     });
   }, []);
 
-  const { users: usersOnAttempts } = useUsersOnPath("/attempt");
-  const { users: usersOnExams } = useUsersOnPath("/exam");
-  // const { users: usersOnGenerations } = useUsersOnPath("/generation");
+  const { users: usersOnAttempts } = useUsersOnPath("/attempts");
+  const { users: usersOnExams } = useUsersOnPath("/exams");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
@@ -135,7 +133,7 @@ export function Landing() {
                 <LandingCard filteredUsers={usersOnExams}>Exams</LandingCard>
               </Button>
               <Button
-                onClick={() => navigate({ to: moderationsRoute.to })}
+                onClick={() => navigate({ to: attemptsRoute.to })}
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
                 borderRadius="xl"
                 transition="all 0.15s"

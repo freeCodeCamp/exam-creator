@@ -36,7 +36,7 @@ import { DatabaseStatus } from "../components/database-status";
 import { ChevronDownIcon } from "lucide-react";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
-export function Moderations() {
+export function Attempts() {
   const { logout } = useContext(AuthContext)!;
   const { error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
@@ -81,7 +81,7 @@ export function Moderations() {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  const { users: usersOnPage } = useUsersOnPath("/moderations");
+  const { users: usersOnPage } = useUsersOnPath("/attempts");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
@@ -223,12 +223,12 @@ export function Moderations() {
   );
 }
 
-export const moderationsRoute = createRoute({
+export const attemptsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/moderations",
+  path: "/attempts",
   component: () => (
     <ProtectedRoute>
-      <Moderations />
+      <Attempts />
     </ProtectedRoute>
   ),
 });

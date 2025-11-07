@@ -7,6 +7,7 @@ AI agent and contributor guide for the Exam Creator full-stack application.
 Exam Creator is a Rust (Axum) + React (Vite + TypeScript) application for creating, generating, moderating, and attempting exams with multiple choice and dialogue question sets. MongoDB backend with Prisma schema typing and WebSocket support for real-time collaboration.
 
 **Key Features:**
+
 - Exam configuration with question sets, tag quotas, timing, and passing criteria
 - Exam generation from question pools with user attempt tracking
 - GitHub OAuth (or mock auth in debug) with session management
@@ -34,6 +35,7 @@ sample.env       Environment variable template
 ```
 
 **Tech Stack:**
+
 - Frontend: React 19, TanStack Router, React Query, Chakra UI, Immer
 - Backend: Axum, tower-sessions, MongoDB driver, oauth2
 - Build: Vite, Bun, cargo-chef
@@ -41,21 +43,25 @@ sample.env       Environment variable template
 ## Development Commands
 
 **Frontend:**
+
 - `bun install` or `npm install` - Install dependencies
 - `bun run dev` - Start Vite dev server (port 5173)
 - `bun run build` - Type-check + production build
 - `bun run preview` - Preview production build
 
 **Backend:**
+
 - `cargo run` - Run server (requires env vars, uses `docker` feature by default)
 - `cargo build --release` - Production build
 - `cargo fmt` - Format code
 - `cargo clippy` - Lint
 
 **Prisma:**
+
 - `npx prisma generate` - Generate client (auto-run in Docker)
 
 **Local Dev Workflow:**
+
 1. Start MongoDB (local or Atlas)
 2. Set environment variables (see sample.env)
 3. Terminal A: `cargo run` (server)
@@ -64,20 +70,23 @@ sample.env       Environment variable template
 ## Environment Variables
 
 **Required:**
+
 - `COOKIE_KEY` - 64-byte session key
 - `MONGODB_URI_PRODUCTION` - MongoDB connection string
 - `MONGODB_URI_STAGING` - MongoDB connection string
 
 **Conditionally Required (unless `MOCK_AUTH=true` in debug):**
+
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET`
 
 **Optional (with defaults):**
+
 - `PORT` (8080) - Server port
 - `ALLOWED_ORIGINS` (`http://127.0.0.1:{PORT}`) - CORS origins (CSV)
 - `GITHUB_REDIRECT_URL` (`http://127.0.0.1:{PORT}/auth/callback/github`)
 - `MOCK_AUTH` (false) - Bypass OAuth (debug only)
-- `REQUEST_BODY_SIZE_LIMIT` (5 * 2^20 bytes) - ~5 MiB
+- `REQUEST_BODY_SIZE_LIMIT` (5 \* 2^20 bytes) - ~5 MiB
 - `REQUEST_TIMEOUT_IN_MS` (5000)
 - `SESSION_TTL_IN_S` (7200)
 
@@ -86,6 +95,7 @@ sample.env       Environment variable template
 ## Architecture
 
 **Backend:**
+
 - Axum with tower-sessions (MemoryStore - not production-ready for multi-node)
 - MongoDB via official driver + custom domain models
 - Tracing for structured logging
@@ -95,10 +105,12 @@ sample.env       Environment variable template
 - Static file serving: Built frontend (`dist/`) served by Rust server
 
 **WebSockets:**
+
 - `/ws/exam/{exam_id}` - Collaborative exam editing (not fully implemented)
 - `/ws/users` - User presence tracking
 
 **Data Model:**
+
 - Prisma schema for JS types
 - Rust uses custom domain models
 - `construct_attempt` in `config.rs` enriches attempts with submission times and selected answers
@@ -106,6 +118,7 @@ sample.env       Environment variable template
 ## Code Style
 
 **TypeScript:**
+
 - Strict mode enabled (`tsconfig.json`)
 - PascalCase for components, camelCase for variables/functions
 - Avoid `any`, prefer explicit types
@@ -115,12 +128,14 @@ sample.env       Environment variable template
 - Keep components < 200 LOC
 
 **Rust:**
+
 - Use `?` for error propagation via `errors.rs`
 - Thin route handlers, delegate logic to modules
 - Async-only (no blocking I/O)
 - Run `cargo fmt` and `cargo clippy`
 
 **General:**
+
 - Document "why" not "what" in comments
 - Match existing code style
 - Check dependencies before use (package.json/Cargo.toml)
@@ -129,6 +144,7 @@ sample.env       Environment variable template
 ## API Endpoints
 
 **Exams:**
+
 - `GET /api/exams` - List exams
 - `POST /api/exams` - Create exam
 - `GET /api/exams/{exam_id}` - Get exam
@@ -137,34 +153,38 @@ sample.env       Environment variable template
 - `PUT /api/exams/{exam_id}/seed/production` - Seed to production
 
 **Attempts:**
+
 - `GET /api/attempts` - List attempts
 - `GET /api/attempts/{attempt_id}` - Get attempt
 - `PATCH /api/attempts/{attempt_id}/moderation` - Update moderation status
 
-**Moderations:**
-- `GET /api/moderations` - List moderation queue
-
 **Exam Challenges:**
+
 - `GET /api/exam-challenges/{exam_id}` - Get challenges
 - `PUT /api/exam-challenges/{exam_id}` - Update challenges
 
 **Users:**
+
 - `GET /api/users` - List users (auth required)
 - `GET /api/users/session` - Current session user
 - `PUT /api/users/session/settings` - Update user settings
 
 **State:**
+
 - `PUT /api/state/exams/{exam_id}` - Discard exam state
 
 **Auth:**
+
 - `GET /auth/login/github` - Initiate OAuth
 - `GET /auth/github` - OAuth callback
 - `DELETE /auth/logout` - Logout
 
 **Health:**
+
 - `GET /status/ping` - Health check
 
 **WebSockets:**
+
 - `/ws/exam/{exam_id}` - Collaborative exam editing (not fully implemented)
 - `/ws/users` - User presence tracking
 

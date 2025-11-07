@@ -42,7 +42,7 @@ export function ExamCard({
   // Find users currently editing/viewing this exam
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
-    return usersPath === `/exam/${exam.id}`;
+    return usersPath === `/exams/${exam.id}`;
   });
 
   const handleClick = () => {
