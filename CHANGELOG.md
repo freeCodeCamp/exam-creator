@@ -6,6 +6,12 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.4.0] - 2025-11-14
+
+### Added
+
+- client: `exam.config.passingPercent` input field
+
 ## [3.3.0] - 2025-11-07
 
 ### Fixed

@@ -297,6 +297,22 @@ export function EditExamConfig({
           Deprecated
         </Checkbox>
       </FormControl>
+
+      <FormControl>
+        <FormLabel color="gray.300">Passing Percent [%]</FormLabel>
+        <NumberInput
+          value={config.passingPercent}
+          onChange={(_, value) =>
+            setConfig({
+              passingPercent: value,
+            })
+          }
+          min={0}
+          max={100}
+        >
+          <NumberInputField bg="gray.700" color="gray.100" />
+        </NumberInput>
+      </FormControl>
     </SimpleGrid>
   );
 }
