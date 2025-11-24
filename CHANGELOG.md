@@ -5,6 +5,7 @@
 ### TODO
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
+- Add infinite scroll to attempts/moderation page
 
 ## [3.5.0] - 2025-11-24
 
