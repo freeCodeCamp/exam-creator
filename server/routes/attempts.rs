@@ -21,7 +21,7 @@ use crate::{
 /// TODO: Return only what is needed
 ///       Could be smarter with fetching exams and attempts as needed
 #[instrument(skip_all, err(Debug))]
-pub async fn get_attempts(
+pub async fn _get_attempts(
     exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,
 ) -> Result<Json<Vec<config::Attempt>>, Error> {
@@ -53,7 +53,7 @@ pub async fn get_attempts(
     Ok(Json(attempts))
 }
 
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn get_attempt_by_id(
     exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,
@@ -90,7 +90,7 @@ pub struct PatchModerationStatusByAttemptIdBody {
     pub status: prisma::ExamEnvironmentExamModerationStatus,
 }
 
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn patch_moderation_status_by_attempt_id(
     exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,

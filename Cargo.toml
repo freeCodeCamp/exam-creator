@@ -1,6 +1,6 @@
 [package]
 name = "server"
-version = "3.4.0"
+version = "3.5.0"
 edition = "2024"
 publish = false
 
@@ -26,6 +26,10 @@ prisma-rust-schema = { git = "https://github.com/ShaunSHamilton/prisma-rust-sche
 ] }
 rand = "0.9"
 reqwest = { version = "0.12", features = ["json"] }
+sentry = { version = "0.45.0", features = [
+  "tower-axum-matched-path",
+  "tracing",
+] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_with = "3"

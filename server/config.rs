@@ -2,6 +2,7 @@ use std::env::var;
 
 use http::HeaderValue;
 use mongodb::bson::oid::ObjectId;
+use sentry::types::Dsn;
 use serde::{Deserialize, Serialize};
 use tracing::{error, warn};
 
@@ -35,6 +36,8 @@ pub struct EnvVars {
     pub request_body_size_limit: usize,
     /// Request timeout in milliseconds
     pub request_timeout_in_ms: u64,
+    /// Sentry DSN
+    pub sentry_dsn: Option<String>,
     /// Session TTL in seconds
     pub session_ttl_in_s: u64,
 }
@@ -147,7 +150,7 @@ impl EnvVars {
             "MONGODB_URI_STAGING must not be empty"
         );
 
-        let request_body_size_limit = match std::env::var("REQUEST_BODY_SIZE_LIMIT") {
+        let request_body_size_limit = match var("REQUEST_BODY_SIZE_LIMIT") {
             Ok(s) => s
                 .parse()
                 .expect("REQUEST_BODY_SIZE_LIMIT to be valid unsigned integer"),
@@ -162,7 +165,7 @@ impl EnvVars {
             }
         };
 
-        let request_timeout_in_ms = match std::env::var("REQUEST_TIMEOUT_IN_MS") {
+        let request_timeout_in_ms = match var("REQUEST_TIMEOUT_IN_MS") {
             Ok(s) => s
                 .parse()
                 .expect("REQUEST_TIMEOUT_IN_MS to be valid unsigned integer"),
@@ -174,7 +177,24 @@ impl EnvVars {
             }
         };
 
-        let session_ttl_in_s = match std::env::var("SESSION_TTL_IN_S") {
+        let sentry_dsn = match var("SENTRY_DSN") {
+            Ok(dsn_string) => {
+                assert!(
+                    valid_sentry_dsn(&dsn_string),
+                    "SENTRY_DSN is not valid DSN."
+                );
+                Some(dsn_string)
+            }
+            Err(_e) => {
+                if cfg!(not(debug_assertions)) {
+                    panic!("SENTRY_DSN is not allowed to be unset outside of a debug build");
+                }
+                warn!("SENTRY_DSN not set.");
+                None
+            }
+        };
+
+        let session_ttl_in_s = match var("SESSION_TTL_IN_S") {
             Ok(s) => s
                 .parse()
                 .expect("SESSION_TTL_IN_S to be valid unsigned integer"),
@@ -197,6 +217,7 @@ impl EnvVars {
             port,
             request_body_size_limit,
             request_timeout_in_ms,
+            sentry_dsn,
             session_ttl_in_s,
         };
 
@@ -461,4 +482,8 @@ pub fn validate_config(exam: &prisma::ExamCreatorExam) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+fn valid_sentry_dsn(url: &str) -> bool {
+    url.parse::<Dsn>().is_ok()
 }

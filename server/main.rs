@@ -15,18 +15,37 @@ async fn main() {
     use crate::{app::app, config::EnvVars};
 
     dotenvy::dotenv().ok();
+
+    let sentry_layer = sentry::integrations::tracing::layer();
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
+                .unwrap_or_else(|_| format!("{}=info", env!("CARGO_CRATE_NAME")).into()),
         )
         // Log to stdout
         .with(tracing_subscriber::fmt::layer().pretty())
+        .with(sentry_layer)
         .init();
 
     info!("Starting server...");
 
     let env_vars = EnvVars::new();
+
+    let _guard = if let Some(sentry_dsn) = env_vars.sentry_dsn.clone() {
+        info!("initializing Sentry");
+        // NOTE: Events are only emitted, once the guard goes out of scope.
+        Some(sentry::init((
+            sentry_dsn,
+            sentry::ClientOptions {
+                release: sentry::release_name!(),
+                traces_sample_rate: 1.0,
+                ..Default::default()
+            },
+        )))
+    } else {
+        None
+    };
 
     let port = env_vars.port;
 

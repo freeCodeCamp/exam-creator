@@ -13,7 +13,7 @@ use crate::{
 };
 
 /// Get all users online (in state)
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn get_users(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -24,7 +24,7 @@ pub async fn get_users(
 }
 
 /// Get current session user
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn get_session_user(
     exam_creator_user: prisma::ExamCreatorUser,
     session: Session,

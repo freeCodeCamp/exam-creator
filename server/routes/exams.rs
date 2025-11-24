@@ -83,7 +83,7 @@ pub async fn get_exams(
     Ok(Json(exams))
 }
 
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn get_exam_by_id(
     _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -116,7 +116,7 @@ pub async fn get_exam_by_id(
 }
 
 /// Create an exam
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn post_exam(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -134,7 +134,7 @@ pub async fn post_exam(
 }
 
 /// Update an exam
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn put_exam(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -164,7 +164,7 @@ pub async fn put_exam(
 /// Upserts it into staging database `ExamEnvironmentExam`
 ///
 /// NOTE: Staging has a special case where the `ExamEnvironmentChallenge` documents need to be copied over
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn put_exam_by_id_to_staging(
     _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -224,7 +224,7 @@ pub async fn put_exam_by_id_to_staging(
 
 /// Finds an exam in `ExamCreatorExam`
 /// Upserts it into production database `ExamEnvironmentExam`
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn put_exam_by_id_to_production(
     _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -292,7 +292,7 @@ pub struct PutGenerateExamResponse {
 }
 
 /// Generate an exam based on the exam configuration
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn put_generations_by_exam_id_with_database_environment(
     _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -406,7 +406,7 @@ async fn put_generations_by_exam_id(
     Ok(StreamBodyAs::json_nl(stream))
 }
 
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn post_validate_config_by_exam_id(
     _auth_user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,

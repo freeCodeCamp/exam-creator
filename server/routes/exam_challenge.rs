@@ -11,7 +11,7 @@ use tracing::instrument;
 use crate::{database::prisma, errors::Error, state::ServerState};
 
 /// Get all exam-challenge mappings for the given exam id.
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn get_exam_challenges(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -44,7 +44,7 @@ pub struct PutExamChallengeBody {
 ///
 /// Overwrites all existing mappings for the given exam id.
 /// TODO: Use `x_many` queries, and fewer ops
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn put_exam_challenges(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,

@@ -19,7 +19,7 @@ pub mod moderations;
 pub mod users;
 pub mod websocket;
 
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn discard_exam_state_by_id(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,

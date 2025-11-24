@@ -1,5 +1,4 @@
 use mongodb::Collection;
-use tracing::info;
 
 use crate::state::{Activity, ServerState, User};
 
@@ -41,13 +40,7 @@ pub fn database_environment<'a>(
     user: &prisma::ExamCreatorUser,
 ) -> &'a Database {
     match user.settings.database_environment {
-        prisma::ExamCreatorDatabaseEnvironment::Staging => {
-            info!("{}: using staging database", user.email);
-            &state.staging_database
-        }
-        prisma::ExamCreatorDatabaseEnvironment::Production => {
-            info!("{}: using production database", user.email);
-            &state.production_database
-        }
+        prisma::ExamCreatorDatabaseEnvironment::Staging => &state.staging_database,
+        prisma::ExamCreatorDatabaseEnvironment::Production => &state.production_database,
     }
 }

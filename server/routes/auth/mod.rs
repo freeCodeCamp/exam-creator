@@ -17,7 +17,7 @@ use crate::{database::prisma, errors::Error, state::ServerState};
 pub mod github;
 
 /// Logs the user out by deleting the db session(s), and unsetting the sid
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn delete_logout(
     user: prisma::ExamCreatorUser,
     jar: PrivateCookieJar,
@@ -50,7 +50,7 @@ pub struct DevLoginBody {
 ///
 /// Takes a name and email as body parameters, creates a user if one does not exist,
 /// and creates a session for that user, setting the sid cookie in the response.
-#[instrument(skip_all, err(Debug))]
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn post_dev_login(
     _session: Session,
     jar: PrivateCookieJar,
