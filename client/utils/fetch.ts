@@ -520,6 +520,7 @@ export async function patchModerationStatusByAttemptId({
 // }
 
 export async function getAttemptById(attemptId: string): Promise<Attempt> {
+  await delayForTesting(500);
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 

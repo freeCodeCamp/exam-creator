@@ -12,18 +12,18 @@ import {
   Flex,
   VStack,
   Box,
+  Spinner,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useContext } from "react";
 import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
-import {
-  ExamEnvironmentConfig,
-  ExamEnvironmentExamModeration,
-} from "@prisma/client";
+import { ExamEnvironmentExamModeration } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+import { getAttemptById } from "../utils/fetch";
 
 interface ModerationCardProps {
-  moderation: ExamEnvironmentExamModeration & { config: ExamEnvironmentConfig };
+  moderation: ExamEnvironmentExamModeration;
 }
 
 export function ModerationCard({ moderation }: ModerationCardProps) {
@@ -36,6 +36,13 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
   const editingUsers = users.filter((u) => {
     const usersPath = u.activity.page.pathname;
     return usersPath === `/attempts/${moderation.examAttemptId}`;
+  });
+
+  const attemptQuery = useQuery({
+    queryKey: ["attempt", moderation.examAttemptId],
+    queryFn: () => getAttemptById(moderation.examAttemptId),
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   return (
@@ -51,6 +58,7 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
         })
       }
       _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
+      disabled={attemptQuery.isPending || attemptQuery.isError}
       borderRadius="xl"
       transition="all 0.15s"
       display="block"
@@ -73,11 +81,17 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
             <Text
               fontSize="xl"
               fontWeight="bold"
-              color={accent}
+              color={attemptQuery.isError ? "#ff3f3f" : accent}
               noOfLines={1}
               maxW="80%"
             >
-              {moderation.config.name}
+              {attemptQuery.isPending ? (
+                <Spinner color={accent} />
+              ) : attemptQuery.isError ? (
+                attemptQuery.error.message
+              ) : (
+                attemptQuery.data.config.name
+              )}
             </Text>
             <Badge
               fontSize={"1em"}
@@ -138,7 +152,14 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
               )}
             </HStack>
             <Text color="gray.400" fontSize="sm" ml={2}>
-              Passing Percent: {moderation.config.passingPercent}
+              Passing Percent:{" "}
+              {attemptQuery.isPending ? (
+                <Spinner color={accent} />
+              ) : attemptQuery.isError ? (
+                "--"
+              ) : (
+                attemptQuery.data.config.passingPercent
+              )}
             </Text>
           </Flex>
           <VStack
