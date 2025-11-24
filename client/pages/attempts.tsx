@@ -16,6 +16,9 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Card,
+  CardHeader,
+  CardBody,
 } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
@@ -51,8 +54,26 @@ export function Attempts() {
       const moderations = await getModerations({ status });
       const attempts = [];
       for (const moderation of moderations) {
-        const attempt = await getAttemptById(moderation.examAttemptId);
-        attempts.push({ ...moderation, config: attempt.config });
+        try {
+          const attempt = await getAttemptById(moderation.examAttemptId);
+          attempts.push({
+            data: { ...moderation, config: attempt.config },
+            error: null,
+          });
+        } catch (e) {
+          console.error(
+            `Failed to fetch attempt with ID ${moderation.examAttemptId}:`,
+            e
+          );
+          if (e instanceof Error) {
+            attempts.push({ data: null, error: e });
+          } else {
+            attempts.push({
+              data: null,
+              error: new Error("Unknown error occurred: " + String(e)),
+            });
+          }
+        }
       }
       return attempts;
     },
@@ -201,12 +222,53 @@ export function Attempts() {
             ) : (
               <SimpleGrid columns={{ base: 1, md: 1, lg: 1 }} spacing={8}>
                 {moderationsMutation.isSuccess &&
-                  moderationsMutation.data.map((moderation) => (
-                    <ModerationCard
-                      key={moderation.id}
-                      moderation={moderation}
-                    />
-                  ))}
+                  moderationsMutation.data.map((res) => {
+                    const { data: moderation, error } = res;
+
+                    if (error) {
+                      return (
+                        <Card
+                          bg={cardBg}
+                          borderRadius="xl"
+                          boxShadow="md"
+                          w="full"
+                          h="auto"
+                          p={4}
+                          // h="100%"
+                          display="block"
+                          minH="120px"
+                          _hover={{ borderColor: accent, boxShadow: "lg" }}
+                          borderWidth={2}
+                          borderColor="transparent"
+                          transition="all 0.15s"
+                        >
+                          <CardHeader pb={2}>
+                            <Text
+                              fontSize="xl"
+                              fontWeight="bold"
+                              color={"#ff3f3f"}
+                              noOfLines={1}
+                              maxW="80%"
+                            >
+                              Error Fetching Attempt
+                            </Text>
+                          </CardHeader>
+                          <CardBody pt={2}>
+                            <Text color="red.400" fontSize="lg">
+                              {error.message}
+                            </Text>
+                          </CardBody>
+                        </Card>
+                      );
+                    }
+
+                    return (
+                      <ModerationCard
+                        key={moderation.id}
+                        moderation={moderation}
+                      />
+                    );
+                  })}
                 {moderationsMutation.data?.length === 0 && (
                   <Center>
                     <Text color="gray.400" fontSize="lg">

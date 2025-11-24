@@ -6,6 +6,16 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.5.0] - 2025-11-24
+
+### Added
+
+- server: sentry integration for traces
+
+### Fixed
+
+- client: for multi-fetch queries, only show error for failed fetch
+
 ## [3.4.0] - 2025-11-14
 
 ### Added
