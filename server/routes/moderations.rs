@@ -16,6 +16,8 @@ use crate::{
 #[derive(Deserialize)]
 pub struct GetModerationsQuery {
     pub status: Option<prisma::ExamEnvironmentExamModerationStatus>,
+    pub skip: Option<u64>,
+    pub limit: Option<i64>,
 }
 
 #[instrument(skip_all, err(Debug))]
@@ -26,18 +28,21 @@ pub async fn get_moderations(
 ) -> Result<Json<Vec<prisma::ExamEnvironmentExamModeration>>, Error> {
     let database = database_environment(&server_state, &exam_creator_user);
     let status = params.status;
+    let skip = params.skip.unwrap_or(0);
     let filter = if let Some(status) = status {
         doc! { "status": bson::serialize_to_bson(&status)? }
     } else {
         doc! {}
     };
 
-    let exam_moderations = database
+    let mut exam_moderations_query = database
         .exam_environment_exam_moderation
         .find(filter)
-        .await?
-        .try_collect()
-        .await?;
+        .skip(skip);
+    if let Some(limit) = params.limit {
+        exam_moderations_query = exam_moderations_query.limit(limit);
+    }
+    let exam_moderations = exam_moderations_query.await?.try_collect().await?;
 
     Ok(Json(exam_moderations))
 }

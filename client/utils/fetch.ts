@@ -424,8 +424,12 @@ export async function logout() {
 
 export async function getModerations({
   status,
+  limit,
+  skip,
 }: {
   status?: ExamEnvironmentExamModerationStatus;
+  limit?: number;
+  skip?: number;
 }): Promise<ExamEnvironmentExamModeration[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -442,6 +446,12 @@ export async function getModerations({
   const url = new URL("/api/attempts", window.location.href);
   if (status) {
     url.searchParams.set("status", status);
+  }
+  if (limit !== undefined) {
+    url.searchParams.set("limit", limit.toString());
+  }
+  if (skip !== undefined) {
+    url.searchParams.set("skip", skip.toString());
   }
   const res = await authorizedFetch(url);
   const json = await res.json();
@@ -520,7 +530,6 @@ export async function patchModerationStatusByAttemptId({
 // }
 
 export async function getAttemptById(attemptId: string): Promise<Attempt> {
-  await delayForTesting(500);
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 

@@ -5,7 +5,15 @@
 ### TODO
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
+- client: add shortcut keys for moderation actions
+
+## [3.6.0] - 2025-11-25
+
+### Added
+
 - Add infinite scroll to attempts/moderation page
+- client: add human-readable time for attempts
+- client: add average time per question
 
 ## [3.5.1] - 2025-11-24
 

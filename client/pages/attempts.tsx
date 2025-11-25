@@ -17,9 +17,11 @@ import {
   MenuList,
   MenuItem,
 } from "@chakra-ui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate } from "@tanstack/react-router";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef, useCallback } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { ModerationCard } from "../components/moderation-card";
@@ -33,8 +35,6 @@ import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
-import { ChevronDownIcon } from "lucide-react";
-import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 export function Attempts() {
   const { logout } = useContext(AuthContext)!;
@@ -45,20 +45,47 @@ export function Attempts() {
   const [filter, setFilter] =
     useState<ExamEnvironmentExamModerationStatus>("Pending");
 
-  const moderationsMutation = useMutation({
-    mutationKey: ["filteredModerations"],
-    mutationFn: async (status: ExamEnvironmentExamModerationStatus) => {
-      return await getModerations({ status });
+  const {
+    data,
+    error,
+    isError,
+    isPending,
+    isSuccess,
+    isFetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["filteredModerations", filter],
+    queryFn: ({ pageParam }) => {
+      return getModerations({
+        status: filter,
+        limit: 5,
+        skip: pageParam,
+      });
+    },
+    initialPageParam: 0,
+    getNextPageParam: (_lastPage, allPages) => {
+      return allPages.flat().length;
     },
     retry: false,
+    refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    if (moderationsMutation.isPending) {
-      return;
-    }
-    moderationsMutation.mutate(filter);
-  }, [filter]);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const lastCardRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isFetchingNextPage) return;
+      if (observerRef.current) observerRef.current.disconnect();
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      });
+      if (node) observerRef.current.observe(node);
+    },
+    [isFetchingNextPage, hasNextPage, fetchNextPage]
+  );
 
   useEffect(() => {
     updateActivity({
@@ -167,8 +194,8 @@ export function Attempts() {
                       color={"white"}
                       colorScheme="green"
                       fontWeight="bold"
-                      isDisabled={moderationsMutation.isPending}
-                      isLoading={moderationsMutation.isPending}
+                      isDisabled={isPending || isFetching}
+                      isLoading={isPending || isFetching}
                       justifyContent={"flex-start"}
                       loadingText={"Filtering..."}
                       onClick={() => handleFilterChange(status)}
@@ -182,28 +209,35 @@ export function Attempts() {
             </Menu>
           </Flex>
           <Box>
-            {moderationsMutation.isPending ? (
+            {isPending ? (
               <Center py={12}>
                 <Spinner color={accent} size="xl" />
               </Center>
-            ) : moderationsMutation.isError ? (
+            ) : isError ? (
               <Center>
                 <Text color="red.400" fontSize="lg">
-                  {moderationsMutation.error.message}
+                  {error.message}
                 </Text>
               </Center>
             ) : (
               <SimpleGrid columns={{ base: 1, md: 1, lg: 1 }} spacing={8}>
-                {moderationsMutation.isSuccess &&
-                  moderationsMutation.data.map((moderation) => {
-                    return (
-                      <ModerationCard
-                        key={moderation.id}
-                        moderation={moderation}
-                      />
-                    );
+                {isSuccess &&
+                  data.pages.flatMap((page, pageIdx) => {
+                    return page.map((moderation, idx) => {
+                      const isLastCard =
+                        pageIdx === data.pages.length - 1 &&
+                        idx === page.length - 1;
+                      return (
+                        <Box
+                          key={moderation.id}
+                          ref={isLastCard ? lastCardRef : undefined}
+                        >
+                          <ModerationCard moderation={moderation} />
+                        </Box>
+                      );
+                    });
                   })}
-                {moderationsMutation.data?.length === 0 && (
+                {data?.pages?.length === 0 && (
                   <Center>
                     <Text color="gray.400" fontSize="lg">
                       No moderations found for "{filter}" status.
@@ -212,6 +246,20 @@ export function Attempts() {
                 )}
               </SimpleGrid>
             )}
+            {isFetchingNextPage && (
+              <Center py={6}>
+                <Spinner color={accent} size="lg" />
+              </Center>
+            )}
+            {!isFetchingNextPage &&
+              isSuccess &&
+              data.pages.at(-1)?.length === 0 && (
+                <Center py={6}>
+                  <Text color="gray.400" fontSize="md">
+                    No more moderations to load.
+                  </Text>
+                </Center>
+              )}
           </Box>
         </Stack>
       </Center>
