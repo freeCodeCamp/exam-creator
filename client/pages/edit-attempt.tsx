@@ -14,8 +14,6 @@ import {
   SimpleGrid,
   Stack,
   Heading,
-  Grid,
-  GridItem,
 } from "@chakra-ui/react";
 import {
   Bar,
@@ -327,29 +325,105 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
               />
               <ReChartsTooltip cursor={false} />
             </BarChart>
-            <Grid
-              // h="200px"
-              templateRows="repeat(3, 1fr)"
-              templateColumns="repeat(2, 1fr)"
-              gap={4}
-            >
-              <GridItem rowSpan={1} colSpan={2} color="gray.300">
-                Total Questions: {totalQuestions}
-              </GridItem>
-              <GridItem colSpan={1} color="gray.300">
-                Total Answered: {answered}
-              </GridItem>
-              <GridItem colSpan={1} color="gray.300">
-                Correct Questions: {correct}
-              </GridItem>
-              <GridItem colSpan={1} color="gray.300">
-                Total Time to Complete: {secondsToHumanReadable(timeToComplete)}{" "}
-                [{timeToComplete}s]
-              </GridItem>
-              <GridItem colSpan={1} color="gray.300">
-                Average Time Per Question [s]: {averageTimePerQuestion}
-              </GridItem>
-            </Grid>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor={accent}
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Total Questions
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {totalQuestions}
+                </Text>
+              </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor={accent}
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Answered
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {answered}
+                  <Text as="span" fontSize="sm" color="gray.400" ml={2}>
+                    ({((answered / totalQuestions) * 100).toFixed(1)}%)
+                  </Text>
+                </Text>
+              </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="green.400"
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Correct Answers
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {correct}
+                  <Text as="span" fontSize="sm" color="gray.400" ml={2}>
+                    (
+                    {totalQuestions > 0
+                      ? ((correct / totalQuestions) * 100).toFixed(1)
+                      : 0}
+                    %)
+                  </Text>
+                </Text>
+              </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="purple.400"
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Accuracy
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {answered > 0 ? ((correct / answered) * 100).toFixed(1) : 0}%
+                </Text>
+              </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="blue.400"
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Total Time
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {secondsToHumanReadable(timeToComplete)}
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  {timeToComplete.toFixed(0)}s
+                </Text>
+              </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="blue.400"
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Avg Time / Question
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {averageTimePerQuestion}s
+                </Text>
+              </Box>
+            </SimpleGrid>
           </SimpleGrid>
         </Box>
       </Stack>
