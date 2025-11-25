@@ -230,6 +230,9 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   );
   const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
+  const averageTimePerQuestion =
+    answered > 0 ? (timeToComplete / answered).toFixed(2) : "0";
+
   return (
     <>
       <Box
@@ -326,7 +329,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
             </BarChart>
             <Grid
               // h="200px"
-              templateRows="repeat(2, 1fr)"
+              templateRows="repeat(3, 1fr)"
               templateColumns="repeat(2, 1fr)"
               gap={4}
             >
@@ -340,7 +343,11 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 Correct Questions: {correct}
               </GridItem>
               <GridItem colSpan={1} color="gray.300">
-                Total Time to Complete [s]: {timeToComplete}
+                Total Time to Complete: {secondsToHumanReadable(timeToComplete)}{" "}
+                [{timeToComplete}s]
+              </GridItem>
+              <GridItem colSpan={1} color="gray.300">
+                Average Time Per Question [s]: {averageTimePerQuestion}
               </GridItem>
             </Grid>
           </SimpleGrid>
@@ -348,6 +355,16 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       </Stack>
     </>
   );
+}
+
+// Converts to HH:MM:SS format
+function secondsToHumanReadable(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${hrs.toString().padStart(2, "0")}:${mins
+    .toString()
+    .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 export const editAttemptRoute = createRoute({
