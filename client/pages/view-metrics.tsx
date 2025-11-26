@@ -40,6 +40,7 @@ import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { metricsRoute } from "./metrics";
 import { parseMarkdown, secondsToHumanReadable } from "../utils/question";
+import { TimeTakenDistribution } from "../components/time-taken-distribution";
 
 function View() {
   const { id } = useParams({ from: "/metrics/exams/$id" });
@@ -135,21 +136,24 @@ function ViewExamMetrics({
             View Exam Metrics
           </Heading>
           <Divider my={4} borderColor="gray.600" />
-          <Heading size="sm" color={accent} mt={6} mb={2}>
+          <Heading size="md" color={accent} mt={6} mb={2}>
             Exam Generations
           </Heading>
           <Text color="gray.300" mb={2}>
             This is the analysis of the exam generations:
           </Text>
           <AttemptStats {...{ attempts }} />
+          <Divider my={2} borderColor="gray.800" />
+          <TimeTakenDistribution {...{ attempts, exam }} />
+          {/* <AverageTimePerQuestionDistribution {...{ attempts }} /> */}
 
           <Divider my={4} borderColor="gray.600" />
           <Heading size="md" color={accent} mt={8} mb={2} id="exam-questions">
             Exam Questions
           </Heading>
           <Text color="gray.300" mb={2}>
-            You can create new questions here. Your questions are not saved to
-            the database until you click the "Save to Database" button.
+            View the exam questions along with how often each question and
+            answer were seen and submitted.
           </Text>
           <Box bg="gray.700" borderRadius="lg" p={4} mt={2}>
             <QuestionsView {...{ exam, attempts, generations }} />

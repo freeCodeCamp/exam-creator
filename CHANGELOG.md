@@ -6,6 +6,16 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.9.0] - 2025-11-26
+
+### Added
+
+- client: add distribution curve to exam metrics for time to complete
+
+### Chore
+
+- add gha release
+
 ## [3.8.0] - 2025-11-26
 
 ### Added
