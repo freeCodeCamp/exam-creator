@@ -60,6 +60,9 @@ export function Attempts() {
   } = useInfiniteQuery({
     queryKey: ["filteredModerations", filter],
     queryFn: ({ pageParam }) => {
+      if (pageParam === null) {
+        return [];
+      }
       return getModerations({
         status: filter,
         limit: 5,
@@ -67,7 +70,10 @@ export function Attempts() {
       });
     },
     initialPageParam: 0,
-    getNextPageParam: (_lastPage, allPages) => {
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 5) {
+        return null;
+      }
       return allPages.flat().length;
     },
     retry: false,
@@ -252,15 +258,13 @@ export function Attempts() {
                 <Spinner color={accent} size="lg" />
               </Center>
             )}
-            {!isFetchingNextPage &&
-              isSuccess &&
-              data.pages.at(-1)?.length === 0 && (
-                <Center py={6}>
-                  <Text color="gray.400" fontSize="md">
-                    No more moderations to load.
-                  </Text>
-                </Center>
-              )}
+            {!isFetchingNextPage && isSuccess && !hasNextPage && (
+              <Center py={6}>
+                <Text color="gray.400" fontSize="md">
+                  No more moderations to load.
+                </Text>
+              </Center>
+            )}
           </Box>
         </Stack>
       </Center>

@@ -8,8 +8,14 @@
 
 ## [3.8.0] - 2025-11-26
 
+### Added
+
 - client: navigate to next attempt on moderation
 - client: add shortcut keys for moderation actions
+
+### Fixed
+
+- client: infinite scroll `hasNextPage` logic
 
 ## [3.7.0] - 2025-11-25
 
