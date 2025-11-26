@@ -165,6 +165,9 @@ function UsersEditing() {
 function EditAttempt({ attempt }: { attempt: Attempt }) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const simpleGridRef = useRef<HTMLDivElement | null>(null);
+  const buttonBoxRef = useRef<HTMLDivElement | null>(null);
+  const approveButtonRef = useRef<HTMLButtonElement | null>(null);
+  const denyButtonRef = useRef<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
   const { filter } = useSearch({ from: editAttemptRoute.to });
 
@@ -174,6 +177,44 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       lastActive: Date.now(),
     });
   }, [attempt]);
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // 'm' key focuses the button box (and approve button)
+      if (event.key === "m" || event.key === "M") {
+        event.preventDefault();
+        buttonBoxRef.current?.focus();
+        approveButtonRef.current?.focus();
+      }
+    };
+
+    const handleButtonBoxKeyPress = (event: KeyboardEvent) => {
+      // Only handle 'a' and 'd' when the button box has focus
+      if (event.key === "a" || event.key === "A") {
+        event.preventDefault();
+        approveButtonRef.current?.click();
+      } else if (event.key === "d" || event.key === "D") {
+        event.preventDefault();
+        denyButtonRef.current?.click();
+      }
+    };
+
+    // Global listener for 'm' key
+    window.addEventListener("keydown", handleKeyPress);
+
+    // Listener on button box for 'a' and 'd' keys
+    const buttonBox = buttonBoxRef.current;
+    if (buttonBox) {
+      buttonBox.addEventListener("keydown", handleButtonBoxKeyPress);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+      if (buttonBox) {
+        buttonBox.removeEventListener("keydown", handleButtonBoxKeyPress);
+      }
+    };
+  }, []);
 
   const patchModerationStatusByAttemptIdMutation = useMutation({
     mutationKey: ["patch-moderation-status"],
@@ -260,6 +301,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   return (
     <>
       <Box
+        ref={buttonBoxRef}
         position="fixed"
         top={3}
         right="1rem"
@@ -272,8 +314,10 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
         display="flex"
         alignItems="center"
         gap={4}
+        tabIndex={0}
       >
         <Button
+          ref={approveButtonRef}
           colorScheme="green"
           px={4}
           fontWeight="bold"
@@ -287,6 +331,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
           Approve
         </Button>
         <Button
+          ref={denyButtonRef}
           colorScheme="red"
           px={4}
           fontWeight="bold"
