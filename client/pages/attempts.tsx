@@ -18,7 +18,7 @@ import {
   MenuItem,
 } from "@chakra-ui/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { createRoute, useNavigate } from "@tanstack/react-router";
+import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
@@ -41,9 +41,11 @@ export function Attempts() {
   const { error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
+  const search = useSearch({ from: attemptsRoute.to });
 
-  const [filter, setFilter] =
-    useState<ExamEnvironmentExamModerationStatus>("Pending");
+  const [filter, setFilter] = useState<ExamEnvironmentExamModerationStatus>(
+    search.filter || "Pending"
+  );
 
   const {
     data,
@@ -222,20 +224,19 @@ export function Attempts() {
             ) : (
               <SimpleGrid columns={{ base: 1, md: 1, lg: 1 }} spacing={8}>
                 {isSuccess &&
-                  data.pages.flatMap((page, pageIdx) => {
-                    return page.map((moderation, idx) => {
-                      const isLastCard =
-                        pageIdx === data.pages.length - 1 &&
-                        idx === page.length - 1;
-                      return (
-                        <Box
-                          key={moderation.id}
-                          ref={isLastCard ? lastCardRef : undefined}
-                        >
-                          <ModerationCard moderation={moderation} />
-                        </Box>
-                      );
-                    });
+                  data.pages.flat().map((moderation, i, moderations) => {
+                    const isLastCard = i === moderations.length - 1;
+                    return (
+                      <Box
+                        key={moderation.id}
+                        ref={isLastCard ? lastCardRef : undefined}
+                      >
+                        <ModerationCard
+                          moderation={moderation}
+                          filter={filter}
+                        />
+                      </Box>
+                    );
                   })}
                 {data?.pages?.length === 0 && (
                   <Center>

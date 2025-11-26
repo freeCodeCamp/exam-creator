@@ -18,15 +18,19 @@ import { useNavigate } from "@tanstack/react-router";
 import { useContext } from "react";
 import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
-import { ExamEnvironmentExamModeration } from "@prisma/client";
+import {
+  ExamEnvironmentExamModeration,
+  ExamEnvironmentExamModerationStatus,
+} from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { getAttemptById } from "../utils/fetch";
 
 interface ModerationCardProps {
   moderation: ExamEnvironmentExamModeration;
+  filter: ExamEnvironmentExamModerationStatus;
 }
 
-export function ModerationCard({ moderation }: ModerationCardProps) {
+export function ModerationCard({ moderation, filter }: ModerationCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
   const cardBg = useColorModeValue("gray.800", "gray.800");
@@ -55,6 +59,9 @@ export function ModerationCard({ moderation }: ModerationCardProps) {
         navigate({
           to: editAttemptRoute.to,
           params: { id: moderation.examAttemptId },
+          search: {
+            filter,
+          },
         })
       }
       _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}

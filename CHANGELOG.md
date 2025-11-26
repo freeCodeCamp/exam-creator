@@ -5,6 +5,10 @@
 ### TODO
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
+
+## [3.8.0] - 2025-11-26
+
+- client: navigate to next attempt on moderation
 - client: add shortcut keys for moderation actions
 
 ## [3.7.0] - 2025-11-25

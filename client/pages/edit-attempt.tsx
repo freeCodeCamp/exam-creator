@@ -1,6 +1,11 @@
 import { useContext, useEffect, useRef } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createRoute, useParams, useNavigate } from "@tanstack/react-router";
+import { InfiniteData, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createRoute,
+  useParams,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import {
   Box,
   Button,
@@ -35,11 +40,13 @@ import {
 import { AuthContext } from "../contexts/auth";
 import {
   getAttemptById,
+  getModerations,
   patchModerationStatusByAttemptId,
 } from "../utils/fetch";
 import { attemptsRoute } from "./attempts";
 import { Attempt } from "../types";
 import { secondsToHumanReadable } from "../utils/question";
+import { queryClient } from "../contexts";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -53,10 +60,6 @@ function Edit() {
     queryFn: () => getAttemptById(id!),
     retry: false,
     refetchOnWindowFocus: false,
-    // TODO: This does not work, because it overwrites the current edit before a save
-    //       Somehow, the client must always PUT before GET
-    //       Potentially, a PATCH request must be used with only the changed data to prevent unwanted overwrites
-    // refetchInterval: 5000,
   });
 
   const bg = useColorModeValue("black", "black");
@@ -163,6 +166,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const simpleGridRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const { filter } = useSearch({ from: editAttemptRoute.to });
 
   useEffect(() => {
     updateActivity({
@@ -181,8 +185,29 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
     },
     retry: false,
     onSuccess: () => {
-      // Navigate back to moderations page
-      navigate({ to: attemptsRoute.to });
+      // Navigate to next attempt
+      const moderationsData = queryClient.getQueryData<
+        InfiniteData<Awaited<ReturnType<typeof getModerations>>, unknown>
+      >(["filteredModerations", filter]);
+      if (moderationsData) {
+        // Find the index of the current attempt
+        const flatModerations = moderationsData.pages.flat();
+        const currentIndex = flatModerations.findIndex(
+          (m) => m.examAttemptId === attempt.id
+        );
+        const nextAttemptId =
+          flatModerations.at(currentIndex + 1)?.examAttemptId ?? null;
+        if (nextAttemptId) {
+          navigate({
+            to: editAttemptRoute.to,
+            params: { id: nextAttemptId },
+            search: { filter },
+          });
+          return;
+        }
+      }
+
+      navigate({ to: attemptsRoute.to, search: { filter } });
     },
     onError: (error: any) => {
       alert(`Error submitting moderation: ${error.message}`);
