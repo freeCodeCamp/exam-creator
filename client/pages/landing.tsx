@@ -26,6 +26,7 @@ import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { examsRoute } from "./exams";
 import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
+import { metricsRoute } from "./metrics";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
@@ -46,6 +47,7 @@ export function Landing() {
 
   const { users: usersOnAttempts } = useUsersOnPath("/attempts");
   const { users: usersOnExams } = useUsersOnPath("/exams");
+  const { users: usersOnMetrics } = useUsersOnPath("/metrics");
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
@@ -146,7 +148,23 @@ export function Landing() {
                 // disabled={true}
               >
                 <LandingCard filteredUsers={usersOnAttempts}>
-                  Attempts (Beta)
+                  Attempts
+                </LandingCard>
+              </Button>
+              <Button
+                onClick={() => navigate({ to: metricsRoute.to })}
+                _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
+                borderRadius="xl"
+                transition="all 0.15s"
+                display="block"
+                textAlign="left"
+                variant="unstyled"
+                w="full"
+                h="auto"
+                p={0}
+              >
+                <LandingCard filteredUsers={usersOnMetrics}>
+                  Exam Metrics (Beta)
                 </LandingCard>
               </Button>
             </SimpleGrid>

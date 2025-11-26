@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("MONGOHQ_URL")
 }
 
 // USER COLLECTION ---------------------
@@ -105,6 +104,7 @@ model user {
   emailVerifyTTL                 DateTime? // Null | Undefined
   externalId                     String
   githubProfile                  String? // Undefined
+  isA2EnglishCert                Boolean? // Undefined
   isApisMicroservicesCert        Boolean? // Undefined
   isBackEndCert                  Boolean? // Undefined
   isBanned                       Boolean? // Undefined
@@ -119,12 +119,14 @@ model user {
   isHonest                       Boolean?
   isInfosecCertV7                Boolean? // Undefined
   isInfosecQaCert                Boolean? // Undefined
+  isJavascriptCertV9             Boolean? // Undefined
   isJsAlgoDataStructCert         Boolean? // Undefined
   isJsAlgoDataStructCertV8       Boolean? // Undefined
   isMachineLearningPyCertV7      Boolean? // Undefined
   isQaCertV7                     Boolean? // Undefined
   isRelationalDatabaseCertV8     Boolean? // Undefined
   isRespWebDesignCert            Boolean? // Undefined
+  isRespWebDesignCertV9          Boolean? // Undefined
   isSciCompPyCertV7              Boolean? // Undefined
   is2018DataVisCert              Boolean? // Undefined
   is2018FullStackCert            Boolean? // Undefined
@@ -166,8 +168,8 @@ model user {
   isClassroomAccount             Boolean? // Undefined
 
   // Relations
-  examAttempts                        ExamEnvironmentExamAttempt[]
-  examEnvironmentAuthorizationToken   ExamEnvironmentAuthorizationToken?
+  examAttempts                      ExamEnvironmentExamAttempt[]
+  examEnvironmentAuthorizationToken ExamEnvironmentAuthorizationToken?
 }
 
 // -----------------------------------

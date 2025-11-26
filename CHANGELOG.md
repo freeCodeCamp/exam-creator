@@ -7,6 +7,19 @@
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 - client: add shortcut keys for moderation actions
 
+## [3.7.0] - 2025-11-25
+
+### Added
+
+- Add exam metrics:
+  - How many times a question is incorrectly answered
+  - Average time taken to complete
+  - Average time per question
+
+### Chore
+
+- update deps
+
 ## [3.6.0] - 2025-11-25
 
 ### Added

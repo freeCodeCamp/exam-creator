@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from "@prisma/client/runtime/library";
+import type { JsonObject, JsonValue } from "@prisma/client/runtime/client.d.ts";
 import { ObjectId } from "bson";
 
 /**

@@ -24,7 +24,6 @@ if (import.meta.env.MODE === "development") {
   DevSignInOptions = (await import("../components/dev-sign-in-options"))
     .DevSignInOptions;
 }
-console.log(import.meta.env.DEV);
 
 export function Login() {
   const navigate = useNavigate();

@@ -1,6 +1,7 @@
 import type {
   ExamCreatorExam,
   ExamEnvironmentChallenge,
+  ExamEnvironmentExamAttempt,
   ExamEnvironmentExamModeration,
   ExamEnvironmentExamModerationStatus,
   ExamEnvironmentGeneratedExam,
@@ -659,6 +660,37 @@ export async function putExamByIdToProduction(
   return await authorizedFetch(`/api/exams/${examId}/seed/production`, {
     method: "PUT",
   });
+}
+
+export async function getExamsMetrics() {
+  const res = await authorizedFetch(`/api/metrics/exams`, {
+    method: "GET",
+  });
+
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<
+    {
+      exam: ExamCreatorExam;
+      numberOfAttempts: number;
+    }[]
+  >(json);
+  return deserialized;
+}
+
+interface GetExamMetricsById {
+  exam: ExamCreatorExam;
+  attempts: ExamEnvironmentExamAttempt[];
+  generations: ExamEnvironmentGeneratedExam[];
+}
+
+export async function getExamMetricsById(examId: string) {
+  const res = await authorizedFetch(`/api/metrics/exams/${examId}`, {
+    method: "GET",
+  });
+
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<GetExamMetricsById>(json);
+  return deserialized;
 }
 
 export async function getStatusPing() {

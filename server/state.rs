@@ -8,6 +8,7 @@ use tracing::error;
 use crate::{
     config::EnvVars,
     database::{Database, prisma},
+    routes::metrics::GetExamMetricsById,
 };
 
 #[derive(Clone)]
@@ -17,6 +18,7 @@ pub struct ServerState {
     pub client_sync: Arc<Mutex<ClientSync>>,
     pub key: Key,
     pub env_vars: EnvVars,
+    pub exam_metrics_by_id_cache: Arc<Mutex<Vec<GetExamMetricsById>>>,
 }
 
 impl FromRef<ServerState> for Key {

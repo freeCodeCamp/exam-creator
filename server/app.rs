@@ -7,6 +7,7 @@ use axum::{
     routing::{any, get, post, put},
 };
 use axum_extra::extract::cookie::Key;
+use http::StatusCode;
 use http::header::ACCEPT;
 use http::header::AUTHORIZATION;
 use http::header::ORIGIN;
@@ -93,12 +94,15 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         exams: Vec::new(),
     }));
 
+    let exam_metrics_by_id_cache = Arc::new(Mutex::new(vec![]));
+
     let server_state = ServerState {
         production_database,
         staging_database,
         client_sync,
         key: Key::from(env_vars.cookie_key.as_bytes()),
         env_vars: env_vars.clone(),
+        exam_metrics_by_id_cache,
     };
 
     tokio::spawn(state::cleanup_online_users(
@@ -175,6 +179,14 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         )
         // .route("/api/attempts", get(routes::attempts::get_attempts))
         .route(
+            "/api/metrics/exams",
+            get(routes::metrics::get_exams_metrics),
+        )
+        .route(
+            "/api/metrics/exams/{exam_id}",
+            get(routes::metrics::get_exam_metrics_by_exam_id),
+        )
+        .route(
             "/api/attempts/{attempt_id}",
             get(routes::attempts::get_attempt_by_id),
         )
@@ -213,13 +225,16 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route_service("/attempts/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/exams", ServeFile::new("dist/index.html"))
         .route_service("/exams/{*id}", ServeFile::new("dist/index.html"))
+        .route_service("/metrics", ServeFile::new("dist/index.html"))
+        .route_service("/metrics/exams/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/login", ServeFile::new("dist/index.html"))
         .fallback_service(ServeDir::new("dist"))
         .layer(cors)
         .layer(session_layer)
-        .layer(TimeoutLayer::new(std::time::Duration::from_millis(
-            env_vars.request_timeout_in_ms,
-        )))
+        .layer(TimeoutLayer::with_status_code(
+            StatusCode::REQUEST_TIMEOUT,
+            std::time::Duration::from_millis(env_vars.request_timeout_in_ms),
+        ))
         .layer(RequestBodyLimitLayer::new(env_vars.request_body_size_limit))
         .layer(Extension(github_client))
         .layer(Extension(http_client))
