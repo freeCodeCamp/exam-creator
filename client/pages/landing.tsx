@@ -27,6 +27,7 @@ import { examsRoute } from "./exams";
 import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
 import { metricsRoute } from "./metrics";
+import { AttemptsLandingCard } from "../components/attempt/landing-card";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
@@ -147,9 +148,10 @@ export function Landing() {
                 p={0}
                 // disabled={true}
               >
-                <LandingCard filteredUsers={usersOnAttempts}>
+                {/* <LandingCard filteredUsers={usersOnAttempts}>
                   Attempts
-                </LandingCard>
+                </LandingCard> */}
+                <AttemptsLandingCard filteredUsers={usersOnAttempts} />
               </Button>
               <Button
                 onClick={() => navigate({ to: metricsRoute.to })}

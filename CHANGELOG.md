@@ -6,6 +6,12 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.10.0] - 2025-11-27
+
+### Added
+
+- add exam attempt moderation stats to landing
+
 ## [3.9.0] - 2025-11-26
 
 ### Added

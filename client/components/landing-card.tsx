@@ -25,7 +25,7 @@ export function LandingCard({ filteredUsers, children }: LandingCardProps) {
       bg={cardBg}
       borderRadius="xl"
       boxShadow="md"
-      p={4}
+      p={3}
       h="100%"
       minH="120px"
       _hover={{ borderColor: accent, boxShadow: "lg" }}
@@ -33,7 +33,7 @@ export function LandingCard({ filteredUsers, children }: LandingCardProps) {
       borderColor="transparent"
       transition="all 0.15s"
     >
-      <CardHeader pb={2}>
+      <CardHeader pb={2} pt={0}>
         <Flex align="center" justify="space-between">
           <Text
             fontSize="xl"

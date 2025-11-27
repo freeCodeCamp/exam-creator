@@ -511,6 +511,26 @@ export async function patchModerationStatusByAttemptId({
   });
 }
 
+interface GetModerationsCountResponse {
+  staging: {
+    pending: number;
+    approved: number;
+    denied: number;
+  };
+  production: {
+    pending: number;
+    approved: number;
+    denied: number;
+  };
+}
+
+export async function getModerationsCount() {
+  const res = await authorizedFetch(`/api/attempts/moderations/count`);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<GetModerationsCountResponse>(json);
+  return deserialized;
+}
+
 // export async function getAttempts(): Promise<Attempt[]> {
 //   if (import.meta.env.VITE_MOCK_DATA === "true") {
 //     await delayForTesting(300);
