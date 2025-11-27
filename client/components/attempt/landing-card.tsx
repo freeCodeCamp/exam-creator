@@ -39,7 +39,8 @@ export function AttemptsLandingCard({
       bg={cardBg}
       borderRadius="xl"
       boxShadow="md"
-      p={3}
+      px={4}
+      py={3}
       h="100%"
       minH="120px"
       _hover={{ borderColor: accent, boxShadow: "lg" }}
@@ -47,7 +48,7 @@ export function AttemptsLandingCard({
       borderColor="transparent"
       transition="all 0.15s"
     >
-      <CardHeader pb={2} pt={0}>
+      <CardHeader pb={2} pt={0} pl={0}>
         <Flex align="center" justify="space-between">
           <Text
             fontSize="xl"
@@ -60,7 +61,7 @@ export function AttemptsLandingCard({
           </Text>
         </Flex>
       </CardHeader>
-      <CardBody pt={2}>
+      <CardBody pt={2} pl={0}>
         <HStack spacing={-2}>
           {filteredUsers.length === 0 ? (
             <Text color="gray.400" fontSize="sm">
@@ -96,7 +97,7 @@ export function AttemptsLandingCard({
           )}
         </HStack>
       </CardBody>
-      <CardFooter padding="0" flexDirection="column" gap={2}>
+      <CardFooter padding="0" flexDirection="column" pl={0}>
         {moderationsCountQuery.isError ? (
           <Text color="red.400" fontSize="sm">
             {moderationsCountQuery.error.message}
@@ -123,13 +124,13 @@ function ModerationSummary({ moderationsCount }: ModerationSummaryProps) {
 
   return (
     <Grid
-      templateColumns="repeat(4, 1fr)"
+      templateColumns="1fr repeat(3, 2fr)"
       rowGap={2}
       columnGap={2}
       alignItems={"center"}
     >
       <GridItem>
-        <Text fontSize="xs" fontWeight="semibold" color="gray.400" minW="70px">
+        <Text fontSize="xs" fontWeight="semibold" color="gray.400">
           Staging:
         </Text>
       </GridItem>
@@ -161,7 +162,7 @@ function ModerationSummary({ moderationsCount }: ModerationSummaryProps) {
         </GridItem>
       ))}
       <GridItem>
-        <Text fontSize="xs" fontWeight="semibold" color="gray.400" minW="70px">
+        <Text fontSize="xs" fontWeight="semibold" color="gray.400">
           Production:
         </Text>
       </GridItem>
