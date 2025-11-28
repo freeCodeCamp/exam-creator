@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createRoute, useParams, useNavigate } from "@tanstack/react-router";
 import {
@@ -23,6 +23,12 @@ import {
   Tbody,
   Td,
   Tooltip,
+  SimpleGrid,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  NumberInput,
+  NumberInputField,
 } from "@chakra-ui/react";
 import type {
   ExamCreatorExam,
@@ -110,6 +116,9 @@ function ViewExamMetrics({
   generations,
 }: ViewExamMetricsProps) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
+  const [sigma, setSigma] = useState(50);
+  const [minAttemptTimeInS, setMinAttemptTimeInS] = useState<number>(0);
+  const [minQuestionsAnswered, setMinQuestionsAnswered] = useState<number>(0);
 
   useEffect(() => {
     updateActivity({
@@ -128,23 +137,94 @@ function ViewExamMetrics({
   const cardBg = useColorModeValue("gray.900", "gray.900");
   const accent = useColorModeValue("teal.400", "teal.300");
 
+  function handleNumberChange(
+    n: number,
+    setter: React.Dispatch<React.SetStateAction<number>>
+  ) {
+    if (isNaN(n) || n < 0) {
+      setter(0);
+    } else {
+      setter(n);
+    }
+  }
+
   return (
     <>
       <Stack spacing={8} w="full" maxW="4xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
-            View Exam Metrics
+            {exam.config.name}
           </Heading>
           <Divider my={4} borderColor="gray.600" />
           <Heading size="md" color={accent} mt={6} mb={2}>
-            Exam Generations
+            Exam Metrics
           </Heading>
           <Text color="gray.300" mb={2}>
-            This is the analysis of the exam generations:
+            This is the analysis of the exam attempts:
           </Text>
-          <AttemptStats {...{ attempts }} />
+
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={4}>
+            <Heading size="sm" gridColumn="span 3">
+              Adjust Histogram Parameters
+            </Heading>
+            <FormControl>
+              <Tooltip label="Minimum attempt time in seconds to include in the distribution">
+                <FormLabel color="gray.300">Min Attempt Time [s]</FormLabel>
+              </Tooltip>
+              <NumberInput
+                value={minAttemptTimeInS}
+                onChange={(_, v) => handleNumberChange(v, setMinAttemptTimeInS)}
+                min={0}
+                inputMode="numeric"
+              >
+                <NumberInputField bg="gray.700" color="gray.100" />
+              </NumberInput>
+            </FormControl>
+            <FormControl>
+              <Tooltip label="Minimum number of questions answered to include in the distribution">
+                <FormLabel color="gray.300">
+                  Min Questions Answered [#]
+                </FormLabel>
+              </Tooltip>
+              <NumberInput
+                value={minQuestionsAnswered}
+                onChange={(_, v) =>
+                  handleNumberChange(v, setMinQuestionsAnswered)
+                }
+                min={0}
+                inputMode="numeric"
+              >
+                <NumberInputField bg="gray.700" color="gray.100" />
+              </NumberInput>
+            </FormControl>
+            <FormControl>
+              <FormLabel>Sigma</FormLabel>
+              <NumberInput
+                value={sigma}
+                onChange={(_, v) => handleNumberChange(v, setSigma)}
+                inputMode="numeric"
+              >
+                <NumberInputField bg="gray.700" color="gray.100" />
+              </NumberInput>
+              <FormHelperText>
+                Adjust how many brackets are used in the histogram
+              </FormHelperText>
+            </FormControl>
+          </SimpleGrid>
+
+          <AttemptStats
+            attempts={attempts}
+            minAttemptTimeInS={minAttemptTimeInS}
+            minQuestionsAnswered={minQuestionsAnswered}
+          />
           <Divider my={2} borderColor="gray.800" />
-          <TimeTakenDistribution {...{ attempts, exam }} />
+          <TimeTakenDistribution
+            attempts={attempts}
+            exam={exam}
+            sigma={sigma}
+            minAttemptTimeInS={minAttemptTimeInS}
+            minQuestionsAnswered={minQuestionsAnswered}
+          />
           {/* <AverageTimePerQuestionDistribution {...{ attempts }} /> */}
 
           <Divider my={4} borderColor="gray.600" />
@@ -166,10 +246,33 @@ function ViewExamMetrics({
 
 function AttemptStats({
   attempts,
+  minAttemptTimeInS,
+  minQuestionsAnswered,
 }: {
   attempts: ExamEnvironmentExamAttempt[];
+  minAttemptTimeInS: number;
+  minQuestionsAnswered: number;
 }) {
-  const sampledAttempts = attempts.length;
+  const filteredAttempts = attempts.filter((a) => {
+    const startTimeInMS = a.startTime.getTime();
+    const flattened = a.questionSets.flatMap((qs) => qs.questions);
+
+    const questionsAnswered = flattened.filter(
+      (f) => !!f.submissionTime
+    ).length;
+    if (questionsAnswered < minQuestionsAnswered) {
+      return false;
+    }
+
+    const lastSubmission = Math.max(
+      ...flattened.map((f) => f.submissionTime?.getTime() ?? 0)
+    );
+    const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
+
+    return timeToComplete > minAttemptTimeInS;
+  });
+
+  const sampledAttempts = filteredAttempts.length;
 
   const avg = attempts.reduce(
     (acc, attempt) => {

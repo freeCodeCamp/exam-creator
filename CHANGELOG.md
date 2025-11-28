@@ -11,6 +11,7 @@
 ### Added
 
 - client: filter in exam metrics to remove _poor_ attempts
+- client: normal distribution curve
 
 ## [3.10.1] - 2025-11-28
 

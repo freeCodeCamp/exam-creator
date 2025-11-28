@@ -1,25 +1,14 @@
-import {
-  Box,
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  Heading,
-  NumberInput,
-  NumberInputField,
-  SimpleGrid,
-  Spinner,
-  Tooltip,
-} from "@chakra-ui/react";
+import { Box, Spinner } from "@chakra-ui/react";
 import {
   ExamEnvironmentExam,
   ExamEnvironmentExamAttempt,
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
-import { Dispatch, SetStateAction, useState } from "react";
 import {
   Bar,
-  BarChart,
   CartesianGrid,
+  ComposedChart,
+  Line,
   Rectangle,
   ResponsiveContainer,
   Tooltip as RechartTooltip,
@@ -30,18 +19,27 @@ import {
 interface TimeTakenDistributionProps {
   attempts: ExamEnvironmentExamAttempt[];
   exam: ExamEnvironmentExam;
+  sigma: number;
+  minAttemptTimeInS: number;
+  minQuestionsAnswered: number;
 }
 
 export function TimeTakenDistribution({
   attempts,
   exam,
+  sigma,
+  minAttemptTimeInS,
+  minQuestionsAnswered,
 }: TimeTakenDistributionProps) {
-  const [sigma, setSigma] = useState(50);
-  const [minAttemptTimeInS, setMinAttemptTimeInS] = useState<number>(0);
-  const [minQuestionsAnswered, setMinQuestionsAnswered] = useState<number>(0);
-
+  // TODO: It would be nice to not re-render every `onChange` for `minX`
   const dataQuery = useQuery({
-    queryKey: ["time-taken-distribution", exam.id],
+    queryKey: [
+      "time-taken-distribution",
+      exam.id,
+      sigma,
+      minAttemptTimeInS,
+      minQuestionsAnswered,
+    ],
     queryFn: () => {
       // Calculate completion times for all attempts
       const completionTimes = attempts
@@ -103,7 +101,40 @@ export function TimeTakenDistribution({
         timeRange: range,
         count: count,
       }));
-      return data;
+
+      // Calculate normal distribution curve
+      const mean =
+        completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length;
+      const variance =
+        completionTimes.reduce(
+          (sum, time) => sum + Math.pow(time - mean, 2),
+          0
+        ) / completionTimes.length;
+      const stdDev = Math.sqrt(variance);
+
+      // Add curve values to data points
+      const totalAttempts = completionTimes.length;
+      const dataWithCurve = data.map((point) => {
+        // Get the midpoint of the time range
+        const [start, end] = point.timeRange.split("-").map(Number);
+        const midpoint = (start + end) / 2;
+
+        // Calculate normal distribution value
+        const exponent =
+          -Math.pow(midpoint - mean, 2) / (2 * Math.pow(stdDev, 2));
+        const normalValue =
+          (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+
+        // Scale to match histogram (multiply by total attempts and bracket size)
+        const scaledCurve = normalValue * totalAttempts * bracketSize;
+
+        return {
+          ...point,
+          curve: scaledCurve,
+        };
+      });
+
+      return dataWithCurve;
     },
     retry: false,
     refetchOnWindowFocus: false,
@@ -113,115 +144,67 @@ export function TimeTakenDistribution({
     return <Spinner size="sm" color="teal.400" />;
   }
 
-  function handleNumberChange(
-    n: number,
-    setter: Dispatch<SetStateAction<number>>
-  ) {
-    if (isNaN(n) || n < 0) {
-      setter(0);
-    } else {
-      setter(n);
-    }
-  }
-
   return (
-    <Box>
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={4}>
-        <Heading size="md" gridColumn="span 3">
-          Adjust Histogram Parameters
-        </Heading>
-        <FormControl>
-          <Tooltip label="Minimum attempt time in seconds to include in the distribution">
-            <FormLabel color="gray.300">Min Attempt Time [s]</FormLabel>
-          </Tooltip>
-          <NumberInput
-            value={minAttemptTimeInS}
-            onChange={(_, v) => handleNumberChange(v, setMinAttemptTimeInS)}
-            onBlur={() => dataQuery.refetch()}
-            min={0}
-            inputMode="numeric"
-          >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
-        <FormControl>
-          <Tooltip label="Minimum number of questions answered to include in the distribution">
-            <FormLabel color="gray.300">Min Questions Answered [#]</FormLabel>
-          </Tooltip>
-          <NumberInput
-            value={minQuestionsAnswered}
-            onChange={(_, v) => handleNumberChange(v, setMinQuestionsAnswered)}
-            onBlur={() => dataQuery.refetch()}
-            min={0}
-            inputMode="numeric"
-          >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
-        <FormControl>
-          <FormLabel>Sigma</FormLabel>
-          <NumberInput
-            value={sigma}
-            onChange={(_, v) => handleNumberChange(v, setSigma)}
-            onBlur={() => dataQuery.refetch()}
-            inputMode="numeric"
-          >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-          <FormHelperText>
-            Adjust how many brackets are used in the histogram
-          </FormHelperText>
-        </FormControl>
-      </SimpleGrid>
-
-      <Box height="400px" mt={6} mb={4}>
-        <ResponsiveContainer width={"100%"} height={"100%"}>
-          <BarChart
-            accessibilityLayer
-            barCategoryGap="5%"
-            barGap={2}
-            data={dataQuery.data}
-            height={300}
-            margin={{
-              bottom: 20,
-              left: 20,
-              right: 30,
-              top: 5,
+    <Box height="400px" mt={6} mb={4}>
+      <ResponsiveContainer width={"100%"} height={"100%"}>
+        <ComposedChart
+          accessibilityLayer
+          barCategoryGap="5%"
+          barGap={2}
+          data={dataQuery.data}
+          height={300}
+          margin={{
+            bottom: 20,
+            left: 20,
+            right: 30,
+            top: 5,
+          }}
+          syncMethod="index"
+          width={500}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey="timeRange"
+            label={{
+              position: "insideBottom",
+              offset: -10,
+              value: "Time (seconds)",
             }}
-            syncMethod="index"
-            width={500}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="timeRange"
-              label={{
-                position: "insideBottom",
-                offset: -10,
-                value: "Time (seconds)",
-              }}
-            />
-            <YAxis
-              label={{
-                angle: -90,
-                position: "insideLeft",
-                value: "Number of Attempts",
-              }}
-            />
-            <RechartTooltip
-              formatter={(value: number) => [`${value} attempts`, "Count"]}
-              labelFormatter={(label: string) => `Time Range: ${label}s`}
-              contentStyle={{
-                color: "black",
-              }}
-            />
-            <Bar
-              activeBar={<Rectangle fill="pink" stroke="blue" />}
-              dataKey="count"
-              fill="#8884d8"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </Box>
+          />
+          <YAxis
+            label={{
+              angle: -90,
+              position: "insideLeft",
+              value: "Number of Attempts",
+            }}
+          />
+          <RechartTooltip
+            formatter={(value: number, name: string) => {
+              if (name === "Normal Distribution") {
+                return [`${value.toFixed(2)}`, "Normal Distribution"];
+              }
+              return [`${value} attempts`, "Count"];
+            }}
+            labelFormatter={(label: string) => `Time Range: ${label}s`}
+            contentStyle={{
+              color: "black",
+            }}
+          />
+          <Bar
+            activeBar={<Rectangle fill="pink" stroke="blue" />}
+            dataKey="count"
+            fill="#8884d8"
+          />
+          <Line
+            type="monotone"
+            dataKey="curve"
+            stroke="#ff7300"
+            strokeWidth={2}
+            dot={false}
+            name="Normal Distribution"
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
     </Box>
   );
 }
