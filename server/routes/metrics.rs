@@ -63,6 +63,8 @@ pub struct GetExamMetricsById {
     exam: prisma::ExamEnvironmentExam,
     attempts: Vec<prisma::ExamEnvironmentExamAttempt>,
     generations: Vec<prisma::ExamEnvironmentGeneratedExam>,
+    /// When the cache for this sampled data expires
+    expire_at: std::time::SystemTime,
 }
 
 #[instrument(skip_all, err(Debug))]
@@ -72,9 +74,14 @@ pub async fn get_exam_metrics_by_exam_id(
     Path(exam_id): Path<ObjectId>,
 ) -> Result<Json<GetExamMetricsById>, Error> {
     {
-        let cache = state.exam_metrics_by_id_cache.lock().unwrap();
+        let mut cache = state.exam_metrics_by_id_cache.lock().unwrap();
         if let Some(cached_response) = cache.iter().find(|c| c.exam.id == exam_id) {
-            return Ok(Json(cached_response.clone()));
+            if cached_response.expire_at < std::time::SystemTime::now() {
+                // Remove expired cached response
+                cache.retain(|c| c.exam.id != exam_id);
+            } else {
+                return Ok(Json(cached_response.clone()));
+            }
         }
     }
 
@@ -133,14 +140,12 @@ pub async fn get_exam_metrics_by_exam_id(
         exam,
         attempts: attempts_sample,
         generations,
+        expire_at: std::time::SystemTime::now() + std::time::Duration::from_secs(2 * 60 * 60), // 2 hours
     };
 
     {
         let mut cache = state.exam_metrics_by_id_cache.lock().unwrap();
         cache.push(response.clone());
-        if cache.len() > 20 {
-            cache.remove(0);
-        }
     }
 
     Ok(Json(response))
