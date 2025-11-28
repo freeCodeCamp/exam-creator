@@ -6,6 +6,13 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.10.1] - 2025-11-28
+
+### Fixed
+
+- server: recalculate tag config solutions in cases where one question resolves multiple configs
+- server: only store attempt sample cache for 24 hours
+
 ## [3.10.0] - 2025-11-27
 
 ### Added

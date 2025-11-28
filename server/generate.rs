@@ -57,10 +57,13 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
     shuffled_question_sets.shuffle(&mut rng);
 
     if exam.config.question_sets.is_empty() {
-        return Err(Error::Generation(StatusCode::BAD_REQUEST,format!(
-            "{}: Invalid exam config - no question sets config.",
-            exam.id
-        )));
+        return Err(Error::Generation(
+            StatusCode::BAD_REQUEST,
+            format!(
+                "{}: Invalid exam config - no question sets config.",
+                exam.id
+            ),
+        ));
     }
 
     // Convert question set config by type: [[all question sets of type], [another type], ...]
@@ -205,10 +208,10 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
         // Add questions to questionSetsConfigWithQuestions until fulfilled.
         while !is_question_set_config_fulfilled(qsc_with_qs) {
             if start_time.elapsed() > timeout {
-                return Err(Error::Generation(StatusCode::REQUEST_TIMEOUT,format!(
-                    "Unable to generate exam within {}ms",
-                    TIMEOUT_IN_MS
-                )));
+                return Err(Error::Generation(
+                    StatusCode::REQUEST_TIMEOUT,
+                    format!("Unable to generate exam within {}ms", TIMEOUT_IN_MS),
+                ));
             }
 
             // Ensure all questionSets ARE FULL
@@ -238,7 +241,7 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
                                 return questions.len()
                                     >= qsc_with_qs.config.number_of_questions as usize;
                         }
-                        
+
                         false
                     })
                     .cloned()
@@ -354,14 +357,33 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
         }
     }
 
+    // Update tag config for cases where one question fulfills multiple tag configs
+    for qsc_with_qs in question_sets_config_with_questions.iter() {
+        for question_set in qsc_with_qs.question_sets.iter() {
+            for question in question_set.questions.iter() {
+                for tag_config in sorted_tag_config.iter_mut() {
+                    if tag_config.number_of_questions == 0 {
+                        continue;
+                    }
+                    if tag_config.group.iter().all(|t| question.tags.contains(t)) {
+                        tag_config.number_of_questions -= 1;
+                    }
+                }
+            }
+        }
+    }
+
     // Verify all tag configs are fulfilled
     for tag_config in sorted_tag_config.iter() {
         if tag_config.number_of_questions > 0 {
-            return Err(Error::Generation(StatusCode::BAD_REQUEST, format!(
-                "Invalid Exam Configuration for exam \"{}\". Not enough questions for tag group \"{}\".",
-                exam.id,
-                tag_config.group.join(",")
-            )));
+            return Err(Error::Generation(
+                StatusCode::BAD_REQUEST,
+                format!(
+                    "Invalid Exam Configuration for exam \"{}\". Not enough questions for tag group \"{}\".",
+                    exam.id,
+                    tag_config.group.join(",")
+                ),
+            ));
         }
     }
 
@@ -429,10 +451,13 @@ fn get_question_with_random_answers(
         .collect();
 
     if incorrect_answers.is_empty() || correct_answers.is_empty() {
-        return Err(Error::Generation(StatusCode::BAD_REQUEST, format!(
-            "Question {} does not have enough correct/incorrect answers.",
-            question.id
-        )));
+        return Err(Error::Generation(
+            StatusCode::BAD_REQUEST,
+            format!(
+                "Question {} does not have enough correct/incorrect answers.",
+                question.id
+            ),
+        ));
     }
 
     let mut answers = incorrect_answers;
