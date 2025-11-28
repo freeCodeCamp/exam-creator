@@ -6,6 +6,12 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.11.0] - 2025-11-28
+
+### Added
+
+- client: filter in exam metrics to remove _poor_ attempts
+
 ## [3.10.1] - 2025-11-28
 
 ### Fixed

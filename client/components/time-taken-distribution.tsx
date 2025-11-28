@@ -3,26 +3,26 @@ import {
   FormControl,
   FormHelperText,
   FormLabel,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
+  Heading,
   NumberInput,
   NumberInputField,
-  NumberInputStepper,
+  SimpleGrid,
   Spinner,
+  Tooltip,
 } from "@chakra-ui/react";
 import {
   ExamEnvironmentExam,
   ExamEnvironmentExamAttempt,
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Rectangle,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartTooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -37,13 +37,24 @@ export function TimeTakenDistribution({
   exam,
 }: TimeTakenDistributionProps) {
   const [sigma, setSigma] = useState(50);
+  const [minAttemptTimeInS, setMinAttemptTimeInS] = useState<number>(0);
+  const [minQuestionsAnswered, setMinQuestionsAnswered] = useState<number>(0);
 
   const dataQuery = useQuery({
-    queryKey: ["time-taken-distribution", exam.id, sigma],
+    queryKey: ["time-taken-distribution", exam.id],
     queryFn: () => {
       // Calculate completion times for all attempts
       const completionTimes = attempts
-        .filter((a) => a.questionSets.length > 0)
+        .filter((a) => {
+          if (a.questionSets.length < 0) {
+            return false;
+          }
+
+          const questionsAnswered = a.questionSets.flatMap(
+            (qs) => qs.questions
+          ).length;
+          return questionsAnswered >= minQuestionsAnswered;
+        })
         .map((attempt) => {
           const startTimeInMS = attempt.startTime.getTime();
           const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
@@ -55,14 +66,14 @@ export function TimeTakenDistribution({
           );
           return (lastSubmission - startTimeInMS) / 1000;
         })
-        .filter((time) => time > 0);
+        .filter((time) => time > minAttemptTimeInS);
 
       // Create histogram data
       if (completionTimes.length === 0) {
         return null;
       }
 
-      const minTime = 0;
+      const minTime = minAttemptTimeInS;
       const maxTime = exam.config.totalTimeInS;
       const range = maxTime - minTime;
 
@@ -102,21 +113,66 @@ export function TimeTakenDistribution({
     return <Spinner size="sm" color="teal.400" />;
   }
 
+  function handleNumberChange(
+    n: number,
+    setter: Dispatch<SetStateAction<number>>
+  ) {
+    if (isNaN(n) || n < 0) {
+      setter(0);
+    } else {
+      setter(n);
+    }
+  }
+
   return (
     <Box>
-      <FormControl>
-        <FormLabel>Sigma</FormLabel>
-        <NumberInput value={sigma} onChange={(v) => setSigma(Number(v))}>
-          <NumberInputField />
-          <NumberInputStepper>
-            <NumberIncrementStepper />
-            <NumberDecrementStepper />
-          </NumberInputStepper>
-        </NumberInput>
-        <FormHelperText>
-          Adjust how many brackets are used in the histogram
-        </FormHelperText>
-      </FormControl>
+      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={4}>
+        <Heading size="md" gridColumn="span 3">
+          Adjust Histogram Parameters
+        </Heading>
+        <FormControl>
+          <Tooltip label="Minimum attempt time in seconds to include in the distribution">
+            <FormLabel color="gray.300">Min Attempt Time [s]</FormLabel>
+          </Tooltip>
+          <NumberInput
+            value={minAttemptTimeInS}
+            onChange={(_, v) => handleNumberChange(v, setMinAttemptTimeInS)}
+            onBlur={() => dataQuery.refetch()}
+            min={0}
+            inputMode="numeric"
+          >
+            <NumberInputField bg="gray.700" color="gray.100" />
+          </NumberInput>
+        </FormControl>
+        <FormControl>
+          <Tooltip label="Minimum number of questions answered to include in the distribution">
+            <FormLabel color="gray.300">Min Questions Answered [#]</FormLabel>
+          </Tooltip>
+          <NumberInput
+            value={minQuestionsAnswered}
+            onChange={(_, v) => handleNumberChange(v, setMinQuestionsAnswered)}
+            onBlur={() => dataQuery.refetch()}
+            min={0}
+            inputMode="numeric"
+          >
+            <NumberInputField bg="gray.700" color="gray.100" />
+          </NumberInput>
+        </FormControl>
+        <FormControl>
+          <FormLabel>Sigma</FormLabel>
+          <NumberInput
+            value={sigma}
+            onChange={(_, v) => handleNumberChange(v, setSigma)}
+            onBlur={() => dataQuery.refetch()}
+            inputMode="numeric"
+          >
+            <NumberInputField bg="gray.700" color="gray.100" />
+          </NumberInput>
+          <FormHelperText>
+            Adjust how many brackets are used in the histogram
+          </FormHelperText>
+        </FormControl>
+      </SimpleGrid>
 
       <Box height="400px" mt={6} mb={4}>
         <ResponsiveContainer width={"100%"} height={"100%"}>
@@ -151,9 +207,12 @@ export function TimeTakenDistribution({
                 value: "Number of Attempts",
               }}
             />
-            <Tooltip
+            <RechartTooltip
               formatter={(value: number) => [`${value} attempts`, "Count"]}
               labelFormatter={(label: string) => `Time Range: ${label}s`}
+              contentStyle={{
+                color: "black",
+              }}
             />
             <Bar
               activeBar={<Rectangle fill="pink" stroke="blue" />}
