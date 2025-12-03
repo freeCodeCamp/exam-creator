@@ -146,13 +146,12 @@ export function TimeTakenDistribution({
 
   return (
     <Box height="400px" mt={6} mb={4}>
-      <ResponsiveContainer width={"100%"} height={"100%"}>
+      <ResponsiveContainer width={"100%"} height={400}>
         <ComposedChart
           accessibilityLayer
           barCategoryGap="5%"
           barGap={2}
           data={dataQuery.data}
-          height={300}
           margin={{
             bottom: 20,
             left: 20,
@@ -160,7 +159,6 @@ export function TimeTakenDistribution({
             top: 5,
           }}
           syncMethod="index"
-          width={500}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis

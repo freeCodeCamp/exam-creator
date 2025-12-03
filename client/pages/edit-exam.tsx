@@ -20,6 +20,7 @@ import {
   Th,
   Tbody,
   Td,
+  Flex,
 } from "@chakra-ui/react";
 import type {
   ExamCreatorExam,
@@ -72,7 +73,7 @@ function Edit() {
   return (
     <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}
-      <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
         <Button
           colorScheme="teal"
           variant="outline"
@@ -263,16 +264,25 @@ function EditExam({ exam: examData }: EditExamProps) {
           examEnvironmentChallenges,
         }}
       />
-      <Stack spacing={8} w="full" maxW="4xl">
+      <Stack spacing={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
-          <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
-            Edit Exam
-          </Heading>
-          <QuestionSearch
-            exam={exam}
-            setSearchIds={setSearchIds}
-            searchIds={searchIds}
-          />
+          <Flex direction="row">
+            <Heading
+              color={accent}
+              fontWeight="extrabold"
+              fontSize="2xl"
+              mb={2}
+            >
+              Edit Exam
+            </Heading>
+            <Box marginLeft={2}>
+              <QuestionSearch
+                exam={exam}
+                setSearchIds={setSearchIds}
+                searchIds={searchIds}
+              />
+            </Box>
+          </Flex>
           <form
             onSubmit={(e) => {
               e.preventDefault();

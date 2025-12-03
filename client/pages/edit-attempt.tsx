@@ -19,6 +19,7 @@ import {
   SimpleGrid,
   Stack,
   Heading,
+  Flex,
 } from "@chakra-ui/react";
 import {
   Bar,
@@ -28,6 +29,7 @@ import {
   XAxis,
   YAxis,
   Cell,
+  ResponsiveContainer,
 } from "recharts";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -67,7 +69,7 @@ function Edit() {
 
   return (
     <Box minH="100vh" bg={bg} py={14} px={2} position="relative">
-      <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
         <Button
           colorScheme="teal"
           variant="outline"
@@ -164,7 +166,6 @@ function UsersEditing() {
 
 function EditAttempt({ attempt }: { attempt: Attempt }) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
-  const simpleGridRef = useRef<HTMLDivElement | null>(null);
   const buttonBoxRef = useRef<HTMLDivElement | null>(null);
   const approveButtonRef = useRef<HTMLButtonElement | null>(null);
   const denyButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -345,58 +346,57 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
           Deny
         </Button>
       </Box>
-      <Stack spacing={8} w="full" maxW="4xl">
+      <Stack spacing={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
             Moderate Attempt
           </Heading>
-          <SimpleGrid
-            columns={{ base: 1, md: 1 }}
-            spacing={6}
-            mb={4}
-            ref={simpleGridRef}
-          >
-            <BarChart
-              width={simpleGridRef.current?.offsetWidth ?? 500}
-              height={document.body.clientHeight * 0.3}
-              data={timeToAnswers}
-              margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-            >
-              <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
-              <Bar
-                type="monotone"
-                dataKey="value"
-                name="time to answer"
-                // Custom fill for each bar
-                fill={"purple"}
+          <Flex direction={"column"} mb={4}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={timeToAnswers}
+                margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
               >
-                {timeToAnswers.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.isCorrect ? "green" : "purple"}
-                  />
-                ))}
-              </Bar>
-              <XAxis
-                dataKey="name"
-                label={{
-                  value: "question number",
-                  position: "insideBottom",
-                  offset: 0,
-                }}
-              />
-              <YAxis
-                width="auto"
-                label={{
-                  value: "seconds since exam start",
-                  position: "insideBottomLeft",
-                  angle: -90,
-                  offset: 20,
-                }}
-              />
-              <ReChartsTooltip cursor={false} />
-            </BarChart>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
+                <Bar
+                  type="monotone"
+                  dataKey="value"
+                  name="time to answer"
+                  // Custom fill for each bar
+                  fill={"purple"}
+                >
+                  {timeToAnswers.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.isCorrect ? "green" : "purple"}
+                    />
+                  ))}
+                </Bar>
+                <XAxis
+                  dataKey="name"
+                  label={{
+                    value: "question number",
+                    position: "insideBottom",
+                    offset: 0,
+                  }}
+                />
+                <YAxis
+                  width="auto"
+                  label={{
+                    value: "seconds since exam start",
+                    position: "insideBottomLeft",
+                    angle: -90,
+                    offset: 20,
+                  }}
+                />
+                <ReChartsTooltip cursor={false} />
+              </BarChart>
+            </ResponsiveContainer>
+            <SimpleGrid
+              // minChildWidth={"200px"}
+              columns={{ base: 1, md: 2, lg: 3 }}
+              spacing={4}
+            >
               <Box
                 bg="gray.700"
                 p={2}
@@ -495,7 +495,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 </Text>
               </Box>
             </SimpleGrid>
-          </SimpleGrid>
+          </Flex>
         </Box>
       </Stack>
     </>

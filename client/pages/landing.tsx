@@ -55,7 +55,7 @@ export function Landing() {
       {/* Logout button top right */}
       <Button
         position="fixed"
-        top={6}
+        top={3}
         right={8}
         zIndex={101}
         colorScheme="red"
@@ -66,7 +66,7 @@ export function Landing() {
         Logout
       </Button>
       <Center>
-        <Stack spacing={8} w="full" maxW="5xl">
+        <Stack spacing={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
@@ -120,7 +120,7 @@ export function Landing() {
             </HStack>
           </Flex>
           <Box>
-            <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} spacing={8}>
+            <SimpleGrid minChildWidth={"380px"} spacing={8}>
               <Button
                 onClick={() => navigate({ to: examsRoute.to })}
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}

@@ -85,21 +85,21 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
       >
         <CardHeader pb={2}>
           <Flex align="center" justify="space-between">
-            <Text
-              fontSize="xl"
-              fontWeight="bold"
-              color={attemptQuery.isError ? "#ff3f3f" : accent}
-              noOfLines={1}
-              maxW="80%"
-            >
-              {attemptQuery.isPending ? (
-                <Spinner color={accent} />
-              ) : attemptQuery.isError ? (
-                attemptQuery.error.message
-              ) : (
-                attemptQuery.data.config.name
-              )}
-            </Text>
+            {attemptQuery.isPending ? (
+              <Spinner color={accent} />
+            ) : (
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                color={attemptQuery.isError ? "#ff3f3f" : accent}
+                noOfLines={1}
+                maxW="80%"
+              >
+                {attemptQuery.isError
+                  ? attemptQuery.error.message
+                  : attemptQuery.data.config.name}
+              </Text>
+            )}
             <Badge
               fontSize={"1em"}
               colorScheme={
@@ -158,7 +158,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                 </Avatar>
               )}
             </HStack>
-            <Text color="gray.400" fontSize="sm" ml={2}>
+            <Box color="gray.400" fontSize="sm" ml={2}>
               Passing Percent:{" "}
               {attemptQuery.isPending ? (
                 <Spinner color={accent} />
@@ -167,7 +167,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
               ) : (
                 attemptQuery.data.config.passingPercent
               )}
-            </Text>
+            </Box>
           </Flex>
           <VStack
             align="start"

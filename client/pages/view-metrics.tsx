@@ -67,7 +67,7 @@ function View() {
   return (
     <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}
-      <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
         <Button
           colorScheme="teal"
           variant="outline"
@@ -150,7 +150,7 @@ function ViewExamMetrics({
 
   return (
     <>
-      <Stack spacing={8} w="full" maxW="4xl">
+      <Stack spacing={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
             {exam.config.name}
@@ -163,10 +163,10 @@ function ViewExamMetrics({
             This is the analysis of the exam attempts:
           </Text>
 
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={4}>
-            <Heading size="sm" gridColumn="span 3">
-              Adjust Histogram Parameters
-            </Heading>
+          <Heading size="sm" gridColumn="span 3">
+            Adjust Histogram Parameters
+          </Heading>
+          <SimpleGrid minChildWidth={"230px"} spacing={6} mb={4} mt={2}>
             <FormControl>
               <Tooltip label="Minimum attempt time in seconds to include in the distribution">
                 <FormLabel color="gray.300">Min Attempt Time [s]</FormLabel>

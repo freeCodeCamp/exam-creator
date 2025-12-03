@@ -6,6 +6,17 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.12.0] - 2025-12-03
+
+### Added
+
+- server: answer text not empty validation
+- client: previous user attempt stats in moderation view
+
+### Refactored
+
+- client: increase widths on large screens
+
 ## [3.11.0] - 2025-11-28
 
 ### Added

@@ -156,7 +156,7 @@ function ModerationSummary({ moderationsCount }: ModerationSummaryProps) {
               width="100%"
               textAlign="center"
             >
-              {statusKey}: {staging[statusKey]}
+              {staging[statusKey]}
             </Badge>
           </Tooltip>
         </GridItem>
@@ -188,7 +188,7 @@ function ModerationSummary({ moderationsCount }: ModerationSummaryProps) {
               width="100%"
               textAlign="center"
             >
-              {statusKey}: {production[statusKey]}
+              {production[statusKey]}
             </Badge>
           </Tooltip>
         </GridItem>

@@ -114,7 +114,7 @@ export function Attempts() {
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
-      <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
         <DatabaseStatus />
         <Button
           colorScheme="teal"
@@ -134,7 +134,7 @@ export function Attempts() {
         </Button>
       </HStack>
       <Center>
-        <Stack spacing={8} w="full" maxW="5xl">
+        <Stack spacing={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
@@ -228,7 +228,7 @@ export function Attempts() {
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid columns={{ base: 1, md: 1, lg: 1 }} spacing={8}>
+              <SimpleGrid columns={1} spacing={8}>
                 {isSuccess &&
                   data.pages.flat().map((moderation, i, moderations) => {
                     const isLastCard = i === moderations.length - 1;

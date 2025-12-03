@@ -222,7 +222,7 @@ export function Exams() {
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
-      <HStack position="fixed" top={6} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
         <Button
           colorScheme="teal"
           variant="outline"
@@ -241,7 +241,7 @@ export function Exams() {
         </Button>
       </HStack>
       <Center>
-        <Stack spacing={8} w="full" maxW="5xl">
+        <Stack spacing={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
@@ -439,7 +439,7 @@ export function Exams() {
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
+              <SimpleGrid minChildWidth={"380px"} spacing={8}>
                 {examsQuery.data.map(({ exam, databaseEnvironments }) => (
                   <ExamCard
                     key={exam.id}
