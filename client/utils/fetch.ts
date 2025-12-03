@@ -585,6 +585,22 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
   return deserialized;
 }
 
+export async function getAttemptsByUserId(userId: string): Promise<Attempt[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const res = await fetch(`/mocks/attempts.json`);
+    const attempts: Attempt[] = deserializeToPrisma(await res.json());
+
+    return attempts;
+  }
+
+  const res = await authorizedFetch(`/api/attempts/user/${userId}`);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<Attempt[]>(json);
+  return deserialized;
+}
+
 export async function getExamChallengeByExamId(
   examId: ExamCreatorExam["id"]
 ): Promise<ExamEnvironmentChallenge[]> {

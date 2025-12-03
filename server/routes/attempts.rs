@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     Json,
     extract::{Path, State},
@@ -125,4 +127,42 @@ pub async fn patch_moderation_status_by_attempt_id(
     }
 
     Ok(())
+}
+
+#[instrument(skip_all, err(Debug), level = "debug")]
+pub async fn get_attempts_by_user_id(
+    exam_creator_user: prisma::ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(user_id): Path<ObjectId>,
+) -> Result<Json<Vec<config::Attempt>>, Error> {
+    let database = database_environment(&server_state, &exam_creator_user);
+    let mut exam_attempts = database
+        .exam_attempt
+        .find(doc! { "userId": user_id })
+        .await?;
+
+    let mut attempts = vec![];
+    let mut exams = HashMap::<ObjectId, prisma::ExamEnvironmentExam>::new();
+
+    while let Some(exam_attempt) = exam_attempts.try_next().await? {
+        let exam = if let Some(exam) = exams.get(&exam_attempt.exam_id) {
+            exam.clone()
+        } else {
+            let exam = database
+                .exam
+                .find_one(doc! {"_id": exam_attempt.exam_id})
+                .await?
+                .ok_or(Error::Server(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("exam non-existent: {}", exam_attempt.exam_id),
+                ))?;
+            exams.insert(exam_attempt.exam_id, exam.to_owned());
+            exam
+        };
+
+        let attempt = config::construct_attempt(&exam, &exam_attempt);
+        attempts.push(attempt);
+    }
+
+    Ok(Json(attempts))
 }

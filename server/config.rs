@@ -229,6 +229,10 @@ impl EnvVars {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Attempt {
     id: ObjectId,
+    #[serde(rename = "examId")]
+    exam_id: ObjectId,
+    #[serde(rename = "userId")]
+    user_id: ObjectId,
     prerequisites: Vec<ObjectId>,
     deprecated: bool,
     #[serde(rename = "questionSets")]
@@ -351,6 +355,8 @@ pub fn construct_attempt(
 
     let attempt = Attempt {
         id: exam_attempt.id,
+        exam_id: exam_attempt.exam_id,
+        user_id: exam_attempt.user_id,
         prerequisites: prerequisites.clone(),
         deprecated: *deprecated,
         question_sets: attempt_question_sets,

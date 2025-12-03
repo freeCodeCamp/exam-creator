@@ -42,6 +42,7 @@ import {
 import { AuthContext } from "../contexts/auth";
 import {
   getAttemptById,
+  getAttemptsByUserId,
   getModerations,
   patchModerationStatusByAttemptId,
 } from "../utils/fetch";
@@ -259,45 +260,14 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
-  const startTimeInMS = attempt.startTime.getTime();
-
-  const totalQuestions = attempt.config.questionSets
-    .map((qs) => qs.numberOfQuestions * qs.numberOfSet)
-    .reduce((a, b) => a + b, 0);
-  // TODO: Consider bar chart with sorted values
-  //       Show questions in order final answer was recorded
-  const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
-  const timeToAnswers = flattened.map((q, i) => {
-    const submissionTimeInMS = q.submissionTime?.getTime() ?? 0;
-    const secondsSinceStart = (submissionTimeInMS - startTimeInMS) / 1000;
-    // Determine if the answer is correct
-    const isCorrect = q.answers
-      .filter((a) => a.isCorrect)
-      .every((a) => q.selected && q.selected.includes(a.id));
-    return {
-      name: i + 1,
-      value: secondsSinceStart,
-      isCorrect,
-    };
-  });
-
-  const answered = flattened.filter((f) => {
-    return !!f.submissionTime;
-  }).length;
-  const correct = flattened.filter((f) => {
-    return f.answers
-      .filter((a) => a.isCorrect)
-      .every((a) => f.selected.includes(a.id));
-  }).length;
-  const lastSubmission = Math.max(
-    ...flattened.map((f) => {
-      return f.submissionTime?.getTime() ?? 0;
-    })
-  );
-  const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
-
-  const averageTimePerQuestion =
-    answered > 0 ? (timeToComplete / answered).toFixed(2) : "0";
+  const {
+    timeToAnswers,
+    totalQuestions,
+    answered,
+    correct,
+    timeToComplete,
+    averageTimePerQuestion,
+  } = getAttemptStats(attempt);
 
   return (
     <>
@@ -349,7 +319,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       <Stack spacing={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
-            Moderate Attempt
+            Moderate Attempt: {attempt.config.name}
           </Heading>
           <Flex direction={"column"} mb={4}>
             <ResponsiveContainer width="100%" height={300}>
@@ -495,11 +465,163 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 </Text>
               </Box>
             </SimpleGrid>
+            <AllUserAttemptsContainer attempt={attempt} />
           </Flex>
         </Box>
       </Stack>
     </>
   );
+}
+
+function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
+  const attemptsMutation = useMutation({
+    mutationKey: ["user-attempts", attempt.userId],
+    mutationFn: (userId: string) => getAttemptsByUserId(userId),
+    retry: false,
+  });
+
+  return (
+    <Center mt={4}>
+      {!attemptsMutation.data ? (
+        <Button
+          colorScheme="teal"
+          size="lg"
+          mt={4}
+          onClick={() => attemptsMutation.mutate(attempt.userId)}
+          disabled={attemptsMutation.isPending}
+          isLoading={attemptsMutation.isPending}
+        >
+          Fetch All User Attempts
+        </Button>
+      ) : (
+        <AllUserAttempts
+          attempts={attemptsMutation.data.filter(
+            (a) => a.examId === attempt.examId
+          )}
+        />
+      )}
+    </Center>
+  );
+}
+
+/**
+ * Shows all attempts for the same exam in a table with:
+ * - Date taken (start time)
+ * - Correct answers
+ * - Average time
+ * - Total time
+ * - Percentage correct
+ *
+ */
+function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
+  if (attempts.length === 0) {
+    return null;
+  }
+
+  return (
+    <Box mt={8} w="full">
+      <Heading size={"md"} mb={4} color="teal.400">
+        All User Attempts for This Exam
+      </Heading>
+      <Box overflowX="auto">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "left", padding: "8px" }}>Date Taken</th>
+              <th style={{ textAlign: "left", padding: "8px" }}>Answers</th>
+              <th style={{ textAlign: "left", padding: "8px" }}>
+                Average Time
+              </th>
+              <th style={{ textAlign: "left", padding: "8px" }}>Total Time</th>
+              <th style={{ textAlign: "left", padding: "8px" }}>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {attempts.map((attempt) => {
+              const {
+                correct,
+                totalQuestions,
+                averageTimePerQuestion,
+                timeToComplete,
+                answered,
+              } = getAttemptStats(attempt);
+              return (
+                <tr key={attempt.id} style={{ borderBottom: "1px solid #ccc" }}>
+                  <td style={{ padding: "8px" }}>
+                    {attempt.startTime.toLocaleString()}
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    {correct}/{answered}
+                  </td>
+                  <td style={{ padding: "8px" }}>{averageTimePerQuestion}s</td>
+                  <td style={{ padding: "8px" }}>
+                    {timeToComplete.toFixed(0)}s
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    {totalQuestions > 0
+                      ? ((correct / totalQuestions) * 100).toFixed(1)
+                      : 0}
+                    %
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Box>
+    </Box>
+  );
+}
+
+function getAttemptStats(attempt: Attempt) {
+  const startTimeInMS = attempt.startTime.getTime();
+
+  const totalQuestions = attempt.config.questionSets
+    .map((qs) => qs.numberOfQuestions * qs.numberOfSet)
+    .reduce((a, b) => a + b, 0);
+  // TODO: Consider bar chart with sorted values
+  //       Show questions in order final answer was recorded
+  const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
+  const timeToAnswers = flattened.map((q, i) => {
+    const submissionTimeInMS = q.submissionTime?.getTime() ?? 0;
+    const secondsSinceStart = (submissionTimeInMS - startTimeInMS) / 1000;
+    // Determine if the answer is correct
+    const isCorrect = q.answers
+      .filter((a) => a.isCorrect)
+      .every((a) => q.selected && q.selected.includes(a.id));
+    return {
+      name: i + 1,
+      value: secondsSinceStart,
+      isCorrect,
+    };
+  });
+
+  const answered = flattened.filter((f) => {
+    return !!f.submissionTime;
+  }).length;
+  const correct = flattened.filter((f) => {
+    return f.answers
+      .filter((a) => a.isCorrect)
+      .every((a) => f.selected.includes(a.id));
+  }).length;
+  const lastSubmission = Math.max(
+    ...flattened.map((f) => {
+      return f.submissionTime?.getTime() ?? 0;
+    })
+  );
+  const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
+
+  const averageTimePerQuestion =
+    answered > 0 ? (timeToComplete / answered).toFixed(2) : "0";
+
+  return {
+    timeToAnswers,
+    totalQuestions,
+    answered,
+    correct,
+    timeToComplete,
+    averageTimePerQuestion,
+  };
 }
 
 export const editAttemptRoute = createRoute({
