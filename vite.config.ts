@@ -89,6 +89,38 @@ export default defineConfig(async () => ({
       allow: ["."],
       exclude: ["target"],
     },
+    proxy: {
+      // Proxy API and auth routes to the Rust server (default port 8080).
+      // This lets you run the real server while using Vite's HMR for client
+      // changes. Adjust PORT env var if your backend runs on a different port.
+      "/api": {
+        target: `http://127.0.0.1:${process.env.PORT ?? "8080"}`,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path: string) => path.replace(/^\/api/, "/api"),
+      },
+      "/auth": {
+        target: `http://127.0.0.1:${process.env.PORT ?? "8080"}`,
+        changeOrigin: true,
+        secure: false,
+      },
+      // WebSocket endpoints used by the server (Vite will proxy WS when ws: true)
+      "/ws": {
+        target: `ws://127.0.0.1:${process.env.PORT ?? "8080"}`,
+        ws: true,
+      },
+      // Ping/health endpoint
+      "/status": {
+        target: `http://127.0.0.1:${process.env.PORT ?? "8080"}`,
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+    hmr: {
+      host: "127.0.0.1",
+      // Keep the HMR port equal to Vite's port so connections are stable
+      port: 1420,
+    },
   },
   optimizeDeps: {
     // Exclude problematic modules that use top-level await
