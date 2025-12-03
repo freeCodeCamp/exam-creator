@@ -366,6 +366,9 @@ pub fn construct_attempt(
 /// - `config.passing_percent` is between 0 and 100
 /// - `config.tags` is solvable
 /// - `config.question_sets` is solvable
+/// - `question_sets.questions.text` is not empty
+/// - `question_sets.questions.answers` has at least one correct answer
+/// - `question_sets.questions.answers.text` is not empty
 ///
 /// A "solvable" config means that there are enough sets, questions, and answers to satisfy the constraints
 pub fn validate_config(exam: &prisma::ExamCreatorExam) -> Result<(), String> {
@@ -475,6 +478,26 @@ pub fn validate_config(exam: &prisma::ExamCreatorExam) -> Result<(), String> {
                         question_set.id,
                         num_incorrect_answers,
                         qs_config.number_of_incorrect_answers
+                    ));
+                }
+            }
+        }
+    }
+
+    for qs in question_sets {
+        for question in &qs.questions {
+            if question.text.trim().is_empty() {
+                return Err(format!("Question {:?} has empty text", question.id));
+            }
+            let has_correct_answer = question.answers.iter().any(|a| a.is_correct);
+            if !has_correct_answer {
+                return Err(format!("Question {:?} has no correct answers", question.id));
+            }
+            for answer in &question.answers {
+                if answer.text.trim().is_empty() {
+                    return Err(format!(
+                        "Answer {:?} in question {:?} has empty text",
+                        answer.id, question.id
                     ));
                 }
             }
