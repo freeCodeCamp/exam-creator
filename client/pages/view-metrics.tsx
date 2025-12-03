@@ -86,7 +86,7 @@ function View() {
         </Button>
       </HStack>
       <Center>
-        {examMetricsQuery.isPending ? (
+        {examMetricsQuery.isFetching || examMetricsQuery.isPending ? (
           <Spinner color={spinnerColor} size="xl" />
         ) : examMetricsQuery.isError ? (
           <Text color="red.400" fontSize="lg">
@@ -253,61 +253,88 @@ function AttemptStats({
   minAttemptTimeInS: number;
   minQuestionsAnswered: number;
 }) {
-  const filteredAttempts = attempts.filter((a) => {
-    const startTimeInMS = a.startTime.getTime();
-    const flattened = a.questionSets.flatMap((qs) => qs.questions);
+  const statsQuery = useQuery({
+    queryKey: [
+      "attempt-stats",
+      attempts,
+      minAttemptTimeInS,
+      minQuestionsAnswered,
+    ],
+    queryFn: async () => {
+      const filteredAttempts = attempts.filter((a) => {
+        const startTimeInMS = a.startTime.getTime();
+        const flattened = a.questionSets.flatMap((qs) => qs.questions);
 
-    const questionsAnswered = flattened.filter(
-      (f) => !!f.submissionTime
-    ).length;
-    if (questionsAnswered < minQuestionsAnswered) {
-      return false;
-    }
+        const questionsAnswered = flattened.filter(
+          (f) => !!f.submissionTime
+        ).length;
+        if (questionsAnswered < minQuestionsAnswered) {
+          return false;
+        }
 
-    const lastSubmission = Math.max(
-      ...flattened.map((f) => f.submissionTime?.getTime() ?? 0)
-    );
-    const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
+        const lastSubmission = Math.max(
+          ...flattened.map((f) => f.submissionTime?.getTime() ?? 0)
+        );
+        const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
-    return timeToComplete > minAttemptTimeInS;
+        return timeToComplete > minAttemptTimeInS;
+      });
+
+      const sampledAttempts = filteredAttempts.length;
+
+      const avg = attempts.reduce(
+        (acc, attempt) => {
+          const startTimeInMS = attempt.startTime.getTime();
+          const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
+
+          if (flattened.length === 0) {
+            return acc;
+          }
+
+          const answered = flattened.filter((f) => {
+            return !!f.submissionTime;
+          }).length;
+          const lastSubmission = Math.max(
+            ...flattened.map((f) => {
+              return f.submissionTime?.getTime() ?? 0;
+            })
+          );
+          const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
+
+          const averageTimePerQuestion =
+            answered > 0 ? timeToComplete / answered : 0;
+
+          return {
+            sumTimeSpent: acc.sumTimeSpent + timeToComplete,
+            sumTimePerQuestion: acc.sumTimePerQuestion + averageTimePerQuestion,
+          };
+        },
+        { sumTimeSpent: 0, sumTimePerQuestion: 0 }
+      );
+
+      const avgTimeSpent =
+        sampledAttempts > 0 ? avg.sumTimeSpent / sampledAttempts : 0;
+      const avgTimePerQuestion =
+        sampledAttempts > 0 ? avg.sumTimePerQuestion / sampledAttempts : 0;
+      return { sampledAttempts, avgTimeSpent, avgTimePerQuestion };
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
-  const sampledAttempts = filteredAttempts.length;
+  if (statsQuery.isPending) {
+    return <Spinner color="teal.300" />;
+  }
 
-  const avg = attempts.reduce(
-    (acc, attempt) => {
-      const startTimeInMS = attempt.startTime.getTime();
-      const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
+  if (statsQuery.isError) {
+    return (
+      <Text color="red.400">
+        Error calculating attempt stats: {statsQuery.error.message}
+      </Text>
+    );
+  }
 
-      if (flattened.length === 0) {
-        return acc;
-      }
-
-      const answered = flattened.filter((f) => {
-        return !!f.submissionTime;
-      }).length;
-      const lastSubmission = Math.max(
-        ...flattened.map((f) => {
-          return f.submissionTime?.getTime() ?? 0;
-        })
-      );
-      const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
-
-      const averageTimePerQuestion =
-        answered > 0 ? timeToComplete / answered : 0;
-
-      return {
-        sumTimeSpent: acc.sumTimeSpent + timeToComplete,
-        sumTimePerQuestion: acc.sumTimePerQuestion + averageTimePerQuestion,
-      };
-    },
-    { sumTimeSpent: 0, sumTimePerQuestion: 0 }
-  );
-
-  const avgTimeSpent =
-    sampledAttempts > 0 ? avg.sumTimeSpent / sampledAttempts : 0;
-  const avgTimePerQuestion =
-    sampledAttempts > 0 ? avg.sumTimePerQuestion / sampledAttempts : 0;
+  const { sampledAttempts, avgTimeSpent, avgTimePerQuestion } = statsQuery.data;
 
   return (
     <Box overflowX="auto" borderRadius="md" bg="black" p={2}>
