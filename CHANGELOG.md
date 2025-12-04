@@ -6,6 +6,12 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.12.1] - 2025-12-04
+
+### Fixed
+
+- server: stop sending invalid config errors to sentry
+
 ## [3.12.0] - 2025-12-03
 
 ### Added

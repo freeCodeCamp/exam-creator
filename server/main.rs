@@ -40,6 +40,24 @@ async fn main() {
             sentry::ClientOptions {
                 release: sentry::release_name!(),
                 traces_sample_rate: 1.0,
+                before_send: Some(std::sync::Arc::new(|event| {
+                    // Filter out InvalidConfig errors - check message and exceptions
+                    let msg = event.message.as_ref().map(|m| m.as_str()).unwrap_or("");
+                    if msg.contains("InvalidConfig") {
+                        return None;
+                    }
+
+                    // Also check exception values
+                    for exception in &event.exception {
+                        if let Some(value) = &exception.value {
+                            if value.contains("InvalidConfig") {
+                                return None;
+                            }
+                        }
+                    }
+
+                    Some(event)
+                })),
                 ..Default::default()
             },
         )))
