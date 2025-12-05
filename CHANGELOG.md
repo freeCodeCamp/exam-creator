@@ -10,7 +10,7 @@
 
 ### Added
 
-- exam metrics sort questions by difficulty
+- exam metrics sort questions by difficulty, time spent, % correct, and how many submitted the question
 - question difficulty by time spent on question and correctness
 
 ### Fixed

@@ -419,141 +419,149 @@ function AttemptStats({
 }
 
 function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
-  const [sortKey, setSortKey] = useState<"difficulty" | "exam">("difficulty");
+  const [sortKey, setSortKey] = useState<
+    "difficulty" | "exam" | "time-spent" | "correct" | "submitted-by"
+  >("difficulty");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Pre-calculate all questions with their stats to get min/max difficulty
-  const questionsWithStats = exam.questionSets
-    .flatMap((qs) => {
-      const questions = qs.questions.map((q) => ({
-        ...q,
-        context: qs.context,
-      }));
-      return questions;
-    })
-    .map((q) => {
-      const seenBy = attempts.filter((attempt) => {
-        const generation = generations.find(
-          (gen) => gen.id === attempt.generatedExamId
-        );
-        if (!generation) return false;
-        return generation.questionSets
-          .flatMap((gqs) => gqs.questions.map((q) => q.id))
-          .includes(q.id);
-      }).length;
-
-      const submittedBy = attempts.filter((attempt) => {
-        const submittedQuestion = attempt.questionSets
-          .flatMap((aqs) => aqs.questions)
-          .find((aq) => aq.id === q.id);
-        return !!submittedQuestion;
-      }).length;
-
-      const timeSpent = (() => {
-        const relevantAttempts = attempts.filter((attempt) => {
-          const submittedQuestion = attempt.questionSets
-            .flatMap((aqs) => aqs.questions)
-            .find((aq) => aq.id === q.id);
-          return !!submittedQuestion;
-        });
-
-        const totalTimeSpent = relevantAttempts.reduce((acc, attempt) => {
-          const flattenedQuestions = attempt.questionSets
-            .flatMap((aqs) => aqs.questions)
-            .sort((a, b) => {
-              const aTime = a.submissionTime
-                ? a.submissionTime.getTime()
-                : Infinity;
-              const bTime = b.submissionTime
-                ? b.submissionTime.getTime()
-                : Infinity;
-              return aTime - bTime;
-            });
-
-          const questionIndex = flattenedQuestions.findIndex(
-            (fq) => fq.id === q.id
-          );
-          if (questionIndex === -1) {
-            return acc;
-          }
-
-          const question = flattenedQuestions[questionIndex];
-          const submissionTime = question.submissionTime.getTime();
-
-          let previousTime =
-            questionIndex === 0
-              ? attempt.startTime.getTime()
-              : flattenedQuestions[questionIndex - 1].submissionTime.getTime();
-
-          const timeSpentOnQuestion = (submissionTime - previousTime) / 1000;
-          return acc + timeSpentOnQuestion;
-        }, 0);
-
-        const timeSpent =
-          relevantAttempts.length > 0
-            ? totalTimeSpent / relevantAttempts.length
-            : 0;
-        return timeSpent.toFixed(2);
-      })();
-
-      const percentageCorrect = (
-        (attempts.filter((attempt) => {
-          const submittedQuestion = attempt.questionSets
-            .flatMap((aqs) => aqs.questions)
-            .find((aq) => aq.id === q.id);
-          if (!submittedQuestion) return false;
-          const selectedCorrectAnswer = submittedQuestion.answers
-            .map((aid) => q.answers.find((qa) => qa.id === aid && qa.isCorrect))
-            .filter((a) => !!a);
-          return selectedCorrectAnswer.length > 0;
-        }).length /
-          Math.max(submittedBy, 1)) *
-        100
-      ).toFixed(2);
-
-      const difficulty = (
-        parseFloat(timeSpent) / Math.max(parseFloat(percentageCorrect), 1)
-      ).toFixed(2);
-
-      const answers = q.answers.map((answer) => {
+  const questionsWithStats = (() => {
+    return exam.questionSets
+      .flatMap((qs) =>
+        qs.questions.map((q) => ({
+          ...q,
+          context: qs.context,
+        }))
+      )
+      .map((q, i) => {
         const seenBy = attempts.filter((attempt) => {
           const generation = generations.find(
             (gen) => gen.id === attempt.generatedExamId
           );
           if (!generation) return false;
           return generation.questionSets
-            .flatMap((gqs) => gqs.questions.flatMap((qqs) => qqs.answers))
-            .includes(answer.id);
+            .flatMap((gqs) => gqs.questions.map((q) => q.id))
+            .includes(q.id);
         }).length;
 
         const submittedBy = attempts.filter((attempt) => {
-          const attemptAnswers = attempt.questionSets.flatMap((aqs) =>
-            aqs.questions.flatMap((aq) => aq.answers)
-          );
-          return attemptAnswers.includes(answer.id);
+          const submittedQuestion = attempt.questionSets
+            .flatMap((aqs) => aqs.questions)
+            .find((aq) => aq.id === q.id);
+          return !!submittedQuestion;
         }).length;
 
+        const timeSpent = (() => {
+          const relevantAttempts = attempts.filter((attempt) => {
+            const submittedQuestion = attempt.questionSets
+              .flatMap((aqs) => aqs.questions)
+              .find((aq) => aq.id === q.id);
+            return !!submittedQuestion;
+          });
+
+          const totalTimeSpent = relevantAttempts.reduce((acc, attempt) => {
+            const flattenedQuestions = attempt.questionSets
+              .flatMap((aqs) => aqs.questions)
+              .sort((a, b) => {
+                const aTime = a.submissionTime
+                  ? a.submissionTime.getTime()
+                  : Infinity;
+                const bTime = b.submissionTime
+                  ? b.submissionTime.getTime()
+                  : Infinity;
+                return aTime - bTime;
+              });
+
+            const questionIndex = flattenedQuestions.findIndex(
+              (fq) => fq.id === q.id
+            );
+            if (questionIndex === -1) {
+              return acc;
+            }
+
+            const question = flattenedQuestions[questionIndex];
+            const submissionTime = question.submissionTime.getTime();
+
+            let previousTime =
+              questionIndex === 0
+                ? attempt.startTime.getTime()
+                : flattenedQuestions[
+                    questionIndex - 1
+                  ].submissionTime.getTime();
+
+            const timeSpentOnQuestion = (submissionTime - previousTime) / 1000;
+            return acc + timeSpentOnQuestion;
+          }, 0);
+
+          const timeSpent =
+            relevantAttempts.length > 0
+              ? totalTimeSpent / relevantAttempts.length
+              : 0;
+          return timeSpent.toFixed(2);
+        })();
+
+        const percentageCorrect = (
+          (attempts.filter((attempt) => {
+            const submittedQuestion = attempt.questionSets
+              .flatMap((aqs) => aqs.questions)
+              .find((aq) => aq.id === q.id);
+            if (!submittedQuestion) return false;
+            const selectedCorrectAnswer = submittedQuestion.answers
+              .map((aid) =>
+                q.answers.find((qa) => qa.id === aid && qa.isCorrect)
+              )
+              .filter((a) => !!a);
+            return selectedCorrectAnswer.length > 0;
+          }).length /
+            Math.max(submittedBy, 1)) *
+          100
+        ).toFixed(2);
+
+        const difficulty = (
+          parseFloat(timeSpent) / Math.max(parseFloat(percentageCorrect), 1)
+        ).toFixed(2);
+
+        const answers = q.answers.map((answer) => {
+          const seenBy = attempts.filter((attempt) => {
+            const generation = generations.find(
+              (gen) => gen.id === attempt.generatedExamId
+            );
+            if (!generation) return false;
+            return generation.questionSets
+              .flatMap((gqs) => gqs.questions.flatMap((qqs) => qqs.answers))
+              .includes(answer.id);
+          }).length;
+
+          const submittedBy = attempts.filter((attempt) => {
+            const attemptAnswers = attempt.questionSets.flatMap((aqs) =>
+              aqs.questions.flatMap((aq) => aq.answers)
+            );
+            return attemptAnswers.includes(answer.id);
+          }).length;
+
+          return {
+            ...answer,
+            stats: {
+              seenBy,
+              submittedBy,
+            },
+          };
+        });
+
         return {
-          ...answer,
+          ...q,
           stats: {
             seenBy,
             submittedBy,
+            timeSpent,
+            percentageCorrect,
+            difficulty,
           },
+          answers,
+          i,
         };
       });
-
-      return {
-        ...q,
-        stats: {
-          seenBy,
-          submittedBy,
-          timeSpent,
-          percentageCorrect,
-          difficulty,
-        },
-        answers,
-      };
-    });
+  })();
 
   const difficulties = questionsWithStats
     .map((q) => parseFloat(q.stats.difficulty))
@@ -599,7 +607,14 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               <select
                 value={sortKey}
                 onChange={(e) =>
-                  setSortKey(e.target.value as "difficulty" | "exam")
+                  setSortKey(
+                    e.target.value as
+                      | "difficulty"
+                      | "exam"
+                      | "time-spent"
+                      | "correct"
+                      | "submitted-by"
+                  )
                 }
                 style={{
                   width: "100%",
@@ -612,6 +627,9 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               >
                 <option value="difficulty">Difficulty</option>
                 <option value="exam">Exam Order</option>
+                <option value="time-spent">Time Spent</option>
+                <option value="correct">Correct %</option>
+                <option value="submitted-by">Submitted By</option>
               </select>
             </FormControl>
             <FormControl>
@@ -640,19 +658,35 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
         <Stack spacing={4}>
           {questionsWithStats
             .sort((a, b) => {
-              // if sorting by exam order:
-              // - do not sort, keep original order except by sortOrder
+              // exam order: use examOrder numeric field
               if (sortKey === "exam") {
-                return sortOrder === "asc" ? 0 : 0;
+                return sortOrder === "asc"
+                  ? (a as any).examOrder - (b as any).examOrder
+                  : (b as any).examOrder - (a as any).examOrder;
               }
 
-              const diffA = parseFloat(a.stats.difficulty);
-              const diffB = parseFloat(b.stats.difficulty);
-              if (sortOrder === "asc") {
-                return diffA - diffB;
-              } else {
-                return diffB - diffA;
+              if (sortKey === "time-spent") {
+                const ta = parseFloat(a.stats.timeSpent) || 0;
+                const tb = parseFloat(b.stats.timeSpent) || 0;
+                return sortOrder === "asc" ? ta - tb : tb - ta;
               }
+
+              if (sortKey === "correct") {
+                const ca = parseFloat(a.stats.percentageCorrect) || 0;
+                const cb = parseFloat(b.stats.percentageCorrect) || 0;
+                return sortOrder === "asc" ? ca - cb : cb - ca;
+              }
+
+              if (sortKey === "submitted-by") {
+                const sa = a.stats.submittedBy || 0;
+                const sb = b.stats.submittedBy || 0;
+                return sortOrder === "asc" ? sa - sb : sb - sa;
+              }
+
+              // default: difficulty
+              const diffA = parseFloat(a.stats.difficulty) || 0;
+              const diffB = parseFloat(b.stats.difficulty) || 0;
+              return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
             })
             .map((question) => {
               return <QuestionCard key={question.id} question={question} />;
@@ -682,6 +716,8 @@ type QuestionWithStats = Omit<
     difficulty: string;
   };
   answers: AnswerWithStats[];
+  // Used to track original order as set in the exam
+  i: number;
 };
 
 function QuestionCard({ question }: { question: QuestionWithStats }) {
