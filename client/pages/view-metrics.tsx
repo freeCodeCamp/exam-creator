@@ -16,12 +16,6 @@ import {
   CardBody,
   CardFooter,
   Divider,
-  Table,
-  Thead,
-  Tr,
-  Th,
-  Tbody,
-  Td,
   Tooltip,
   SimpleGrid,
   FormControl,
@@ -29,6 +23,7 @@ import {
   FormHelperText,
   NumberInput,
   NumberInputField,
+  Flex,
 } from "@chakra-ui/react";
 import type {
   ExamCreatorExam,
@@ -374,252 +369,295 @@ function AttemptStats({
   const { sampledAttempts, avgTimeSpent, avgTimePerQuestion } = statsQuery.data;
 
   return (
-    <Box overflowX="auto" borderRadius="md" bg="black" p={2}>
-      <Table variant="simple" size="sm" colorScheme="teal">
-        <Thead>
-          <Tr>
-            <Th color="teal.300">Metric</Th>
-            <Th color="gray.200">Value</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          <Tr>
-            <Td color="gray.100" fontWeight="bold">
-              <Tooltip label="Number of random attempts taken from database">
+    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
+      <Tooltip label="Number of attempts included in this analysis after applying filters">
+        <Card bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+          <CardBody>
+            <Stack spacing={2}>
+              <Heading size="sm" color="teal.300">
                 Sampled Attempts
-              </Tooltip>
-            </Td>
-            <Td color="gray.100">{sampledAttempts}</Td>
-          </Tr>
-          <Tr>
-            <Td color="gray.100" fontWeight="bold">
-              <Tooltip label="sum(Final Question Submission Time - Start Time) / len(Attempts)">
-                Average Time Spent [HH:MM:SS]
-              </Tooltip>
-            </Td>
-            <Td color="gray.100">
-              {secondsToHumanReadable(Math.floor(avgTimeSpent))}
-            </Td>
-          </Tr>
-          <Tr>
-            <Td color="gray.100" fontWeight="bold">
-              <Tooltip label="sum(Question Submission Time) / len(Attempts)">
-                Average Question Submission Time [s]
-              </Tooltip>
-            </Td>
-            <Td color="gray.100">{avgTimePerQuestion.toFixed(2)}</Td>
-          </Tr>
-        </Tbody>
-      </Table>
-    </Box>
+              </Heading>
+              <Text fontSize="2xl" fontWeight="bold" color="gray.100">
+                {sampledAttempts}
+              </Text>
+            </Stack>
+          </CardBody>
+        </Card>
+      </Tooltip>
+
+      <Tooltip label="Average time from exam start to final question submission: sum(Final Submission Time - Start Time) / number of attempts">
+        <Card bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+          <CardBody>
+            <Stack spacing={2}>
+              <Heading size="sm" color="teal.300">
+                Average Time Spent
+              </Heading>
+              <Text fontSize="2xl" fontWeight="bold" color="gray.100">
+                {secondsToHumanReadable(Math.floor(avgTimeSpent))}
+              </Text>
+            </Stack>
+          </CardBody>
+        </Card>
+      </Tooltip>
+
+      <Tooltip label="Average time per question answered: sum(Question Submission Time) / total questions answered">
+        <Card bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+          <CardBody>
+            <Stack spacing={1}>
+              <Heading size="sm" color="teal.300">
+                Average Question Time
+              </Heading>
+              <Text fontSize="2xl" fontWeight="bold" color="gray.100">
+                {avgTimePerQuestion.toFixed(2)}s
+              </Text>
+            </Stack>
+          </CardBody>
+        </Card>
+      </Tooltip>
+    </SimpleGrid>
   );
 }
 
 function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
   const [sortKey, setSortKey] = useState<"difficulty" | "exam">("difficulty");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Pre-calculate all questions with their stats to get min/max difficulty
+  const questionsWithStats = exam.questionSets
+    .flatMap((qs) => {
+      const questions = qs.questions.map((q) => ({
+        ...q,
+        context: qs.context,
+      }));
+      return questions;
+    })
+    .map((q) => {
+      const seenBy = attempts.filter((attempt) => {
+        const generation = generations.find(
+          (gen) => gen.id === attempt.generatedExamId
+        );
+        if (!generation) return false;
+        return generation.questionSets
+          .flatMap((gqs) => gqs.questions.map((q) => q.id))
+          .includes(q.id);
+      }).length;
+
+      const submittedBy = attempts.filter((attempt) => {
+        const submittedQuestion = attempt.questionSets
+          .flatMap((aqs) => aqs.questions)
+          .find((aq) => aq.id === q.id);
+        return !!submittedQuestion;
+      }).length;
+
+      const timeSpent = (() => {
+        const relevantAttempts = attempts.filter((attempt) => {
+          const submittedQuestion = attempt.questionSets
+            .flatMap((aqs) => aqs.questions)
+            .find((aq) => aq.id === q.id);
+          return !!submittedQuestion;
+        });
+
+        const totalTimeSpent = relevantAttempts.reduce((acc, attempt) => {
+          const flattenedQuestions = attempt.questionSets
+            .flatMap((aqs) => aqs.questions)
+            .sort((a, b) => {
+              const aTime = a.submissionTime
+                ? a.submissionTime.getTime()
+                : Infinity;
+              const bTime = b.submissionTime
+                ? b.submissionTime.getTime()
+                : Infinity;
+              return aTime - bTime;
+            });
+
+          const questionIndex = flattenedQuestions.findIndex(
+            (fq) => fq.id === q.id
+          );
+          if (questionIndex === -1) {
+            return acc;
+          }
+
+          const question = flattenedQuestions[questionIndex];
+          const submissionTime = question.submissionTime.getTime();
+
+          let previousTime =
+            questionIndex === 0
+              ? attempt.startTime.getTime()
+              : flattenedQuestions[questionIndex - 1].submissionTime.getTime();
+
+          const timeSpentOnQuestion = (submissionTime - previousTime) / 1000;
+          return acc + timeSpentOnQuestion;
+        }, 0);
+
+        const timeSpent =
+          relevantAttempts.length > 0
+            ? totalTimeSpent / relevantAttempts.length
+            : 0;
+        return timeSpent.toFixed(2);
+      })();
+
+      const percentageCorrect = (
+        (attempts.filter((attempt) => {
+          const submittedQuestion = attempt.questionSets
+            .flatMap((aqs) => aqs.questions)
+            .find((aq) => aq.id === q.id);
+          if (!submittedQuestion) return false;
+          const selectedCorrectAnswer = submittedQuestion.answers
+            .map((aid) => q.answers.find((qa) => qa.id === aid && qa.isCorrect))
+            .filter((a) => !!a);
+          return selectedCorrectAnswer.length > 0;
+        }).length /
+          Math.max(submittedBy, 1)) *
+        100
+      ).toFixed(2);
+
+      const difficulty = (
+        parseFloat(timeSpent) / Math.max(parseFloat(percentageCorrect), 1)
+      ).toFixed(2);
+
+      const answers = q.answers.map((answer) => {
+        const seenBy = attempts.filter((attempt) => {
+          const generation = generations.find(
+            (gen) => gen.id === attempt.generatedExamId
+          );
+          if (!generation) return false;
+          return generation.questionSets
+            .flatMap((gqs) => gqs.questions.flatMap((qqs) => qqs.answers))
+            .includes(answer.id);
+        }).length;
+
+        const submittedBy = attempts.filter((attempt) => {
+          const attemptAnswers = attempt.questionSets.flatMap((aqs) =>
+            aqs.questions.flatMap((aq) => aq.answers)
+          );
+          return attemptAnswers.includes(answer.id);
+        }).length;
+
+        return {
+          ...answer,
+          stats: {
+            seenBy,
+            submittedBy,
+          },
+        };
+      });
+
+      return {
+        ...q,
+        stats: {
+          seenBy,
+          submittedBy,
+          timeSpent,
+          percentageCorrect,
+          difficulty,
+        },
+        answers,
+      };
+    });
+
+  const difficulties = questionsWithStats
+    .map((q) => parseFloat(q.stats.difficulty))
+    .filter((d) => !isNaN(d));
+  const minDifficulty = difficulties.length > 0 ? Math.min(...difficulties) : 0;
+  const maxDifficulty = difficulties.length > 0 ? Math.max(...difficulties) : 0;
 
   const cardBg = useColorModeValue("gray.900", "gray.900");
   return (
     <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
-      <Heading size="sm" mb={4}>
-        Questions Overview (sorted by {sortKey} - {sortOrder})
-      </Heading>
-      <HStack spacing={4} mb={4}>
-        {/* Selection for sortKey and sortOrder */}
-        <FormControl w="200px">
-          <FormLabel color="gray.300">Sort By</FormLabel>
-          <select
-            value={sortKey}
-            onChange={(e) =>
-              setSortKey(e.target.value as "difficulty" | "exam")
-            }
-          >
-            <option value="difficulty">Difficulty</option>
-            <option value="exam">Exam Order</option>
-          </select>
-        </FormControl>
-        <FormControl w="200px">
-          <FormLabel color="gray.300">Sort Order</FormLabel>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-        </FormControl>
-      </HStack>
       <Stack spacing={4}>
-        {exam.questionSets
-          .flatMap((qs) => {
-            const questions = qs.questions.map((q) => ({
-              ...q,
-              context: qs.context,
-            }));
-            return questions;
-          })
-          .map((q) => {
-            // 1. Percentage of attempts that saw this question
-            //   - If the attempt's related generation included this question
-            // 2. Percentage of **those** attempts that submitted this question
-            //   - If the attempt's `question.submissionTime` field is non-null
-            // 3. Percentage of attempts that saw each answer
-            //   - If the attempt's related generation included this answer
-            // 4. Percentage of **those** attempts that selected each answer
-            const seenBy = attempts.filter((attempt) => {
-              const generation = generations.find(
-                (gen) => gen.id === attempt.generatedExamId
-              );
-              if (!generation) return false;
-              return generation.questionSets
-                .flatMap((gqs) => gqs.questions.map((q) => q.id))
-                .includes(q.id);
-            }).length;
-
-            const submittedBy = attempts.filter((attempt) => {
-              const submittedQuestion = attempt.questionSets
-                .flatMap((aqs) => aqs.questions)
-                .find((aq) => aq.id === q.id);
-              return !!submittedQuestion;
-            }).length;
-
-            const answers = q.answers.map((answer) => {
-              const seenBy = attempts.filter((attempt) => {
-                const generation = generations.find(
-                  (gen) => gen.id === attempt.generatedExamId
-                );
-                if (!generation) return false;
-                return generation.questionSets
-                  .flatMap((gqs) => gqs.questions.flatMap((qqs) => qqs.answers))
-                  .includes(answer.id);
-              }).length;
-
-              const submittedBy = attempts.filter((attempt) => {
-                const attemptAnswers = attempt.questionSets.flatMap((aqs) =>
-                  aqs.questions.flatMap((aq) => aq.answers)
-                );
-                return attemptAnswers.includes(answer.id);
-              }).length;
-
-              return {
-                ...answer,
-                stats: {
-                  seenBy,
-                  submittedBy,
-                },
-              };
-            });
-
-            // Average time spent on question (in seconds)
-            // For first question, this is question submission time - attempt start time
-            // For subsequent questions, this is question submission time - previous question submission time
-            // Account for questions not answered in order, by sorting in order of submission time
-            const timeSpent = (() => {
-              // Attempts that submitted the question
-              const relevantAttempts = attempts.filter((attempt) => {
-                const submittedQuestion = attempt.questionSets
-                  .flatMap((aqs) => aqs.questions)
-                  .find((aq) => aq.id === q.id);
-                return !!submittedQuestion;
-              });
-
-              const totalTimeSpent = relevantAttempts.reduce((acc, attempt) => {
-                const flattenedQuestions = attempt.questionSets
-                  .flatMap((aqs) => aqs.questions)
-                  .sort((a, b) => {
-                    const aTime = a.submissionTime
-                      ? a.submissionTime.getTime()
-                      : Infinity;
-                    const bTime = b.submissionTime
-                      ? b.submissionTime.getTime()
-                      : Infinity;
-                    return aTime - bTime;
-                  });
-
-                const questionIndex = flattenedQuestions.findIndex(
-                  (fq) => fq.id === q.id
-                );
-                if (questionIndex === -1) {
-                  return acc;
+        <Box>
+          <Heading size="sm" mb={3} color={"teal.300"}>
+            Questions Overview
+          </Heading>
+          <Flex direction="row" justifyContent={"center"}>
+            <Tooltip label="Lowest difficulty score among all questions">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help" mr={1}>
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Min Difficulty
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {minDifficulty.toFixed(2)}
+                </Text>
+              </Box>
+            </Tooltip>
+            <Tooltip label="Highest difficulty score among all questions">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help" ml={1}>
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Max Difficulty
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {maxDifficulty.toFixed(2)}
+                </Text>
+              </Box>
+            </Tooltip>
+          </Flex>
+          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+            <FormControl>
+              <FormLabel color="gray.300" fontSize="sm" fontWeight="bold">
+                Sort By
+              </FormLabel>
+              <select
+                value={sortKey}
+                onChange={(e) =>
+                  setSortKey(e.target.value as "difficulty" | "exam")
                 }
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  backgroundColor: "#2D3748",
+                  color: "#E2E8F0",
+                  border: "1px solid #4A5568",
+                }}
+              >
+                <option value="difficulty">Difficulty</option>
+                <option value="exam">Exam Order</option>
+              </select>
+            </FormControl>
+            <FormControl>
+              <FormLabel color="gray.300" fontSize="sm" fontWeight="bold">
+                Order
+              </FormLabel>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  backgroundColor: "#2D3748",
+                  color: "#E2E8F0",
+                  border: "1px solid #4A5568",
+                }}
+              >
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+              </select>
+            </FormControl>
+          </SimpleGrid>
+        </Box>
 
-                const question = flattenedQuestions[questionIndex];
-                const submissionTime = question.submissionTime.getTime();
+        <Stack spacing={4}>
+          {questionsWithStats
+            .sort((a, b) => {
+              // if sorting by exam order:
+              // - do not sort, keep original order except by sortOrder
+              if (sortKey === "exam") {
+                return sortOrder === "asc" ? 0 : 0;
+              }
 
-                let previousTime =
-                  questionIndex === 0
-                    ? attempt.startTime.getTime()
-                    : flattenedQuestions[
-                        questionIndex - 1
-                      ].submissionTime.getTime();
-
-                const timeSpentOnQuestion =
-                  (submissionTime - previousTime) / 1000;
-                return acc + timeSpentOnQuestion;
-              }, 0);
-
-              const timeSpent =
-                relevantAttempts.length > 0
-                  ? totalTimeSpent / relevantAttempts.length
-                  : 0;
-              return timeSpent.toFixed(2);
-            })();
-
-            const percentageCorrect = (
-              (attempts.filter((attempt) => {
-                const submittedQuestion = attempt.questionSets
-                  .flatMap((aqs) => aqs.questions)
-                  .find((aq) => aq.id === q.id);
-                if (!submittedQuestion) return false;
-                const selectedCorrectAnswer = submittedQuestion.answers
-                  .map((aid) =>
-                    q.answers.find((qa) => qa.id === aid && qa.isCorrect)
-                  )
-                  .filter((a) => !!a);
-                return selectedCorrectAnswer.length > 0;
-              }).length /
-                Math.max(submittedBy, 1)) *
-              100
-            ).toFixed(2);
-
-            // difficulty = time spent / percentage correct
-            const difficulty = (
-              parseFloat(timeSpent) / Math.max(parseFloat(percentageCorrect), 1)
-            ).toFixed(2);
-
-            const question = {
-              ...q,
-              stats: {
-                seenBy,
-                submittedBy,
-                timeSpent,
-                percentageCorrect,
-                difficulty,
-              },
-              answers,
-            };
-
-            return question;
-          })
-          .sort((a, b) => {
-            // if sorting by exam order:
-            // - do not sort, keep original order except by sortOrder
-            if (sortKey === "exam") {
-              return sortOrder === "asc" ? 0 : 0;
-            }
-
-            const diffA = parseFloat(a.stats.difficulty);
-            const diffB = parseFloat(b.stats.difficulty);
-            if (sortOrder === "asc") {
-              return diffA - diffB;
-            } else {
-              return diffB - diffA;
-            }
-          })
-          .map((question) => {
-            return <QuestionCard key={question.id} question={question} />;
-          })}
+              const diffA = parseFloat(a.stats.difficulty);
+              const diffB = parseFloat(b.stats.difficulty);
+              if (sortOrder === "asc") {
+                return diffA - diffB;
+              } else {
+                return diffB - diffA;
+              }
+            })
+            .map((question) => {
+              return <QuestionCard key={question.id} question={question} />;
+            })}
+        </Stack>
       </Stack>
     </Box>
   );
@@ -688,23 +726,62 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
           </Box>
         </CardHeader>
         <CardBody pt={0}>
-          <Box textAlign="right" ml={4} minW="120px">
-            <Text color="gray.400" fontSize="sm">
-              Seen by: {question.stats.seenBy} attempts
-            </Text>
-            <Text color="gray.400" fontSize="sm">
-              Submitted by: {question.stats.submittedBy} attempts
-            </Text>
-            <Text color="gray.400" fontSize="sm">
-              Time Spent: {question.stats.timeSpent} seconds
-            </Text>
-            <Text color="gray.400" fontSize="sm">
-              Percent Correct: {question.stats.percentageCorrect}%
-            </Text>
-            <Text color="gray.400" fontSize="sm">
-              Difficulty: {question.stats.difficulty}
-            </Text>
-          </Box>
+          <SimpleGrid columns={{ base: 2, md: 5 }} spacing={3} mb={4}>
+            <Tooltip label="Number of attempts that included this question">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Seen By
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {question.stats.seenBy}
+                </Text>
+              </Box>
+            </Tooltip>
+
+            <Tooltip label="Number of attempts that submitted an answer to this question">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Submitted By
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {question.stats.submittedBy}
+                </Text>
+              </Box>
+            </Tooltip>
+
+            <Tooltip label="Average time spent on this question from start to submission">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Time Spent
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {question.stats.timeSpent}s
+                </Text>
+              </Box>
+            </Tooltip>
+
+            <Tooltip label="Percentage of submitted answers that selected a correct option">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Correct
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {question.stats.percentageCorrect}%
+                </Text>
+              </Box>
+            </Tooltip>
+
+            <Tooltip label="Time Spent divided by Percent Correct - higher indicates more difficult questions">
+              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+                <Text color="gray.400" fontSize="xs" fontWeight="bold">
+                  Difficulty
+                </Text>
+                <Text color="teal.300" fontSize="lg" fontWeight="bold">
+                  {question.stats.difficulty}
+                </Text>
+              </Box>
+            </Tooltip>
+          </SimpleGrid>
         </CardBody>
         <CardFooter>
           <Stack spacing={3} w="full">
