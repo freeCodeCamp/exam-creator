@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { secondsToHumanReadable } from "../utils/question";
 
 interface TimeTakenDistributionProps {
   attempts: ExamEnvironmentExamAttempt[];
@@ -161,7 +162,12 @@ export function TimeTakenDistribution({
               }
               return [`${value} attempts`, "Count"];
             }}
-            labelFormatter={(label: string) => `Time Range: ${label}s`}
+            labelFormatter={(label: string) => {
+              const [start, end] = label.split("-");
+              const mid = (Number(start) + Number(end)) / 2;
+              const humanReadable = secondsToHumanReadable(mid);
+              return `${humanReadable}`;
+            }}
             contentStyle={{
               color: "black",
             }}
