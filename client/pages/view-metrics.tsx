@@ -120,6 +120,38 @@ function ViewExamMetrics({
   const [minAttemptTimeInS, setMinAttemptTimeInS] = useState<number>(0);
   const [minQuestionsAnswered, setMinQuestionsAnswered] = useState<number>(0);
 
+  const filteredAttemptsQuery = useQuery({
+    queryKey: [
+      "filtered-attempts",
+      exam.id,
+      minAttemptTimeInS,
+      minQuestionsAnswered,
+    ],
+    queryFn: () => {
+      const filteredAttempts = attempts.filter((a) => {
+        const startTimeInMS = a.startTime.getTime();
+        const flattened = a.questionSets.flatMap((qs) => qs.questions);
+
+        const questionsAnswered = flattened.filter(
+          (f) => !!f.submissionTime
+        ).length;
+        if (questionsAnswered < minQuestionsAnswered) {
+          return false;
+        }
+
+        const lastSubmission = Math.max(
+          ...flattened.map((f) => f.submissionTime?.getTime() ?? 0)
+        );
+        const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
+
+        return timeToComplete > minAttemptTimeInS;
+      });
+      return filteredAttempts;
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
     updateActivity({
       page: new URL(window.location.href),
@@ -172,8 +204,13 @@ function ViewExamMetrics({
                 <FormLabel color="gray.300">Min Attempt Time [s]</FormLabel>
               </Tooltip>
               <NumberInput
-                value={minAttemptTimeInS}
-                onChange={(_, v) => handleNumberChange(v, setMinAttemptTimeInS)}
+                // value={minAttemptTimeInS}
+                defaultValue={0}
+                // onChange={(_, v) => handleNumberChange(v, setMinAttemptTimeInS)}
+                onBlur={(e) => {
+                  const v = parseInt(e.target.value);
+                  handleNumberChange(v, setMinAttemptTimeInS);
+                }}
                 min={0}
                 inputMode="numeric"
               >
@@ -187,10 +224,15 @@ function ViewExamMetrics({
                 </FormLabel>
               </Tooltip>
               <NumberInput
-                value={minQuestionsAnswered}
-                onChange={(_, v) =>
-                  handleNumberChange(v, setMinQuestionsAnswered)
-                }
+                // value={minQuestionsAnswered}
+                defaultValue={0}
+                // onChange={(_, v) =>
+                //   handleNumberChange(v, setMinQuestionsAnswered)
+                // }
+                onBlur={(e) => {
+                  const v = parseInt(e.target.value);
+                  handleNumberChange(v, setMinQuestionsAnswered);
+                }}
                 min={0}
                 inputMode="numeric"
               >
@@ -200,8 +242,14 @@ function ViewExamMetrics({
             <FormControl>
               <FormLabel>Sigma</FormLabel>
               <NumberInput
-                value={sigma}
-                onChange={(_, v) => handleNumberChange(v, setSigma)}
+                // value={sigma}
+                defaultValue={50}
+                min={1}
+                // onChange={(_, v) => handleNumberChange(v, setSigma)}
+                onBlur={(e) => {
+                  const v = parseInt(e.target.value);
+                  handleNumberChange(v, setSigma);
+                }}
                 inputMode="numeric"
               >
                 <NumberInputField bg="gray.700" color="gray.100" />
@@ -212,32 +260,49 @@ function ViewExamMetrics({
             </FormControl>
           </SimpleGrid>
 
-          <AttemptStats
-            attempts={attempts}
-            minAttemptTimeInS={minAttemptTimeInS}
-            minQuestionsAnswered={minQuestionsAnswered}
-          />
-          <Divider my={2} borderColor="gray.800" />
-          <TimeTakenDistribution
-            attempts={attempts}
-            exam={exam}
-            sigma={sigma}
-            minAttemptTimeInS={minAttemptTimeInS}
-            minQuestionsAnswered={minQuestionsAnswered}
-          />
-          {/* <AverageTimePerQuestionDistribution {...{ attempts }} /> */}
+          {filteredAttemptsQuery.isFetching || !filteredAttemptsQuery.data ? (
+            <Spinner size="sm" color="teal.400" />
+          ) : filteredAttemptsQuery.isError ? (
+            <Text color="red.400">
+              Error filtering attempts: {filteredAttemptsQuery.error.message}
+            </Text>
+          ) : (
+            <>
+              <AttemptStats attempts={filteredAttemptsQuery.data} />
+              <Divider my={2} borderColor="gray.800" />
+              <TimeTakenDistribution
+                attempts={filteredAttemptsQuery.data}
+                exam={exam}
+                sigma={sigma}
+              />
+              {/* <AverageTimePerQuestionDistribution {...{ attempts }} /> */}
 
-          <Divider my={4} borderColor="gray.600" />
-          <Heading size="md" color={accent} mt={8} mb={2} id="exam-questions">
-            Exam Questions
-          </Heading>
-          <Text color="gray.300" mb={2}>
-            View the exam questions along with how often each question and
-            answer were seen and submitted.
-          </Text>
-          <Box bg="gray.700" borderRadius="lg" p={4} mt={2}>
-            <QuestionsView {...{ exam, attempts, generations }} />
-          </Box>
+              <Divider my={4} borderColor="gray.600" />
+              <Heading
+                size="md"
+                color={accent}
+                mt={8}
+                mb={2}
+                id="exam-questions"
+              >
+                Exam Questions
+              </Heading>
+              <Text color="gray.300" mb={2}>
+                View the exam questions along with how often each question and
+                answer were seen and submitted.
+              </Text>
+              {/* Sort questions by difficulty - ascending or descending */}
+              <Box bg="gray.700" borderRadius="lg" p={4} mt={2}>
+                <QuestionsView
+                  {...{
+                    exam,
+                    attempts: filteredAttemptsQuery.data,
+                    generations,
+                  }}
+                />
+              </Box>
+            </>
+          )}
         </Box>
       </Stack>
     </>
@@ -246,41 +311,13 @@ function ViewExamMetrics({
 
 function AttemptStats({
   attempts,
-  minAttemptTimeInS,
-  minQuestionsAnswered,
 }: {
   attempts: ExamEnvironmentExamAttempt[];
-  minAttemptTimeInS: number;
-  minQuestionsAnswered: number;
 }) {
   const statsQuery = useQuery({
-    queryKey: [
-      "attempt-stats",
-      attempts,
-      minAttemptTimeInS,
-      minQuestionsAnswered,
-    ],
+    queryKey: ["attempt-stats", attempts],
     queryFn: async () => {
-      const filteredAttempts = attempts.filter((a) => {
-        const startTimeInMS = a.startTime.getTime();
-        const flattened = a.questionSets.flatMap((qs) => qs.questions);
-
-        const questionsAnswered = flattened.filter(
-          (f) => !!f.submissionTime
-        ).length;
-        if (questionsAnswered < minQuestionsAnswered) {
-          return false;
-        }
-
-        const lastSubmission = Math.max(
-          ...flattened.map((f) => f.submissionTime?.getTime() ?? 0)
-        );
-        const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
-
-        return timeToComplete > minAttemptTimeInS;
-      });
-
-      const sampledAttempts = filteredAttempts.length;
+      const sampledAttempts = attempts.length;
 
       const avg = attempts.reduce(
         (acc, attempt) => {
@@ -379,9 +416,40 @@ function AttemptStats({
 }
 
 function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
+  const [sortKey, setSortKey] = useState<"difficulty" | "exam">("difficulty");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
   const cardBg = useColorModeValue("gray.900", "gray.900");
   return (
     <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
+      <Heading size="sm" mb={4}>
+        Questions Overview (sorted by {sortKey} - {sortOrder})
+      </Heading>
+      <HStack spacing={4} mb={4}>
+        {/* Selection for sortKey and sortOrder */}
+        <FormControl w="200px">
+          <FormLabel color="gray.300">Sort By</FormLabel>
+          <select
+            value={sortKey}
+            onChange={(e) =>
+              setSortKey(e.target.value as "difficulty" | "exam")
+            }
+          >
+            <option value="difficulty">Difficulty</option>
+            <option value="exam">Exam Order</option>
+          </select>
+        </FormControl>
+        <FormControl w="200px">
+          <FormLabel color="gray.300">Sort Order</FormLabel>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+          >
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </FormControl>
+      </HStack>
       <Stack spacing={4}>
         {exam.questionSets
           .flatMap((qs) => {
@@ -443,16 +511,114 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               };
             });
 
+            // Average time spent on question (in seconds)
+            // For first question, this is question submission time - attempt start time
+            // For subsequent questions, this is question submission time - previous question submission time
+            // Account for questions not answered in order, by sorting in order of submission time
+            const timeSpent = (() => {
+              // Attempts that submitted the question
+              const relevantAttempts = attempts.filter((attempt) => {
+                const submittedQuestion = attempt.questionSets
+                  .flatMap((aqs) => aqs.questions)
+                  .find((aq) => aq.id === q.id);
+                return !!submittedQuestion;
+              });
+
+              const totalTimeSpent = relevantAttempts.reduce((acc, attempt) => {
+                const flattenedQuestions = attempt.questionSets
+                  .flatMap((aqs) => aqs.questions)
+                  .sort((a, b) => {
+                    const aTime = a.submissionTime
+                      ? a.submissionTime.getTime()
+                      : Infinity;
+                    const bTime = b.submissionTime
+                      ? b.submissionTime.getTime()
+                      : Infinity;
+                    return aTime - bTime;
+                  });
+
+                const questionIndex = flattenedQuestions.findIndex(
+                  (fq) => fq.id === q.id
+                );
+                if (questionIndex === -1) {
+                  return acc;
+                }
+
+                const question = flattenedQuestions[questionIndex];
+                const submissionTime = question.submissionTime.getTime();
+
+                let previousTime =
+                  questionIndex === 0
+                    ? attempt.startTime.getTime()
+                    : flattenedQuestions[
+                        questionIndex - 1
+                      ].submissionTime.getTime();
+
+                const timeSpentOnQuestion =
+                  (submissionTime - previousTime) / 1000;
+                return acc + timeSpentOnQuestion;
+              }, 0);
+
+              const timeSpent =
+                relevantAttempts.length > 0
+                  ? totalTimeSpent / relevantAttempts.length
+                  : 0;
+              return timeSpent.toFixed(2);
+            })();
+
+            const percentageCorrect = (
+              (attempts.filter((attempt) => {
+                const submittedQuestion = attempt.questionSets
+                  .flatMap((aqs) => aqs.questions)
+                  .find((aq) => aq.id === q.id);
+                if (!submittedQuestion) return false;
+                const selectedCorrectAnswer = submittedQuestion.answers
+                  .map((aid) =>
+                    q.answers.find((qa) => qa.id === aid && qa.isCorrect)
+                  )
+                  .filter((a) => !!a);
+                return selectedCorrectAnswer.length > 0;
+              }).length /
+                Math.max(submittedBy, 1)) *
+              100
+            ).toFixed(2);
+
+            // difficulty = time spent / percentage correct
+            const difficulty = (
+              parseFloat(timeSpent) / Math.max(parseFloat(percentageCorrect), 1)
+            ).toFixed(2);
+
             const question = {
               ...q,
               stats: {
                 seenBy,
                 submittedBy,
+                timeSpent,
+                percentageCorrect,
+                difficulty,
               },
               answers,
             };
 
-            return <QuestionCard key={q.id} question={question} />;
+            return question;
+          })
+          .sort((a, b) => {
+            // if sorting by exam order:
+            // - do not sort, keep original order except by sortOrder
+            if (sortKey === "exam") {
+              return sortOrder === "asc" ? 0 : 0;
+            }
+
+            const diffA = parseFloat(a.stats.difficulty);
+            const diffB = parseFloat(b.stats.difficulty);
+            if (sortOrder === "asc") {
+              return diffA - diffB;
+            } else {
+              return diffB - diffA;
+            }
+          })
+          .map((question) => {
+            return <QuestionCard key={question.id} question={question} />;
           })}
       </Stack>
     </Box>
@@ -473,6 +639,9 @@ type QuestionWithStats = Omit<
   stats: {
     seenBy: number;
     submittedBy: number;
+    timeSpent: string;
+    percentageCorrect: string;
+    difficulty: string;
   };
   answers: AnswerWithStats[];
 };
@@ -525,6 +694,15 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
             </Text>
             <Text color="gray.400" fontSize="sm">
               Submitted by: {question.stats.submittedBy} attempts
+            </Text>
+            <Text color="gray.400" fontSize="sm">
+              Time Spent: {question.stats.timeSpent} seconds
+            </Text>
+            <Text color="gray.400" fontSize="sm">
+              Percent Correct: {question.stats.percentageCorrect}%
+            </Text>
+            <Text color="gray.400" fontSize="sm">
+              Difficulty: {question.stats.difficulty}
             </Text>
           </Box>
         </CardBody>

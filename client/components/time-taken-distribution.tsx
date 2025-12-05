@@ -20,58 +20,36 @@ interface TimeTakenDistributionProps {
   attempts: ExamEnvironmentExamAttempt[];
   exam: ExamEnvironmentExam;
   sigma: number;
-  minAttemptTimeInS: number;
-  minQuestionsAnswered: number;
 }
 
 export function TimeTakenDistribution({
   attempts,
   exam,
   sigma,
-  minAttemptTimeInS,
-  minQuestionsAnswered,
 }: TimeTakenDistributionProps) {
   // TODO: It would be nice to not re-render every `onChange` for `minX`
   const dataQuery = useQuery({
-    queryKey: [
-      "time-taken-distribution",
-      exam.id,
-      sigma,
-      minAttemptTimeInS,
-      minQuestionsAnswered,
-    ],
+    queryKey: ["time-taken-distribution", exam.id, sigma],
     queryFn: () => {
       // Calculate completion times for all attempts
-      const completionTimes = attempts
-        .filter((a) => {
-          if (a.questionSets.length < 0) {
-            return false;
-          }
+      const completionTimes = attempts.map((attempt) => {
+        const startTimeInMS = attempt.startTime.getTime();
+        const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
 
-          const questionsAnswered = a.questionSets.flatMap(
-            (qs) => qs.questions
-          ).length;
-          return questionsAnswered >= minQuestionsAnswered;
-        })
-        .map((attempt) => {
-          const startTimeInMS = attempt.startTime.getTime();
-          const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
-
-          const lastSubmission = Math.max(
-            ...flattened.map((f) => {
-              return f.submissionTime?.getTime() ?? 0;
-            })
-          );
-          return (lastSubmission - startTimeInMS) / 1000;
-        })
-        .filter((time) => time > minAttemptTimeInS);
+        const lastSubmission = Math.max(
+          ...flattened.map((f) => {
+            return f.submissionTime?.getTime() ?? 0;
+          })
+        );
+        return (lastSubmission - startTimeInMS) / 1000;
+      });
 
       // Create histogram data
       if (completionTimes.length === 0) {
         return null;
       }
 
-      const minTime = minAttemptTimeInS;
+      const minTime = Math.min(...completionTimes);
       const maxTime = exam.config.totalTimeInS;
       const range = maxTime - minTime;
 

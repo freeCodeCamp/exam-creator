@@ -6,6 +6,17 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.13.0] - 2025-12-05
+
+### Added
+
+- exam metrics sort questions by difficulty
+- question difficulty by time spent on question and correctness
+
+### Fixed
+
+- server: only show exam metrics for attempts that have moderations
+
 ## [3.12.1] - 2025-12-04
 
 ### Fixed

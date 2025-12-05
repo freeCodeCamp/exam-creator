@@ -7,7 +7,7 @@ use http::StatusCode;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use serde::Serialize;
-use tracing::instrument;
+use tracing::{info, instrument};
 
 use crate::{
     database::{database_environment, prisma},
@@ -100,7 +100,11 @@ pub async fn get_exam_metrics_by_exam_id(
         .aggregate(vec![
             doc! {
                 "$match": {
-                    "examId": exam_id
+                    "examId": exam_id,
+                    "$and": [
+                        {"examModerationId": { "$exists": true }},
+                        {"examModerationId": { "$ne": null}}
+                    ]
                 }
             },
             doc! {
