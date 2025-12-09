@@ -6,6 +6,12 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.13.1] - 2025-12-09
+
+### Fixed
+
+- client: correct question determination uses generation
+
 ## [3.13.0] - 2025-12-05
 
 ### Added

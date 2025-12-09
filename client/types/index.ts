@@ -2,6 +2,7 @@ import type {
   ExamCreatorExam,
   ExamCreatorUser,
   ExamEnvironmentExamAttempt,
+  ExamEnvironmentGeneratedMultipleChoiceQuestion,
   ExamEnvironmentMultipleChoiceQuestion,
   ExamEnvironmentMultipleChoiceQuestionAttempt,
   ExamEnvironmentQuestionSet,
@@ -35,8 +36,13 @@ export type Attempt = Omit<ExamCreatorExam, "questionSets"> & {
     Omit<ExamEnvironmentQuestionSet, "questions"> & {
       questions: Array<
         ExamEnvironmentMultipleChoiceQuestion &
-          Omit<ExamEnvironmentMultipleChoiceQuestionAttempt, "answers"> & {
+          Omit<
+            ExamEnvironmentMultipleChoiceQuestionAttempt,
+            "answers" | "submissionTime"
+          > & {
             selected: ExamEnvironmentMultipleChoiceQuestionAttempt["answers"];
+            generated: ExamEnvironmentGeneratedMultipleChoiceQuestion["answers"];
+            submissionTime?: ExamEnvironmentMultipleChoiceQuestionAttempt["submissionTime"];
           }
       >;
     }

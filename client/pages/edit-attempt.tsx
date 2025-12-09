@@ -576,34 +576,39 @@ function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
 function getAttemptStats(attempt: Attempt) {
   const startTimeInMS = attempt.startTime.getTime();
 
-  const totalQuestions = attempt.config.questionSets
-    .map((qs) => qs.numberOfQuestions * qs.numberOfSet)
-    .reduce((a, b) => a + b, 0);
-  // TODO: Consider bar chart with sorted values
-  //       Show questions in order final answer was recorded
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
-  const timeToAnswers = flattened.map((q, i) => {
-    const submissionTimeInMS = q.submissionTime?.getTime() ?? 0;
-    const secondsSinceStart = (submissionTimeInMS - startTimeInMS) / 1000;
-    // Determine if the answer is correct
-    const isCorrect = q.answers
+  const totalQuestions = flattened.filter((q) => !!q.generated.length).length;
+
+  let correct = 0;
+  const timeToAnswers: { name: number; value: number; isCorrect: boolean }[] =
+    [];
+  for (const question of flattened) {
+    const isAnswered = !!question.submissionTime;
+    if (!isAnswered) {
+      continue;
+    }
+    const allCorrectAnswerIds = question.answers
       .filter((a) => a.isCorrect)
-      .every((a) => q.selected && q.selected.includes(a.id));
-    return {
-      name: i + 1,
-      value: secondsSinceStart,
+      .map((a) => a.id);
+    const allShownCorrectAnswers = question.generated.filter((ga) =>
+      allCorrectAnswerIds.includes(ga)
+    );
+    // Every shown correct answer is selected
+    const isCorrect = allShownCorrectAnswers.every((a) =>
+      question.selected.includes(a)
+    );
+    if (isCorrect) {
+      correct++;
+    }
+
+    const timeToAnswer = {
+      name: timeToAnswers.length,
+      value: ((question.submissionTime?.getTime() ?? 0) - startTimeInMS) / 1000,
       isCorrect,
     };
-  });
+    timeToAnswers.push(timeToAnswer);
+  }
 
-  const answered = flattened.filter((f) => {
-    return !!f.submissionTime;
-  }).length;
-  const correct = flattened.filter((f) => {
-    return f.answers
-      .filter((a) => a.isCorrect)
-      .every((a) => f.selected.includes(a.id));
-  }).length;
   const lastSubmission = Math.max(
     ...flattened.map((f) => {
       return f.submissionTime?.getTime() ?? 0;
@@ -611,6 +616,7 @@ function getAttemptStats(attempt: Attempt) {
   );
   const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
+  const answered = timeToAnswers.length;
   const averageTimePerQuestion =
     answered > 0 ? (timeToComplete / answered).toFixed(2) : "0";
 

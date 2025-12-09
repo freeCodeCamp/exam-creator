@@ -259,10 +259,15 @@ pub struct AttemptQuestionSetQuestion {
     tags: Vec<String>,
     deprecated: bool,
     audio: Option<prisma::ExamEnvironmentAudio>,
+    /// Includes all answers available in the exam
     answers: Vec<prisma::ExamEnvironmentAnswer>,
+    /// Includes only answers submitted in the attempt
     selected: Vec<ObjectId>,
+    /// Includes only answers shown from the generation
+    generated: Vec<ObjectId>,
+    /// If question was submitted, time it was submitted
     #[serde(rename = "submissionTime")]
-    submission_time: mongodb::bson::DateTime,
+    submission_time: Option<mongodb::bson::DateTime>,
 }
 
 /// Constructs an `Attempt`:
@@ -274,6 +279,7 @@ pub struct AttemptQuestionSetQuestion {
 /// because API ensures attempt only includes answers from assigned generation.
 pub fn construct_attempt(
     exam: &prisma::ExamEnvironmentExam,
+    generation: &prisma::ExamEnvironmentGeneratedExam,
     exam_attempt: &prisma::ExamEnvironmentExamAttempt,
 ) -> Attempt {
     let prisma::ExamEnvironmentExam {
@@ -296,14 +302,14 @@ pub fn construct_attempt(
         } = question_set;
 
         // Attempt might not have question set, if related question(s) not answered
-        let attempt_question_set = match exam_attempt
+        let attempt_question_set = exam_attempt
             .question_sets
             .iter()
-            .find(|qs| qs.id == question_set.id)
-        {
-            Some(a) => a,
-            None => continue,
-        };
+            .find(|qs| qs.id == question_set.id);
+        let generation_question_set = generation
+            .question_sets
+            .iter()
+            .find(|qs| qs.id == question_set.id);
 
         let mut attempt_questions = vec![];
 
@@ -317,15 +323,23 @@ pub fn construct_attempt(
                 deprecated,
             } = question;
 
+            let mut selected = vec![];
+            let mut generated = vec![];
+            let mut submission_time = None;
             // Attempt question might not exist if not answered
-            let attempt_question = match attempt_question_set.questions.iter().find(|q| q.id == *id)
-            {
-                Some(a) => a,
-                None => continue,
-            };
+            if let Some(aqs) = attempt_question_set {
+                if let Some(aq) = aqs.questions.iter().find(|q| q.id == *id) {
+                    selected.extend_from_slice(&aq.answers);
+                    submission_time = Some(aq.submission_time);
+                };
+            }
 
-            let selected = attempt_question.answers.clone();
-            let submission_time = attempt_question.submission_time;
+            // TODO: It should be impossible for the generation question set to not exist if the attempt encountered it
+            if let Some(gqs) = generation_question_set {
+                if let Some(gq) = gqs.questions.iter().find(|q| q.id == *id) {
+                    generated.extend_from_slice(&gq.answers);
+                }
+            }
 
             let attempt_question_set_question = AttemptQuestionSetQuestion {
                 id: id.clone(),
@@ -335,6 +349,7 @@ pub fn construct_attempt(
                 audio: audio.clone(),
                 answers: answers.clone(),
                 selected,
+                generated,
                 submission_time,
             };
 
