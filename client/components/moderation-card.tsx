@@ -24,6 +24,7 @@ import {
 } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { getAttemptById } from "../utils/fetch";
+import { prettyDate } from "../utils/question";
 
 interface ModerationCardProps {
   moderation: ExamEnvironmentExamModeration;
@@ -189,7 +190,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                 <Box as="span" fontWeight="bold" color="whiteAlpha.600">
                   Moderation Date:
                 </Box>{" "}
-                {new Date(moderation.moderationDate).toString()}
+                {prettyDate(moderation.moderationDate)}
               </Text>
             )}
             {moderation.moderatorId && (
@@ -204,7 +205,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
               <Box as="span" fontWeight="bold" color="whiteAlpha.600">
                 Submission Date:
               </Box>{" "}
-              {new Date(moderation.submissionDate).toString()}
+              {prettyDate(moderation.submissionDate)}
             </Text>
           </VStack>
         </CardBody>

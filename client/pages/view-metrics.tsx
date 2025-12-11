@@ -426,7 +426,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
 
   // Pre-calculate all questions with their stats to get min/max difficulty
   const questionsWithStats = (() => {
-    return exam.questionSets
+    const noDifficulty = exam.questionSets
       .flatMap((qs) =>
         qs.questions.map((q) => ({
           ...q,
@@ -434,6 +434,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
         }))
       )
       .map((q, i) => {
+        // Number of attempts whose generation included this question
         const seenBy = attempts.filter((attempt) => {
           const generation = generations.find(
             (gen) => gen.id === attempt.generatedExamId
@@ -444,24 +445,22 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
             .includes(q.id);
         }).length;
 
-        const submittedBy = attempts.filter((attempt) => {
+        const attemptsWhoSubmittedQuestion = attempts.filter((attempt) => {
           const submittedQuestion = attempt.questionSets
             .flatMap((aqs) => aqs.questions)
             .find((aq) => aq.id === q.id);
           return !!submittedQuestion;
-        }).length;
+        });
 
-        const timeSpent = (() => {
-          const relevantAttempts = attempts.filter((attempt) => {
-            const submittedQuestion = attempt.questionSets
-              .flatMap((aqs) => aqs.questions)
-              .find((aq) => aq.id === q.id);
-            return !!submittedQuestion;
-          });
+        // Number of attempts who submitted this question
+        const submittedBy = attemptsWhoSubmittedQuestion.length;
 
-          const totalTimeSpent = relevantAttempts.reduce((acc, attempt) => {
+        // Array of all submitted attempts time spents
+        const timeSpents = attemptsWhoSubmittedQuestion.reduce(
+          (acc, attempt) => {
             const flattenedQuestions = attempt.questionSets
               .flatMap((aqs) => aqs.questions)
+              // Sorted to handle when questions are not submitted in order
               .sort((a, b) => {
                 const aTime = a.submissionTime
                   ? a.submissionTime.getTime()
@@ -490,17 +489,22 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                   ].submissionTime.getTime();
 
             const timeSpentOnQuestion = (submissionTime - previousTime) / 1000;
-            return acc + timeSpentOnQuestion;
-          }, 0);
 
-          const timeSpent =
-            relevantAttempts.length > 0
-              ? totalTimeSpent / relevantAttempts.length
-              : 0;
-          return timeSpent.toFixed(2);
-        })();
+            acc.push(timeSpentOnQuestion);
+            return acc;
+          },
+          [] as number[]
+        );
 
-        const percentageCorrect = (
+        const totalTimeSpent = timeSpents.reduce((acc, t) => {
+          return acc + t;
+        }, 0);
+
+        const timeSpent =
+          timeSpents.length > 0 ? totalTimeSpent / timeSpents.length : 0;
+
+        // Percentage of attempts who submitted an answer + got the correct answer
+        const percentageCorrect =
           (attempts.filter((attempt) => {
             const submittedQuestion = attempt.questionSets
               .flatMap((aqs) => aqs.questions)
@@ -514,12 +518,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
             return selectedCorrectAnswer.length > 0;
           }).length /
             Math.max(submittedBy, 1)) *
-          100
-        ).toFixed(2);
-
-        const difficulty = (
-          parseFloat(timeSpent) / Math.max(parseFloat(percentageCorrect), 1)
-        ).toFixed(2);
+          100;
 
         const answers = q.answers.map((answer) => {
           const seenBy = attempts.filter((attempt) => {
@@ -555,16 +554,45 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
             submittedBy,
             timeSpent,
             percentageCorrect,
-            difficulty,
           },
           answers,
           i,
         };
       });
+
+    let maxTimeSpent = 0;
+    let minTimeSpent = Infinity;
+
+    for (const q of noDifficulty) {
+      if (q.stats.timeSpent > maxTimeSpent) {
+        maxTimeSpent = q.stats.timeSpent;
+      }
+      if (q.stats.timeSpent < minTimeSpent) {
+        minTimeSpent = q.stats.timeSpent;
+      }
+    }
+
+    const withDifficulty = noDifficulty.map((q) => {
+      // Time spent on a question is normalized to have the same weight as the percentage correct
+      const normalizedTimeSpent =
+        (q.stats.timeSpent - minTimeSpent) / (maxTimeSpent - minTimeSpent);
+      const difficulty =
+        normalizedTimeSpent / (q.stats.percentageCorrect / 100 + 1);
+
+      return {
+        ...q,
+        stats: {
+          ...q.stats,
+          difficulty,
+        },
+      };
+    });
+
+    return withDifficulty;
   })();
 
   const difficulties = questionsWithStats
-    .map((q) => parseFloat(q.stats.difficulty))
+    .map((q) => q.stats.difficulty)
     .filter((d) => !isNaN(d));
   const minDifficulty = difficulties.length > 0 ? Math.min(...difficulties) : 0;
   const maxDifficulty = difficulties.length > 0 ? Math.max(...difficulties) : 0;
@@ -666,14 +694,14 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               }
 
               if (sortKey === "time-spent") {
-                const ta = parseFloat(a.stats.timeSpent) || 0;
-                const tb = parseFloat(b.stats.timeSpent) || 0;
+                const ta = a.stats.timeSpent || 0;
+                const tb = b.stats.timeSpent || 0;
                 return sortOrder === "asc" ? ta - tb : tb - ta;
               }
 
               if (sortKey === "correct") {
-                const ca = parseFloat(a.stats.percentageCorrect) || 0;
-                const cb = parseFloat(b.stats.percentageCorrect) || 0;
+                const ca = a.stats.percentageCorrect || 0;
+                const cb = b.stats.percentageCorrect || 0;
                 return sortOrder === "asc" ? ca - cb : cb - ca;
               }
 
@@ -684,8 +712,8 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               }
 
               // default: difficulty
-              const diffA = parseFloat(a.stats.difficulty) || 0;
-              const diffB = parseFloat(b.stats.difficulty) || 0;
+              const diffA = a.stats.difficulty || 0;
+              const diffB = b.stats.difficulty || 0;
               return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
             })
             .map((question) => {
@@ -711,9 +739,9 @@ type QuestionWithStats = Omit<
   stats: {
     seenBy: number;
     submittedBy: number;
-    timeSpent: string;
-    percentageCorrect: string;
-    difficulty: string;
+    timeSpent: number;
+    percentageCorrect: number;
+    difficulty: number;
   };
   answers: AnswerWithStats[];
   // Used to track original order as set in the exam
@@ -791,7 +819,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
                   Time Spent
                 </Text>
                 <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.timeSpent}s
+                  {question.stats.timeSpent.toFixed(2)}s
                 </Text>
               </Box>
             </Tooltip>
@@ -802,18 +830,18 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
                   Correct
                 </Text>
                 <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.percentageCorrect}%
+                  {question.stats.percentageCorrect.toFixed(2)}%
                 </Text>
               </Box>
             </Tooltip>
 
-            <Tooltip label="Time Spent divided by Percent Correct - higher indicates more difficult questions">
+            <Tooltip label="Normalized Time Spent divided by Percent Correct - higher indicates more difficult questions">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Difficulty
                 </Text>
                 <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.difficulty}
+                  {question.stats.difficulty.toFixed(2)}
                 </Text>
               </Box>
             </Tooltip>

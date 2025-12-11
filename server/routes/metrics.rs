@@ -7,7 +7,7 @@ use http::StatusCode;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use serde::Serialize;
-use tracing::{info, instrument};
+use tracing::instrument;
 
 use crate::{
     database::{database_environment, prisma},

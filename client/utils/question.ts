@@ -415,3 +415,10 @@ export function secondsToHumanReadable(seconds: number): string {
     .toString()
     .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
+
+export function prettyDate(date: Date): string {
+  const iso = date.toISOString();
+  const noZ = iso.slice(0, -5);
+  const parts = noZ.split("T");
+  return `${parts[0]} ${parts[1]}`;
+}

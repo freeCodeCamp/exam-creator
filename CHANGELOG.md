@@ -6,6 +6,16 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.15.0] - 2025-12-12
+
+### Added
+
+- client: human-readable time to attempt moderations
+
+### Changed
+
+- client: normalize difficulty calculation
+
 ## [3.14.0] - 2025-12-11
 
 ### Added

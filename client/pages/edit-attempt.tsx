@@ -49,7 +49,7 @@ import {
 } from "../utils/fetch";
 import { attemptsRoute } from "./attempts";
 import { Attempt } from "../types";
-import { secondsToHumanReadable } from "../utils/question";
+import { prettyDate, secondsToHumanReadable } from "../utils/question";
 import { queryClient } from "../contexts";
 
 function Edit() {
@@ -330,9 +330,9 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
               fontSize="2xl"
               mb={2}
             >
-              Moderate Attempt: {attempt.config.name}
+              {attempt.config.name}
             </Heading>
-            <Text color={accent}>{attempt.startTime.toISOString()}</Text>
+            <Text color={accent}>{prettyDate(attempt.startTime)}</Text>
           </Flex>
           <Flex direction={"column"} mb={4}>
             <ResponsiveContainer width="100%" height={300}>
@@ -344,14 +344,14 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 <Bar
                   type="monotone"
                   dataKey="value"
-                  name="time to answer"
+                  name="submission time"
                   // Custom fill for each bar
                   fill={"purple"}
                 >
                   {timeToAnswers.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={entry.isCorrect ? "green" : "purple"}
+                      fill={entry.isCorrect ? "green" : "red"}
                     />
                   ))}
                 </Bar>
@@ -372,7 +372,12 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                     offset: 20,
                   }}
                 />
-                <ReChartsTooltip cursor={false} />
+                <ReChartsTooltip
+                  cursor={false}
+                  formatter={(value, name) => {
+                    return [secondsToHumanReadable(Number(value)), name];
+                  }}
+                />
               </BarChart>
             </ResponsiveContainer>
             <SimpleGrid
@@ -521,12 +526,7 @@ function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
           )
         </Button>
       ) : (
-        <AllUserAttempts
-          // TODO: only fetch needed attempts, or show all attempts
-          attempts={attemptsMutation.data.filter(
-            (a) => a.examId === attempt.examId
-          )}
-        />
+        <AllUserAttempts attempts={attemptsMutation.data} />
       )}
     </Center>
   );
@@ -556,6 +556,7 @@ function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
           <thead>
             <tr>
               <th style={{ textAlign: "left", padding: "8px" }}>Date Taken</th>
+              <th style={{ textAlign: "left", padding: "8px" }}>Exam</th>
               <th style={{ textAlign: "left", padding: "8px" }}>Answers</th>
               <th style={{ textAlign: "left", padding: "8px" }}>
                 Average Time
@@ -576,8 +577,9 @@ function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
               return (
                 <tr key={attempt.id} style={{ borderBottom: "1px solid #ccc" }}>
                   <td style={{ padding: "8px" }}>
-                    {attempt.startTime.toLocaleString()}
+                    {prettyDate(attempt.startTime)}
                   </td>
+                  <td style={{ padding: "8px" }}>{attempt.config.name}</td>
                   <td style={{ padding: "8px" }}>
                     {correct}/{answered}
                   </td>
