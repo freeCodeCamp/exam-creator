@@ -6,6 +6,14 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 
+## [3.14.0] - 2025-12-11
+
+### Added
+
+- client: attempt start time
+- client: number of total attempts by user
+- server: `/api/attempts/user/{user_id}/count`
+
 ## [3.13.1] - 2025-12-09
 
 ### Fixed

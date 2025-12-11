@@ -601,6 +601,24 @@ export async function getAttemptsByUserId(userId: string): Promise<Attempt[]> {
   return deserialized;
 }
 
+export async function getNumberOfAttemptsByUserId(
+  userId: string
+): Promise<number> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const res = await fetch(`/mocks/attempts.json`);
+    const attempts: number = deserializeToPrisma((await res.json()).length);
+
+    return attempts;
+  }
+
+  const res = await authorizedFetch(`/api/attempts/user/${userId}/count`);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<number>(json);
+  return deserialized;
+}
+
 export async function getExamChallengeByExamId(
   examId: ExamCreatorExam["id"]
 ): Promise<ExamEnvironmentChallenge[]> {

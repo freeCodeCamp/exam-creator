@@ -204,6 +204,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             get(routes::attempts::get_attempts_by_user_id),
         )
         .route(
+            "/api/attempts/user/{user_id}/count",
+            get(routes::attempts::get_number_of_attempts_by_user_id),
+        )
+        .route(
             "/api/exam-challenges/{exam_id}",
             get(routes::exam_challenge::get_exam_challenges)
                 .put(routes::exam_challenge::put_exam_challenges), // .delete(routes::exam_challenge::delete_exam_challenge),

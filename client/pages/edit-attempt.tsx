@@ -44,6 +44,7 @@ import {
   getAttemptById,
   getAttemptsByUserId,
   getModerations,
+  getNumberOfAttemptsByUserId,
   patchModerationStatusByAttemptId,
 } from "../utils/fetch";
 import { attemptsRoute } from "./attempts";
@@ -318,9 +319,21 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       </Box>
       <Stack spacing={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
-          <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
-            Moderate Attempt: {attempt.config.name}
-          </Heading>
+          <Flex
+            direction={"row"}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+          >
+            <Heading
+              color={accent}
+              fontWeight="extrabold"
+              fontSize="2xl"
+              mb={2}
+            >
+              Moderate Attempt: {attempt.config.name}
+            </Heading>
+            <Text color={accent}>{attempt.startTime.toISOString()}</Text>
+          </Flex>
           <Flex direction={"column"} mb={4}>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
@@ -479,6 +492,12 @@ function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
     mutationFn: (userId: string) => getAttemptsByUserId(userId),
     retry: false,
   });
+  const numberOfAttemptsQuery = useQuery({
+    queryKey: ["user-number-of-attempts", attempt.userId],
+    queryFn: () => getNumberOfAttemptsByUserId(attempt.userId),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
   return (
     <Center mt={4}>
@@ -491,10 +510,19 @@ function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
           disabled={attemptsMutation.isPending}
           isLoading={attemptsMutation.isPending}
         >
-          Fetch All User Attempts
+          Fetch All User Attempts (
+          {numberOfAttemptsQuery.isFetching ? (
+            <Spinner />
+          ) : numberOfAttemptsQuery.isError ? (
+            "?"
+          ) : (
+            numberOfAttemptsQuery.data
+          )}
+          )
         </Button>
       ) : (
         <AllUserAttempts
+          // TODO: only fetch needed attempts, or show all attempts
           attempts={attemptsMutation.data.filter(
             (a) => a.examId === attempt.examId
           )}

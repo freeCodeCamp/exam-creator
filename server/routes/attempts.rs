@@ -198,3 +198,18 @@ pub async fn get_attempts_by_user_id(
 
     Ok(Json(attempts))
 }
+
+#[instrument(skip_all, err(Debug), level = "debug")]
+pub async fn get_number_of_attempts_by_user_id(
+    exam_creator_user: prisma::ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(user_id): Path<ObjectId>,
+) -> Result<Json<u64>, Error> {
+    let database = database_environment(&server_state, &exam_creator_user);
+    let mut number_of_attempts = database
+        .exam_attempt
+        .count_documents(doc! { "userId": user_id })
+        .await?;
+
+    Ok(Json(number_of_attempts))
+}
