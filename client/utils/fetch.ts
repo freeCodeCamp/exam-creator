@@ -461,32 +461,6 @@ export async function getModerations({
   return deserialized;
 }
 
-export async function getModerationById(
-  moderationId: string
-): Promise<ExamEnvironmentExamModeration> {
-  if (import.meta.env.VITE_MOCK_DATA === "true") {
-    await delayForTesting(300);
-    const res = await fetch("/mocks/moderations.json");
-    if (!res.ok) {
-      throw new Error(
-        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
-      );
-    }
-    const moderations = await res.json();
-    const moderation = moderations[0];
-    // NOTE: This is an RFC 3339 date string
-    moderation.submissionDate = new Date(
-      Date.now() - 10 * 60 * 60 * 1000
-    ).toISOString();
-    return deserializeToPrisma(moderation);
-  }
-
-  const res = await authorizedFetch(`/api/attempts/${moderationId}`);
-  const json = await res.json();
-  const deserialized = deserializeToPrisma<ExamEnvironmentExamModeration>(json);
-  return deserialized;
-}
-
 interface PatchModerationStatus {
   attemptId: string;
   status: ExamEnvironmentExamModerationStatus;
