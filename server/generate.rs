@@ -3,6 +3,7 @@ use mongodb::bson::oid::ObjectId;
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
+use tracing::trace;
 
 use crate::database::prisma::{
     ExamEnvironmentAnswer, ExamEnvironmentConfig, ExamEnvironmentGeneratedExam,
@@ -117,14 +118,20 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
             {
                 // If questionSet does not have enough questions for config, do not consider.
                 if qsc_with_qs.config.number_of_questions > question_set.questions.len() as i64 {
+                    trace!(
+                        number_of_questions = question_set.questions.len(),
+                        "skipping. not enough questions in question set"
+                    );
                     continue;
                 }
                 // If tagConfig is finished, skip.
                 if tag_config.number_of_questions == 0 {
+                    trace!(?tag_config.group, "skipping. tag config fulfilled");
                     continue 'sorted_tag_config_loop;
                 }
                 // If questionSetConfig has been fulfilled, skip.
                 if is_question_set_config_fulfilled(qsc_with_qs) {
+                    trace!(?qsc_with_qs, "skipping. question set config fulfilled");
                     continue 'question_sets_config_loop;
                 }
 
@@ -139,6 +146,12 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
                     .iter_mut()
                     .filter(|q| tag_config.group.iter().all(|t| q.tags.contains(t)))
                     .collect();
+
+                // trace!(
+                //     number_of_questions = questions.len(),
+                //     ?tag_config,
+                //     "questions fulfilling tags"
+                // );
 
                 for question in questions {
                     // Does question fulfill criteria for questionSetConfig:
@@ -216,6 +229,7 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
 
             // Ensure all questionSets ARE FULL
             if (qsc_with_qs.config.number_of_set as usize) > qsc_with_qs.question_sets.len() {
+                // Find a question set with enough questions and answers to fulfill config
                 let question_set = shuffled_question_sets
                     .iter()
                     .find(|qs| {
@@ -252,10 +266,13 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
                         ))
                     })?;
 
+                trace!("question set found to fulfill");
+
                 // Remove questionSet from shuffledQuestionSets
                 let question_set_id = question_set.id;
                 shuffled_question_sets.retain(|qs| qs.id != question_set_id);
 
+                // Find question with enough answers to fulfill config
                 let questions: Vec<ExamEnvironmentMultipleChoiceQuestion> = question_set
                     .questions
                     .iter()
@@ -271,11 +288,13 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
                     .cloned()
                     .collect();
 
+                let num_to_add = qsc_with_qs.config.number_of_questions as usize;
                 let questions_with_correct_answers: Result<
                     Vec<ExamEnvironmentMultipleChoiceQuestion>,
                     Error,
                 > = questions
                     .iter()
+                    .take(num_to_add)
                     .map(|q| get_question_with_random_answers(q, &qsc_with_qs.config))
                     .collect();
 
@@ -283,6 +302,11 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
                 question_set_with_correct_number_of_answers.questions =
                     questions_with_correct_answers?;
 
+                trace!(
+                    number_of_questions =
+                        question_set_with_correct_number_of_answers.questions.len(),
+                    "pushing question set to question set with config"
+                );
                 qsc_with_qs
                     .question_sets
                     .push(question_set_with_correct_number_of_answers);
@@ -357,12 +381,14 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
         }
     }
 
+    trace!("finished question set config");
+
     // Update tag config for cases where one question fulfills multiple tag configs
     for qsc_with_qs in question_sets_config_with_questions.iter() {
         for question_set in qsc_with_qs.question_sets.iter() {
             for question in question_set.questions.iter() {
                 for tag_config in sorted_tag_config.iter_mut() {
-                    if tag_config.number_of_questions == 0 {
+                    if tag_config.number_of_questions <= 0 {
                         continue;
                     }
                     if tag_config.group.iter().all(|t| question.tags.contains(t)) {
@@ -372,6 +398,8 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
             }
         }
     }
+
+    trace!("finished updating tag config post question set config");
 
     // Verify all tag configs are fulfilled
     for tag_config in sorted_tag_config.iter() {
@@ -386,6 +414,8 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
             ));
         }
     }
+
+    trace!("all tag configs are fulfilled");
 
     // Build the final generated exam structure
     let question_sets: Vec<ExamEnvironmentGeneratedQuestionSet> =
@@ -419,12 +449,34 @@ pub fn generate_exam(exam: ExamInput) -> Result<ExamEnvironmentGeneratedExam, Er
     })
 }
 
+/// Returns the configs that are not fulfilled
 fn is_question_set_config_fulfilled(qsc_with_qs: &QuestionSetConfigWithQuestions) -> bool {
-    qsc_with_qs.config.number_of_set as usize == qsc_with_qs.question_sets.len()
-        && qsc_with_qs
-            .question_sets
-            .iter()
-            .all(|qs| qs.questions.len() == qsc_with_qs.config.number_of_questions as usize)
+    let enough_of_set =
+        qsc_with_qs.config.number_of_set as usize == qsc_with_qs.question_sets.len();
+
+    if !enough_of_set {
+        trace!(
+            expected = qsc_with_qs.config.number_of_set,
+            actual = qsc_with_qs.question_sets.len(),
+            "not enough of set"
+        );
+    }
+
+    let enough_questions = qsc_with_qs.question_sets.iter().all(|qs| {
+        let num_questions = qs.questions.len();
+        let expected_num_questions = qsc_with_qs.config.number_of_questions as usize;
+        if num_questions != expected_num_questions {
+            trace!(
+                expected = expected_num_questions,
+                actual = num_questions,
+                "number of questions required in config does not match number of questions"
+            );
+        }
+
+        num_questions == expected_num_questions
+    });
+
+    enough_of_set && enough_questions
 }
 
 /// Gets random answers for a question.

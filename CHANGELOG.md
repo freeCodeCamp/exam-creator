@@ -5,6 +5,25 @@
 ### TODO
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
+- moderations
+  - sort order
+  - filter by user id
+  - find by attempt id
+  - find by moderation id
+  - filter by exam id
+  - view of whether or not moderation record has been handled (challengesAwarded)
+  - ability to set as "pending" again
+  - feedback
+- change users editing to not timeout
+  - consider using actions (e.g. mouse/keyboard events) to continue sessions
+
+## [4.0.0] - 2025-12-17
+
+### Changed
+
+- server: adjust generation algorithm to handle sets with more than enough questions
+  - for question sets with more than enough questions, without help from a tag config, the algorithm got stuck in a loop
+- client: size of margin in exam edit
 
 ## [3.15.0] - 2025-12-12
 
