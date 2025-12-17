@@ -45,7 +45,7 @@ export function DialogueForm({
   const accent = useColorModeValue("teal.400", "teal.300");
 
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
+    <Box bg={cardBg} borderRadius="lg" p={4}>
       <Text fontWeight="bold" color={accent} mb={2} id={questionSet.id}>
         Dialogue Form
       </Text>

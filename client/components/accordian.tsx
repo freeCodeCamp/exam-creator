@@ -51,7 +51,7 @@ export function QuestionAccordion({
   const { isOpen, onToggle } = useDisclosure();
 
   return (
-    <Box position="relative" mb={4}>
+    <Box position="relative" marginTop={1}>
       {isLoading && (
         <Box
           position="absolute"
@@ -105,7 +105,6 @@ export function QuestionAccordion({
               colorScheme="yellow"
               fontSize="xs"
               px={2}
-              py={1}
               borderRadius="md"
               bg="yellow.500"
               color="white"
@@ -116,7 +115,6 @@ export function QuestionAccordion({
               colorScheme="green"
               fontSize="xs"
               px={2}
-              py={1}
               borderRadius="md"
               bg="green.500"
               color="white"
@@ -139,7 +137,6 @@ export function QuestionAccordion({
             }
             fontSize="xs"
             px={2}
-            py={1}
             borderRadius="md"
             zIndex={1}
             bg={

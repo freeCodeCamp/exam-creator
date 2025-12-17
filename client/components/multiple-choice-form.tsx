@@ -101,7 +101,6 @@ export function MultipleChoiceForm({
       bg={cardBg}
       borderRadius="lg"
       p={4}
-      mb={4}
       borderWidth={borderWidth}
       borderColor={borderColor}
       borderStyle={borderStyle}
@@ -268,7 +267,6 @@ export function MultipleChoiceForm({
           return (
             <Box
               key={answer.id}
-              mb={3}
               p={2}
               bg="gray.700"
               borderRadius="md"
