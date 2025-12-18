@@ -13,9 +13,15 @@
   - filter by exam id
   - view of whether or not moderation record has been handled (challengesAwarded)
   - ability to set as "pending" again
-  - feedback
+  - [x] feedback
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
+
+## [4.1.0] - 2025-12-18
+
+### Added
+
+- client: moderation feedback on edit attempt page
 
 ## [4.0.0] - 2025-12-17
 

@@ -427,10 +427,12 @@ export async function getModerations({
   status,
   limit,
   skip,
+  sort,
 }: {
   status?: ExamEnvironmentExamModerationStatus;
   limit?: number;
   skip?: number;
+  sort?: number;
 }): Promise<ExamEnvironmentExamModeration[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -453,6 +455,9 @@ export async function getModerations({
   }
   if (skip !== undefined) {
     url.searchParams.set("skip", skip.toString());
+  }
+  if (sort !== undefined) {
+    url.searchParams.set("sort", sort.toString());
   }
   const res = await authorizedFetch(url);
   const json = await res.json();
@@ -499,9 +504,48 @@ interface GetModerationsCountResponse {
 }
 
 export async function getModerationsCount() {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const moderationCounts: GetModerationsCountResponse = {
+      staging: {
+        pending: 1,
+        approved: 2,
+        denied: 3,
+      },
+      production: {
+        pending: 4,
+        approved: 2000,
+        denied: 32,
+      },
+    };
+    return moderationCounts;
+  }
   const res = await authorizedFetch(`/api/attempts/moderations/count`);
   const json = await res.json();
   const deserialized = deserializeToPrisma<GetModerationsCountResponse>(json);
+  return deserialized;
+}
+
+export async function getModerationByAttemptId(attemptId: string) {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    const res = await fetch("/mocks/moderations.json");
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
+      );
+    }
+    const moderations = await res.json();
+
+    const deserialized =
+      deserializeToPrisma<ExamEnvironmentExamModeration[]>(moderations);
+    const mod = deserialized.find((m) => m.examAttemptId === attemptId);
+    return mod;
+  }
+  const res = await authorizedFetch(`/api/attempts/${attemptId}/moderation`);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<ExamEnvironmentExamModeration>(json);
   return deserialized;
 }
 

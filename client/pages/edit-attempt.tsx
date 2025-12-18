@@ -43,6 +43,7 @@ import { AuthContext } from "../contexts/auth";
 import {
   getAttemptById,
   getAttemptsByUserId,
+  getModerationByAttemptId,
   getModerations,
   getNumberOfAttemptsByUserId,
   patchModerationStatusByAttemptId,
@@ -173,6 +174,13 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const denyButtonRef = useRef<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
   const { filter } = useSearch({ from: editAttemptRoute.to });
+
+  const moderationQuery = useQuery({
+    queryKey: ["moderation", attempt.id],
+    queryFn: () => getModerationByAttemptId(attempt.id),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
     updateActivity({
@@ -483,6 +491,11 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 </Text>
               </Box>
             </SimpleGrid>
+            {moderationQuery.data?.feedback && (
+              <Text color="white" py={3}>
+                <b>Feedback</b>: {moderationQuery.data?.feedback}
+              </Text>
+            )}
             <AllUserAttemptsContainer attempt={attempt} />
           </Flex>
         </Box>
@@ -505,12 +518,11 @@ function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
   });
 
   return (
-    <Center mt={4}>
+    <Center mt={2}>
       {!attemptsMutation.data ? (
         <Button
           colorScheme="teal"
           size="lg"
-          mt={4}
           onClick={() => attemptsMutation.mutate(attempt.userId)}
           disabled={attemptsMutation.isPending}
           isLoading={attemptsMutation.isPending}

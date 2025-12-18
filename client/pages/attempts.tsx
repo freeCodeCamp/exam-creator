@@ -46,6 +46,7 @@ export function Attempts() {
   const [filter, setFilter] = useState<ExamEnvironmentExamModerationStatus>(
     search.filter || "Pending"
   );
+  // const [sort, setSort] = useState<number>(search.sort ?? 1);
 
   const {
     data,
@@ -67,6 +68,7 @@ export function Attempts() {
         status: filter,
         limit: 5,
         skip: pageParam,
+        // sort,
       });
     },
     initialPageParam: 0,
@@ -215,6 +217,16 @@ export function Attempts() {
                 })}
               </MenuList>
             </Menu>
+            {/* <FormControl>
+              <FormLabel>Sort Order</FormLabel>
+              <select
+                value={sort}
+                onChange={(e) => setSort(Number(e.target.value))}
+              >
+                <option value="1">Ascending</option>
+                <option value="-1">Descending</option>
+              </select>
+            </FormControl> */}
           </Flex>
           <Box>
             {isPending ? (

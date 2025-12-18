@@ -192,7 +192,8 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         )
         .route(
             "/api/attempts/{attempt_id}/moderation",
-            patch(routes::attempts::patch_moderation_status_by_attempt_id),
+            patch(routes::attempts::patch_moderation_status_by_attempt_id)
+                .get(routes::moderations::get_moderation_by_attempt_id),
         )
         .route("/api/attempts", get(routes::moderations::get_moderations))
         .route(
