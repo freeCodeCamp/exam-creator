@@ -17,6 +17,12 @@
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
 
+## [4.2.0] - 2025-12-18
+
+### Added
+
+- client: enabled exam note to be multi-line
+
 ## [4.1.0] - 2025-12-18
 
 ### Added

@@ -14,6 +14,7 @@ import {
   Checkbox,
   Text,
   useColorModeValue,
+  Textarea,
 } from "@chakra-ui/react";
 import {
   ExamCreatorExam,
@@ -71,10 +72,9 @@ export function EditExamConfig({
       </FormControl>
       <FormControl>
         <FormLabel color="gray.300">Accessibility Note</FormLabel>
-        <Input
-          type="text"
+        <Textarea
           placeholder="Accessibility Note..."
-          value={config.note}
+          value={config.note ?? ""}
           onChange={(e) =>
             setConfig({
               note: e.target.value,
