@@ -128,7 +128,18 @@ export function EditExamGenerationVariability({
           <Tbody>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="How many generated exams exist">
+                <Tooltip label="How many generations are deprecated">
+                  Deprecated Generations
+                </Tooltip>
+              </Td>
+              <Td color="gray.100">{stagingMetrics.deprecatedGenerations}</Td>
+              <Td color="gray.100">
+                {productionMetrics.deprecatedGenerations}
+              </Td>
+            </Tr>
+            <Tr>
+              <Td color="gray.100" fontWeight="bold">
+                <Tooltip label="How many non-deprecated generations exist">
                   Total Generations
                 </Tooltip>
               </Td>
@@ -137,7 +148,7 @@ export function EditExamGenerationVariability({
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Overall question variability across all generated exams. (sum of variabilities) / (number of comparisons)">
+                <Tooltip label="Overall question variability across all live generations. (sum of variabilities) / (number of comparisons)">
                   Question Total
                 </Tooltip>
               </Td>
@@ -146,7 +157,7 @@ export function EditExamGenerationVariability({
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Maximum question variability found between any two generated exams">
+                <Tooltip label="Maximum question variability found between any two live generations">
                   Question Max
                 </Tooltip>
               </Td>
@@ -157,7 +168,7 @@ export function EditExamGenerationVariability({
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Minimum question variability found between any two generated exams">
+                <Tooltip label="Minimum question variability found between any two live generations">
                   Question Min
                 </Tooltip>
               </Td>
@@ -168,7 +179,7 @@ export function EditExamGenerationVariability({
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Overall answer variability across all generated exams. (sum of variabilities) / (number of comparisons)">
+                <Tooltip label="Overall answer variability across all live generations. (sum of variabilities) / (number of comparisons)">
                   Answer Total
                 </Tooltip>
               </Td>
@@ -177,7 +188,7 @@ export function EditExamGenerationVariability({
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Maximum answer variability found between any two generated exams">
+                <Tooltip label="Maximum answer variability found between any two live generations">
                   Answer Max
                 </Tooltip>
               </Td>
@@ -186,7 +197,7 @@ export function EditExamGenerationVariability({
             </Tr>
             <Tr>
               <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Minimum answer variability found between any two generated exams">
+                <Tooltip label="Minimum answer variability found between any two live generations">
                   Answer Min
                 </Tooltip>
               </Td>

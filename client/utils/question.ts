@@ -179,6 +179,7 @@ export function calculateGenerationMetrics(
   if (!generatedExams || generatedExams.length === 0) {
     return {
       totalGenerations: 0,
+      deprecatedGenerations: 0,
       questionVariability: "-",
       questionVariabilityMax: "-",
       questionVariabilityMin: "-",
@@ -188,14 +189,16 @@ export function calculateGenerationMetrics(
     };
   }
 
-  const totalGenerations = generatedExams.length;
+  const nonDeprecatedGenerations = generatedExams.filter((g) => !g.deprecated);
+  const totalGenerations = nonDeprecatedGenerations.length;
+  const deprecatedGenerations = generatedExams.length - totalGenerations;
 
   // Variability is considered: (number of different) / (total)
   // For final variability, it is: (sum of variabilities) / (number of comparisons)
 
   // Compare all generations to each other to find variability
   // - Compare A to B, A to C, and B to C
-  const questions = generatedExams.map((gen) =>
+  const questions = nonDeprecatedGenerations.map((gen) =>
     gen.questionSets.flatMap((qs) => qs.questions)
   );
 
@@ -208,7 +211,7 @@ export function calculateGenerationMetrics(
     min: questionVariabilityMin,
   } = analyzeVariability(findVariabilities(questionIds));
 
-  const answers = generatedExams.map((gen) =>
+  const answers = nonDeprecatedGenerations.map((gen) =>
     gen.questionSets.flatMap((qs) => qs.questions).flatMap((q) => q.answers)
   );
 
@@ -220,6 +223,7 @@ export function calculateGenerationMetrics(
 
   return {
     totalGenerations,
+    deprecatedGenerations,
     questionVariability: questionVariability.toFixed(3),
     questionVariabilityMax: questionVariabilityMax.toFixed(3),
     questionVariabilityMin: questionVariabilityMin.toFixed(3),
