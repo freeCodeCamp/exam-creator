@@ -23,7 +23,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-icons": "5.5.0",
-    "recharts": "3.5.0",
+    "recharts": "3.6.0",
     "use-immer": "0.11.0",
     "vite-plugin-prismjs": "0.0.11"
   },

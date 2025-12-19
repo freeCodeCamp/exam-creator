@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { InfiniteData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   createRoute,
@@ -20,16 +20,20 @@ import {
   Stack,
   Heading,
   Flex,
+  FormControl,
+  FormLabel,
+  Switch,
 } from "@chakra-ui/react";
 import {
   Bar,
-  BarChart,
-  CartesianGrid,
   Tooltip as ReChartsTooltip,
   XAxis,
   YAxis,
   Cell,
   ResponsiveContainer,
+  ReferenceArea,
+  Line,
+  ComposedChart,
 } from "recharts";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -52,6 +56,7 @@ import { attemptsRoute } from "./attempts";
 import { Attempt } from "../types";
 import { prettyDate, secondsToHumanReadable } from "../utils/question";
 import { queryClient } from "../contexts";
+import { BracketLayer } from "../components/diff-brackets";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -169,6 +174,11 @@ function UsersEditing() {
 
 function EditAttempt({ attempt }: { attempt: Attempt }) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
+  // TODO: Consider sticking in user settings
+  const [isSubmissionDiffToggled, setIsSubmissionDiffToggled] = useState(false);
+  const [isSubmissionTimeToggled, setIsSubmissionTimeToggled] = useState(false);
+  const [isSubmissionTimelineToggled, setIsSubmissionTimelineToggled] =
+    useState(false);
   const buttonBoxRef = useRef<HTMLDivElement | null>(null);
   const approveButtonRef = useRef<HTMLButtonElement | null>(null);
   const denyButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -269,6 +279,57 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   const cardBg = useColorModeValue("gray.800", "gray.800");
   const accent = useColorModeValue("teal.400", "teal.300");
 
+  const attemptStatsQuery = useQuery({
+    queryKey: [
+      "attempt-stats-calc",
+      isSubmissionTimeToggled,
+      isSubmissionTimelineToggled,
+    ],
+    queryFn: () => {
+      let {
+        timeToAnswers,
+        totalQuestions,
+        answered,
+        correct,
+        timeToComplete,
+        averageTimePerQuestion,
+      } = getAttemptStats(attempt);
+
+      if (isSubmissionTimeToggled) {
+        timeToAnswers.sort((a, b) => {
+          return a.value - b.value;
+        });
+      }
+
+      if (isSubmissionTimelineToggled) {
+        timeToAnswers = timeToAnswers.map((t, i) => {
+          if (i === 0) return { ...t, questionTimeDiff: t.value };
+
+          const prev = timeToAnswers[i - 1];
+
+          return { ...t, questionTimeDiff: t.value - prev.value };
+        });
+      }
+
+      return {
+        timeToAnswers,
+        totalQuestions,
+        answered,
+        correct,
+        timeToComplete,
+        averageTimePerQuestion,
+      };
+    },
+  });
+
+  if (
+    attemptStatsQuery.isFetching ||
+    attemptStatsQuery.isError ||
+    !attemptStatsQuery.isSuccess
+  ) {
+    return <Spinner />;
+  }
+
   const {
     timeToAnswers,
     totalQuestions,
@@ -276,7 +337,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
     correct,
     timeToComplete,
     averageTimePerQuestion,
-  } = getAttemptStats(attempt);
+  } = attemptStatsQuery.data;
 
   return (
     <>
@@ -343,18 +404,52 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
             <Text color={accent}>{prettyDate(attempt.startTime)}</Text>
           </Flex>
           <Flex direction={"column"} mb={4}>
+            <SimpleGrid minChildWidth={"230px"} spacing={4}>
+              <FormControl alignItems={"center"} display={"flex"}>
+                <FormLabel htmlFor="submission-diff" color="gray.400">
+                  Enable Submission Diff
+                </FormLabel>
+                <Switch
+                  id="submission-diff"
+                  isChecked={isSubmissionDiffToggled}
+                  onChange={(e) => setIsSubmissionDiffToggled(e.target.checked)}
+                />
+              </FormControl>
+              <FormControl alignItems={"center"} display={"flex"}>
+                <FormLabel htmlFor="submission-time-sort" color="gray.400">
+                  Sort by Submission Time
+                </FormLabel>
+                <Switch
+                  id="submission-time-sort"
+                  isChecked={isSubmissionTimeToggled}
+                  onChange={(e) => setIsSubmissionTimeToggled(e.target.checked)}
+                />
+              </FormControl>
+              <FormControl alignItems={"center"} display={"flex"}>
+                <FormLabel htmlFor="submission-timeline" color="gray.400">
+                  Enable Submission Frequency
+                </FormLabel>
+                <Switch
+                  id="submission-timeline"
+                  isChecked={isSubmissionTimelineToggled}
+                  onChange={(e) =>
+                    setIsSubmissionTimelineToggled(e.target.checked)
+                  }
+                />
+              </FormControl>
+            </SimpleGrid>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart
+              <ComposedChart
                 data={timeToAnswers}
-                margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
               >
-                <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
                 <Bar
                   type="monotone"
                   dataKey="value"
                   name="submission time"
                   // Custom fill for each bar
                   fill={"purple"}
+                  yAxisId={"left"}
                 >
                   {timeToAnswers.map((entry, index) => (
                     <Cell
@@ -363,6 +458,16 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                     />
                   ))}
                 </Bar>
+                {isSubmissionTimelineToggled && (
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey={"questionTimeDiff"}
+                    stroke="#ff7300"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                )}
                 <XAxis
                   dataKey="name"
                   label={{
@@ -373,6 +478,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 />
                 <YAxis
                   width="auto"
+                  yAxisId={"left"}
                   label={{
                     value: "seconds since exam start",
                     position: "insideBottomLeft",
@@ -380,13 +486,51 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                     offset: 20,
                   }}
                 />
+                <YAxis
+                  width="auto"
+                  yAxisId={"right"}
+                  orientation="right"
+                  label={{
+                    value: "time between questions [s]",
+                    position: "insideTopRight",
+                    angle: -90,
+                    offset: 20,
+                  }}
+                />
+                {isSubmissionDiffToggled &&
+                  timeToAnswers.map((entry, index) => {
+                    if (index === 0) return null;
+                    const prev = timeToAnswers[index - 1];
+
+                    // Calculate the highest point of the two bars to anchor the bracket
+                    const peakValue = Math.max(prev.value, entry.value);
+
+                    return (
+                      <ReferenceArea
+                        key={`bracket-${index}`}
+                        x1={prev.name} // Matches XAxis dataKey
+                        x2={entry.name}
+                        y1={peakValue}
+                        y2={peakValue}
+                        strokeOpacity={0}
+                        yAxisId={"left"}
+                        fillOpacity={0} // Makes the area itself invisible
+                        label={
+                          <BracketLayer
+                            prevValue={prev.value}
+                            currValue={entry.value}
+                          />
+                        }
+                      />
+                    );
+                  })}
                 <ReChartsTooltip
                   cursor={false}
                   formatter={(value, name) => {
                     return [secondsToHumanReadable(Number(value)), name];
                   }}
                 />
-              </BarChart>
+              </ComposedChart>
             </ResponsiveContainer>
             <SimpleGrid
               // minChildWidth={"200px"}
