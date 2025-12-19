@@ -17,6 +17,19 @@
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
 
+## [5.0.0] - 2025-12-19
+
+### Changed
+
+- client: handle deprecated generations
+
+### Added
+
+- client: sort attempt question submissions by time
+- client: toggle to show question submission time diff
+- client: toggle to show question submission frequency curve
+- client: collapsible exam config view
+
 ## [4.2.0] - 2025-12-18
 
 ### Added
