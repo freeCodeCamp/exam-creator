@@ -284,6 +284,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       "attempt-stats-calc",
       isSubmissionTimeToggled,
       isSubmissionTimelineToggled,
+      attempt.id,
     ],
     queryFn: () => {
       let {

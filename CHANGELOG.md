@@ -16,12 +16,14 @@
   - [x] feedback
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
+- client: add keyboard shortcuts to toggle attempt moderation stats
 
 ## [5.0.1] - 2025-12-20
 
 ### Fixed
 
 - client: generation question frequency ignore deprecated
+- client: add attempt id to stats cache key
 
 ## [5.0.0] - 2025-12-19
 
