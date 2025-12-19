@@ -52,8 +52,12 @@ export function QuestionForm({
     generatedExamsStagingQuery.isPending ||
     generatedExamsProductionQuery.isPending;
 
-  const stagingExams = generatedExamsStagingQuery.data;
-  const productionExams = generatedExamsProductionQuery.data;
+  const stagingExams = generatedExamsStagingQuery.data?.filter(
+    (g) => !g.deprecated
+  );
+  const productionExams = generatedExamsProductionQuery.data?.filter(
+    (g) => !g.deprecated
+  );
 
   const hasGeneratedExams = useMemo(() => {
     return !!(

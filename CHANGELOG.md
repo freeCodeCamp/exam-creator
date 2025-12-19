@@ -17,6 +17,12 @@
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
 
+## [5.0.1] - 2025-12-20
+
+### Fixed
+
+- client: generation question frequency ignore deprecated
+
 ## [5.0.0] - 2025-12-19
 
 ### Changed
