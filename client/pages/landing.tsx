@@ -166,7 +166,7 @@ export function Landing() {
                 p={0}
               >
                 <LandingCard filteredUsers={usersOnMetrics}>
-                  Exam Metrics (Beta)
+                  Exam Metrics
                 </LandingCard>
               </Button>
             </SimpleGrid>
