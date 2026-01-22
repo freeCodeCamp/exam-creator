@@ -64,6 +64,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .with_expiry(Expiry::OnInactivity(time::Duration::seconds(10)));
 
     let production_database = database::Database {
+        user: production_database.collection("user"),
         exam_creator_exam: production_database.collection("ExamCreatorExam"),
         exam: production_database.collection("ExamEnvironmentExam"),
         exam_attempt: production_database.collection("ExamEnvironmentExamAttempt"),
@@ -76,6 +77,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     };
 
     let staging_database = database::Database {
+        user: staging_database.collection("user"),
         exam_creator_exam: staging_database.collection("ExamCreatorExam"),
         exam: staging_database.collection("ExamEnvironmentExam"),
         exam_attempt: staging_database.collection("ExamEnvironmentExamAttempt"),
@@ -214,6 +216,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
                 .put(routes::exam_challenge::put_exam_challenges), // .delete(routes::exam_challenge::delete_exam_challenge),
         )
         .route("/api/users", get(routes::users::get_users))
+        .route(
+            "/api/prisma/users/{user_id}",
+            get(routes::users::get_user_by_id),
+        )
         .route("/api/users/session", get(routes::users::get_session_user))
         .route(
             "/api/users/session/settings",

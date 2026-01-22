@@ -1,10 +1,10 @@
-import type {
-  ExamCreatorExam,
-  ExamEnvironmentChallenge,
-  ExamEnvironmentExamAttempt,
-  ExamEnvironmentExamModeration,
-  ExamEnvironmentExamModerationStatus,
-  ExamEnvironmentGeneratedExam,
+import {
+  type ExamCreatorExam,
+  type ExamEnvironmentChallenge,
+  type ExamEnvironmentExamAttempt,
+  type ExamEnvironmentExamModeration,
+  type ExamEnvironmentExamModerationStatus,
+  type ExamEnvironmentGeneratedExam,
 } from "@prisma/client";
 import type {
   Attempt,
@@ -85,7 +85,7 @@ export async function putState(state: ClientSync): Promise<ClientSync> {
   return deserialized;
 }
 
-type GetExam = {
+export type GetExam = {
   exam: Omit<ExamCreatorExam, "questionSets">;
   databaseEnvironments: ("Staging" | "Production")[];
 };
@@ -428,11 +428,13 @@ export async function getModerations({
   limit,
   skip,
   sort,
+  exam,
 }: {
   status?: ExamEnvironmentExamModerationStatus;
   limit?: number;
   skip?: number;
   sort?: number;
+  exam?: string;
 }): Promise<ExamEnvironmentExamModeration[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -458,6 +460,9 @@ export async function getModerations({
   }
   if (sort !== undefined) {
     url.searchParams.set("sort", sort.toString());
+  }
+  if (exam !== undefined) {
+    url.searchParams.set("exam", exam);
   }
   const res = await authorizedFetch(url);
   const json = await res.json();

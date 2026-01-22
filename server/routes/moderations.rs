@@ -20,6 +20,7 @@ pub struct GetModerationsQuery {
     pub status: Option<prisma::ExamEnvironmentExamModerationStatus>,
     pub skip: Option<u64>,
     pub limit: Option<i64>,
+    // pub exam: Option<ObjectId>,
     // Realistically, this can be -1, 0, 1
     // pub sort: Option<i32>,
 }
@@ -31,13 +32,16 @@ pub async fn get_moderations(
     Query(params): Query<GetModerationsQuery>,
 ) -> Result<Json<Vec<prisma::ExamEnvironmentExamModeration>>, Error> {
     let database = database_environment(&server_state, &exam_creator_user);
-    let status = params.status;
     let skip = params.skip.unwrap_or(0);
-    let filter = if let Some(status) = status {
-        doc! { "status": bson::serialize_to_bson(&status)? }
-    } else {
-        doc! {}
-    };
+    let mut filter = doc! {};
+    if let Some(status) = params.status {
+        filter.insert("status", bson::serialize_to_bson(&status)?);
+    }
+    // if let Some(exam) = params.exam {
+    //     // "examId" does not exist on moderation
+    //     // Could manually query attempts, but skipping becomes difficult
+    //     filter.insert("examId")
+    // }
     // let sort = if let Some(sort) = params.sort {
     //     doc! {"_id":  sort}
     // } else {

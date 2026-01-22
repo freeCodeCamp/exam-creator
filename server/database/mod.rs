@@ -1,3 +1,4 @@
+use bson::Document;
 use mongodb::Collection;
 
 use crate::state::{Activity, ServerState, User};
@@ -6,6 +7,7 @@ pub mod prisma;
 
 #[derive(Clone, Debug)]
 pub struct Database {
+    pub user: Collection<Document>,
     pub exam_creator_exam: Collection<prisma::ExamCreatorExam>,
     pub exam: Collection<prisma::ExamEnvironmentExam>,
     pub exam_environment_challenge: Collection<prisma::ExamEnvironmentChallenge>,

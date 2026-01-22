@@ -43,10 +43,18 @@ export function Attempts() {
   const navigate = useNavigate();
   const search = useSearch({ from: attemptsRoute.to });
 
-  const [filter, setFilter] = useState<ExamEnvironmentExamModerationStatus>(
-    search.filter || "Pending"
-  );
+  const [moderationStatusFilter, setModerationStatusFilter] =
+    useState<ExamEnvironmentExamModerationStatus>(search.filter || "Pending");
+  // const [examFilter, setExamFilter] = useState<GetExam["exam"] | null>(null);
   // const [sort, setSort] = useState<number>(search.sort ?? 1);
+
+  // TODO: Could turn this into a mutation, and only fetch if filter is used
+  // const examsQuery = useQuery({
+  //   queryKey: ["exams"],
+  //   queryFn: () => getExams(),
+  //   retry: false,
+  //   refetchOnWindowFocus: false,
+  // });
 
   const {
     data,
@@ -59,15 +67,16 @@ export function Attempts() {
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ["filteredModerations", filter],
+    queryKey: ["filteredModerations", moderationStatusFilter],
     queryFn: ({ pageParam }) => {
       if (pageParam === null) {
         return [];
       }
       return getModerations({
-        status: filter,
+        status: moderationStatusFilter,
         limit: 5,
         skip: pageParam,
+        // exam: examFilter?.id,
         // sort,
       });
     },
@@ -94,7 +103,7 @@ export function Attempts() {
       });
       if (node) observerRef.current.observe(node);
     },
-    [isFetchingNextPage, hasNextPage, fetchNextPage]
+    [isFetchingNextPage, hasNextPage, fetchNextPage],
   );
 
   useEffect(() => {
@@ -103,10 +112,6 @@ export function Attempts() {
       lastActive: Date.now(),
     });
   }, []);
-
-  function handleFilterChange(status: ExamEnvironmentExamModerationStatus) {
-    setFilter(status);
-  }
 
   const bg = useColorModeValue("black", "black");
   const cardBg = useColorModeValue("gray.800", "gray.800");
@@ -190,7 +195,7 @@ export function Attempts() {
             </HStack>
             <Menu>
               <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                {filter}
+                {moderationStatusFilter}
               </MenuButton>
               <MenuList backgroundColor="gray.800">
                 {(["Pending", "Approved", "Denied"] as const).map((status) => {
@@ -208,7 +213,7 @@ export function Attempts() {
                       isLoading={isPending || isFetching}
                       justifyContent={"flex-start"}
                       loadingText={"Filtering..."}
-                      onClick={() => handleFilterChange(status)}
+                      onClick={() => setModerationStatusFilter(status)}
                       _hover={{ bg: "green.500" }}
                     >
                       {status}
@@ -217,6 +222,52 @@ export function Attempts() {
                 })}
               </MenuList>
             </Menu>
+            {/* <Menu>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {examFilter?.config?.name ?? "All"}
+              </MenuButton>
+              <MenuList backgroundColor="gray.800">
+                <MenuItem
+                  as={Button}
+                  backgroundColor="gray.800"
+                  borderRadius={0}
+                  boxShadow="md"
+                  color={"white"}
+                  colorScheme="green"
+                  fontWeight="bold"
+                  isDisabled={isPending || isFetching}
+                  isLoading={isPending || isFetching}
+                  justifyContent={"flex-start"}
+                  loadingText={"Filtering..."}
+                  onClick={() => setExamFilter(null)}
+                  _hover={{ bg: "green.500" }}
+                >
+                  All
+                </MenuItem>
+                {examsQuery.data?.map(({ exam }) => {
+                  return (
+                    <MenuItem
+                      key={exam.id}
+                      as={Button}
+                      backgroundColor="gray.800"
+                      borderRadius={0}
+                      boxShadow="md"
+                      color={"white"}
+                      colorScheme="green"
+                      fontWeight="bold"
+                      isDisabled={isPending || isFetching}
+                      isLoading={isPending || isFetching}
+                      justifyContent={"flex-start"}
+                      loadingText={"Filtering..."}
+                      onClick={() => setExamFilter(exam)}
+                      _hover={{ bg: "green.500" }}
+                    >
+                      {exam.config.name}
+                    </MenuItem>
+                  );
+                })}
+              </MenuList>
+            </Menu> */}
             {/* <FormControl>
               <FormLabel>Sort Order</FormLabel>
               <select
@@ -251,7 +302,7 @@ export function Attempts() {
                       >
                         <ModerationCard
                           moderation={moderation}
-                          filter={filter}
+                          filter={moderationStatusFilter}
                         />
                       </Box>
                     );
@@ -259,7 +310,8 @@ export function Attempts() {
                 {data?.pages?.length === 0 && (
                   <Center>
                     <Text color="gray.400" fontSize="lg">
-                      No moderations found for "{filter}" status.
+                      No moderations found for "{moderationStatusFilter}"
+                      status.
                     </Text>
                   </Center>
                 )}

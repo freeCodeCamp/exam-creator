@@ -1,5 +1,9 @@
-use axum::{Json, extract::State};
+use axum::{
+    Json,
+    extract::{Path, State},
+};
 use axum_extra::extract::PrivateCookieJar;
+use bson::{Document, oid::ObjectId};
 use http::StatusCode;
 use mongodb::bson::doc;
 use oauth2::CsrfToken;
@@ -106,4 +110,23 @@ pub async fn put_user_settings(
     }
 
     Ok(Json(settings))
+}
+
+#[instrument(skip_all, err(Debug), level = "debug")]
+pub async fn get_user_by_id(
+    _: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(user_id): Path<ObjectId>,
+) -> Result<Json<Document>, Error> {
+    let user = state
+        .staging_database
+        .user
+        .find_one(doc! {"_id": user_id})
+        .await?
+        .ok_or(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("user non-existent for id: {user_id}"),
+        ))?;
+
+    Ok(Json(user))
 }
