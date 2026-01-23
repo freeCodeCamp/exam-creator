@@ -16,10 +16,6 @@
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
 - client: add keyboard shortcuts to toggle attempt moderation stats
 - events
-  - question navigation
-    - when a question is visited on new graph
-  - application focus
-    - blur/focus as vertical lines overlayed on answer graph
   - captions opened
     - vertical lines overlayed on answer graph
 
@@ -31,6 +27,11 @@
 - server: moderations sort by submission time
 - client: attempt events
 - server: supabase connection with attempts
+- events
+  - question navigation
+    - when a question is visited on new graph
+  - application focus
+    - blur/focus as vertical lines overlayed on answer graph
 
 ### Fixed
 

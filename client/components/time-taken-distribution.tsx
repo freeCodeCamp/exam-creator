@@ -40,7 +40,7 @@ export function TimeTakenDistribution({
         const lastSubmission = Math.max(
           ...flattened.map((f) => {
             return f.submissionTime?.getTime() ?? 0;
-          })
+          }),
         );
         return (lastSubmission - startTimeInMS) / 1000;
       });
@@ -87,7 +87,7 @@ export function TimeTakenDistribution({
       const variance =
         completionTimes.reduce(
           (sum, time) => sum + Math.pow(time - mean, 2),
-          0
+          0,
         ) / completionTimes.length;
       const stdDev = Math.sqrt(variance);
 
@@ -163,7 +163,7 @@ export function TimeTakenDistribution({
               }
               return [`${value} attempts`, "Count"];
             }}
-            labelFormatter={(label: string) => {
+            labelFormatter={(label) => {
               const [start, end] = label.split("-");
               const mid = (Number(start) + Number(end)) / 2;
               const humanReadable = secondsToHumanReadable(mid);

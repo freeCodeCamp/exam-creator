@@ -16,10 +16,8 @@ export function BracketLayer(props: BracketLayerProps) {
   // @ts-expect-error Types can be difficult
   const { x, y, width } = viewBox;
 
-  // Recharts 'x' is the starting pixel of the area (center of first bar)
-  // 'width' is the distance to the end of the area (center of second bar)
-  const x1 = x + width / 4;
-  const x2 = x + (3 * width) / 4;
+  const x1 = x;
+  const x2 = x + width;
 
   // 'y' is the top pixel based on the y1/y2 values passed to ReferenceArea
   const bracketTop = y - 30;

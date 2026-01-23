@@ -34,6 +34,9 @@ import {
   ComposedChart,
   Scatter,
   CartesianGrid,
+  Legend,
+  DefaultLegendContentProps,
+  DefaultLegendContent,
 } from "recharts";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -195,6 +198,7 @@ function EditAttempt({
   const [isSubmissionTimeToggled, setIsSubmissionTimeToggled] = useState(false);
   const [isSubmissionTimelineToggled, setIsSubmissionTimelineToggled] =
     useState(false);
+  const [isEventsToggled, setIsEventsToggled] = useState(true);
   const buttonBoxRef = useRef<HTMLDivElement | null>(null);
   const approveButtonRef = useRef<HTMLButtonElement | null>(null);
   const denyButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -346,12 +350,13 @@ function EditAttempt({
     const visitEvents = events
       .filter((e) => e.kind === "QUESTION_VISIT")
       .map((e) => {
+        // @ts-expect-error Types are hard
         const idx = questionIdToIndexMap.get(e.meta?.question ?? "");
         if (idx === undefined) return null;
 
         return {
           idx,
-          timeSinceStartInS: (e.timestamp.getTime() - attemptStartTime) / 1000, // y-axis
+          timeSinceStartInS: (e.timestamp.getTime() - attemptStartTime) / 1000,
           kind: "QUESTION_VISIT",
         };
       })
@@ -377,7 +382,8 @@ function EditAttempt({
         // Map to the question active during the blur, if possible
         const questionId = lastBlurEvent.meta?.question || e.meta?.question;
         const idx = questionId
-          ? questionIdToIndexMap.get(questionId)
+          ? // @ts-expect-error Types \_O_/
+            questionIdToIndexMap.get(questionId)
           : undefined;
 
         if (idx !== undefined) {
@@ -531,29 +537,40 @@ function EditAttempt({
                   }
                 />
               </FormControl>
+              <FormControl alignItems={"center"} display={"flex"}>
+                <FormLabel htmlFor="event-switch" color="gray.400">
+                  Enable Events
+                </FormLabel>
+                <Switch
+                  id="event-switch"
+                  isChecked={isEventsToggled}
+                  onChange={(e) => setIsEventsToggled(e.target.checked)}
+                />
+              </FormControl>
             </SimpleGrid>
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart
                 margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                {focusGaps.map((f) => {
-                  const stroke = "red";
-                  const opacity = 0.3;
-                  const y1 = f.blurTime;
-                  const y2 = f.focusTime;
-                  return (
-                    <ReferenceArea
-                      {...{ y1, y2, stroke, opacity }}
-                      xAxisId={"bottom"}
-                      yAxisId={"left"}
-                    />
-                  );
-                })}
+                {isEventsToggled &&
+                  focusGaps.map((f) => {
+                    const stroke = "red";
+                    const opacity = 0.3;
+                    const y1 = f.blurTime;
+                    const y2 = f.focusTime;
+                    return (
+                      <ReferenceArea
+                        {...{ y1, y2, stroke, opacity }}
+                        xAxisId={"bottom"}
+                        yAxisId={"left"}
+                      />
+                    );
+                  })}
 
                 {isSubmissionTimelineToggled && (
                   <Line
-                    data={questions}
+                    data={questions.filter((q) => !!q.questionTimeDiff)}
                     yAxisId="right"
                     xAxisId="bottom"
                     type="monotone"
@@ -607,6 +624,8 @@ function EditAttempt({
                   }}
                 />
 
+                <Legend verticalAlign="top" height={36} content={legendFill} />
+
                 <Scatter
                   name="Correct"
                   data={correctAnswers}
@@ -625,16 +644,18 @@ function EditAttempt({
                   xAxisId="bottom"
                 />
 
-                <Scatter
-                  name="Visit"
-                  data={visitEvents}
-                  dataKey="timeSinceStartInS"
-                  fill="transparent"
-                  stroke="purple"
-                  shape="circle"
-                  yAxisId="left"
-                  xAxisId="bottom"
-                />
+                {isEventsToggled && (
+                  <Scatter
+                    name="Visit"
+                    data={visitEvents}
+                    dataKey="timeSinceStartInS"
+                    fill="transparent"
+                    stroke="purple"
+                    shape="circle"
+                    yAxisId="left"
+                    xAxisId="bottom"
+                  />
+                )}
 
                 {isSubmissionDiffToggled &&
                   questions.map((entry, index) => {
@@ -670,7 +691,7 @@ function EditAttempt({
                   })}
                 <ReChartsTooltip
                   cursor={{ strokeDasharray: "3 3" }}
-                  content={({ active, payload, label }) => {
+                  content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       if (data.blurTime) {
@@ -833,6 +854,19 @@ function EditAttempt({
       </Stack>
     </>
   );
+}
+
+function legendFill({ payload, ref, ...rest }: DefaultLegendContentProps) {
+  const payloadWithFill = payload?.map((p) => {
+    const color =
+      // @ts-ignore
+      p.color === "transparent" ? (p.payload?.stroke ?? "white") : p.color;
+    return {
+      ...p,
+      color,
+    };
+  });
+  return <DefaultLegendContent payload={payloadWithFill} {...rest} />;
 }
 
 function AllUserAttemptsContainer({
