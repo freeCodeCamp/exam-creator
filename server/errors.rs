@@ -26,6 +26,8 @@ pub enum Error {
     BsonSerialization(#[from] mongodb::bson::error::Error),
     #[error("{0}")]
     TimeConversion(#[from] time::error::ConversionRange),
+    #[error("{0}")]
+    Supabase(#[from] supabase_rs::errors::ErrorTypes),
 }
 
 impl IntoResponse for Error {

@@ -6,17 +6,35 @@
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully
 - moderations
-  - sort order
   - filter by user id
   - find by attempt id
   - find by moderation id
   - filter by exam id
   - view of whether or not moderation record has been handled (challengesAwarded)
   - ability to set as "pending" again
-  - [x] feedback
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
 - client: add keyboard shortcuts to toggle attempt moderation stats
+- events
+  - question navigation
+    - when a question is visited on new graph
+  - application focus
+    - blur/focus as vertical lines overlayed on answer graph
+  - captions opened
+    - vertical lines overlayed on answer graph
+
+## [5.1.0] - 2026-01-22
+
+### Added
+
+- client: sort order for moderations
+- server: moderations sort by submission time
+- client: attempt events
+- server: supabase connection with attempts
+
+### Fixed
+
+- client: deserialization accounting for nested objects
 
 ## [5.0.1] - 2025-12-20
 

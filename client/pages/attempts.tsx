@@ -16,6 +16,8 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  FormControl,
+  FormLabel,
 } from "@chakra-ui/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
@@ -46,7 +48,7 @@ export function Attempts() {
   const [moderationStatusFilter, setModerationStatusFilter] =
     useState<ExamEnvironmentExamModerationStatus>(search.filter || "Pending");
   // const [examFilter, setExamFilter] = useState<GetExam["exam"] | null>(null);
-  // const [sort, setSort] = useState<number>(search.sort ?? 1);
+  const [sort, setSort] = useState<number>(search.sort ?? 1);
 
   // TODO: Could turn this into a mutation, and only fetch if filter is used
   // const examsQuery = useQuery({
@@ -67,7 +69,7 @@ export function Attempts() {
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ["filteredModerations", moderationStatusFilter],
+    queryKey: ["filteredModerations", moderationStatusFilter, sort],
     queryFn: ({ pageParam }) => {
       if (pageParam === null) {
         return [];
@@ -77,7 +79,7 @@ export function Attempts() {
         limit: 5,
         skip: pageParam,
         // exam: examFilter?.id,
-        // sort,
+        sort,
       });
     },
     initialPageParam: 0,
@@ -193,41 +195,64 @@ export function Attempts() {
                 </Avatar>
               )}
             </HStack>
-            <Menu>
+            <HStack spacing={2}>
+              <Menu>
+                <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                  {moderationStatusFilter}
+                </MenuButton>
+                <MenuList backgroundColor="gray.800">
+                  {(["Pending", "Approved", "Denied"] as const).map(
+                    (status) => {
+                      return (
+                        <MenuItem
+                          key={status}
+                          as={Button}
+                          backgroundColor="gray.800"
+                          borderRadius={0}
+                          boxShadow="md"
+                          color={"white"}
+                          colorScheme="green"
+                          fontWeight="bold"
+                          isDisabled={isPending || isFetching}
+                          isLoading={isPending || isFetching}
+                          justifyContent={"flex-start"}
+                          loadingText={"Filtering..."}
+                          onClick={() => setModerationStatusFilter(status)}
+                          _hover={{ bg: "green.500" }}
+                        >
+                          {status}
+                        </MenuItem>
+                      );
+                    },
+                  )}
+                </MenuList>
+              </Menu>
+              {/* <Menu>
               <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                {moderationStatusFilter}
+              {examFilter?.config?.name ?? "All"}
               </MenuButton>
               <MenuList backgroundColor="gray.800">
-                {(["Pending", "Approved", "Denied"] as const).map((status) => {
-                  return (
-                    <MenuItem
-                      key={status}
-                      as={Button}
-                      backgroundColor="gray.800"
-                      borderRadius={0}
-                      boxShadow="md"
-                      color={"white"}
-                      colorScheme="green"
-                      fontWeight="bold"
-                      isDisabled={isPending || isFetching}
-                      isLoading={isPending || isFetching}
-                      justifyContent={"flex-start"}
-                      loadingText={"Filtering..."}
-                      onClick={() => setModerationStatusFilter(status)}
-                      _hover={{ bg: "green.500" }}
-                    >
-                      {status}
-                    </MenuItem>
-                  );
-                })}
-              </MenuList>
-            </Menu>
-            {/* <Menu>
-              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                {examFilter?.config?.name ?? "All"}
-              </MenuButton>
-              <MenuList backgroundColor="gray.800">
-                <MenuItem
+              <MenuItem
+              as={Button}
+              backgroundColor="gray.800"
+              borderRadius={0}
+              boxShadow="md"
+              color={"white"}
+              colorScheme="green"
+              fontWeight="bold"
+              isDisabled={isPending || isFetching}
+              isLoading={isPending || isFetching}
+              justifyContent={"flex-start"}
+              loadingText={"Filtering..."}
+              onClick={() => setExamFilter(null)}
+              _hover={{ bg: "green.500" }}
+              >
+              All
+              </MenuItem>
+              {examsQuery.data?.map(({ exam }) => {
+                return (
+                  <MenuItem
+                  key={exam.id}
                   as={Button}
                   backgroundColor="gray.800"
                   borderRadius={0}
@@ -239,45 +264,55 @@ export function Attempts() {
                   isLoading={isPending || isFetching}
                   justifyContent={"flex-start"}
                   loadingText={"Filtering..."}
-                  onClick={() => setExamFilter(null)}
+                  onClick={() => setExamFilter(exam)}
                   _hover={{ bg: "green.500" }}
-                >
-                  All
-                </MenuItem>
-                {examsQuery.data?.map(({ exam }) => {
-                  return (
-                    <MenuItem
-                      key={exam.id}
-                      as={Button}
-                      backgroundColor="gray.800"
-                      borderRadius={0}
-                      boxShadow="md"
-                      color={"white"}
-                      colorScheme="green"
-                      fontWeight="bold"
-                      isDisabled={isPending || isFetching}
-                      isLoading={isPending || isFetching}
-                      justifyContent={"flex-start"}
-                      loadingText={"Filtering..."}
-                      onClick={() => setExamFilter(exam)}
-                      _hover={{ bg: "green.500" }}
-                    >
-                      {exam.config.name}
-                    </MenuItem>
+                  >
+                  {exam.config.name}
+                  </MenuItem>
                   );
-                })}
-              </MenuList>
-            </Menu> */}
-            {/* <FormControl>
+                  })}
+                  </MenuList>
+                  </Menu> */}
+              <Menu>
+                <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                  {sort === 1 ? "Ascending" : "Descending"}
+                </MenuButton>
+                <MenuList backgroundColor="gray.800">
+                  {(["Ascending", "Descending"] as const).map((name) => {
+                    return (
+                      <MenuItem
+                        key={name}
+                        as={Button}
+                        backgroundColor="gray.800"
+                        borderRadius={0}
+                        boxShadow="md"
+                        color={"white"}
+                        colorScheme="green"
+                        fontWeight="bold"
+                        isDisabled={isPending || isFetching}
+                        isLoading={isPending || isFetching}
+                        justifyContent={"flex-start"}
+                        loadingText={"Filtering..."}
+                        onClick={() => setSort(name === "Ascending" ? 1 : -1)}
+                        _hover={{ bg: "green.500" }}
+                      >
+                        {name}
+                      </MenuItem>
+                    );
+                  })}
+                </MenuList>
+              </Menu>
+              {/* <FormControl>
               <FormLabel>Sort Order</FormLabel>
               <select
-                value={sort}
-                onChange={(e) => setSort(Number(e.target.value))}
+              value={sort}
+              onChange={(e) => setSort(Number(e.target.value))}
               >
-                <option value="1">Ascending</option>
-                <option value="-1">Descending</option>
+              <option value="1">Ascending</option>
+              <option value="-1">Descending</option>
               </select>
-            </FormControl> */}
+              </FormControl> */}
+            </HStack>
           </Flex>
           <Box>
             {isPending ? (

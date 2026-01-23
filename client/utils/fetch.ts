@@ -9,6 +9,7 @@ import {
 import type {
   Attempt,
   ClientSync,
+  Event,
   SessionUser,
   Settings,
   User,
@@ -17,7 +18,7 @@ import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
 async function authorizedFetch(
   url: string | URL,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<Response> {
   const headers = {
     ...options?.headers,
@@ -42,14 +43,14 @@ async function authorizedFetch(
 }
 
 export async function discardExamStateById(
-  examId: ExamCreatorExam["id"]
+  examId: ExamCreatorExam["id"],
 ): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch("/mocks/exams.json");
     if (!res.ok) {
       throw new Error(
-        `Failed to load mock exams: ${res.status} - ${res.statusText}`
+        `Failed to load mock exams: ${res.status} - ${res.statusText}`,
       );
     }
     const exams: ExamCreatorExam[] = await res.json();
@@ -96,7 +97,7 @@ export async function getExams(): Promise<GetExam[]> {
     const res = await fetch("/mocks/exams.json");
     if (!res.ok) {
       throw new Error(
-        `Failed to load mock exams: ${res.status} - ${res.statusText}`
+        `Failed to load mock exams: ${res.status} - ${res.statusText}`,
       );
     }
     const exams: ExamCreatorExam[] = await res.json();
@@ -130,7 +131,7 @@ export async function getExamById(examId: string): Promise<ExamCreatorExam> {
  * @returns
  */
 export async function putExamById(
-  exam: ExamCreatorExam
+  exam: ExamCreatorExam,
 ): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -161,7 +162,7 @@ export async function postExam(): Promise<ExamCreatorExam> {
 
     if (!exam.ok) {
       throw new Error(
-        `Failed to load mock exam: ${exam.status} - ${exam.statusText}`
+        `Failed to load mock exam: ${exam.status} - ${exam.statusText}`,
       );
     }
 
@@ -190,12 +191,12 @@ export async function getGenerations({
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch(
-      `/mocks/api/exams/${examId}/generations/staging.json`
+      `/mocks/api/exams/${examId}/generations/staging.json`,
     );
 
     if (!res.ok) {
       throw new Error(
-        `Failed to load mock generations: ${res.status} - ${res.statusText}`
+        `Failed to load mock generations: ${res.status} - ${res.statusText}`,
       );
     }
 
@@ -204,7 +205,7 @@ export async function getGenerations({
   }
 
   const res = await authorizedFetch(
-    `/api/exams/${examId}/generations/${databaseEnvironment}`
+    `/api/exams/${examId}/generations/${databaseEnvironment}`,
   );
   const json = await res.json();
   return deserializeToPrisma(json);
@@ -241,8 +242,8 @@ export async function putGenerateExam({
           if (sent < count) {
             controller.enqueue(
               new TextEncoder().encode(
-                JSON.stringify(generatedExam) + (sent < count - 1 ? "\n" : "")
-              )
+                JSON.stringify(generatedExam) + (sent < count - 1 ? "\n" : ""),
+              ),
             );
             sent++;
           } else {
@@ -262,7 +263,7 @@ export async function putGenerateExam({
       headers: {
         "Content-Type": "application/json",
       },
-    }
+    },
   );
 
   if (!res.body) {
@@ -273,7 +274,7 @@ export async function putGenerateExam({
 }
 
 export async function postValidateConfigByExamId(
-  examId: ExamCreatorExam["id"]
+  examId: ExamCreatorExam["id"],
 ): Promise<Response> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -346,7 +347,7 @@ export async function getSessionUser(): Promise<SessionUser> {
 }
 
 export async function putUserSettings(
-  newSettings: Settings
+  newSettings: Settings,
 ): Promise<Settings> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -441,7 +442,7 @@ export async function getModerations({
     const res = await fetch("/mocks/moderations.json");
     if (!res.ok) {
       throw new Error(
-        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
+        `Failed to load mock moderations: ${res.status} - ${res.statusText}`,
       );
     }
     const moderations = await res.json();
@@ -538,7 +539,7 @@ export async function getModerationByAttemptId(attemptId: string) {
     const res = await fetch("/mocks/moderations.json");
     if (!res.ok) {
       throw new Error(
-        `Failed to load mock moderations: ${res.status} - ${res.statusText}`
+        `Failed to load mock moderations: ${res.status} - ${res.statusText}`,
       );
     }
     const moderations = await res.json();
@@ -584,19 +585,19 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
     const startTime = new Date();
     attempt.startTime = startTime;
     attempt.questionSets[0].questions[0].submissionTime = new Date(
-      startTime.getTime() + 25_000
+      startTime.getTime() + 25_000,
     );
     attempt.questionSets[1].questions[0].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 2
+      startTime.getTime() + 25_000 * 2,
     );
     attempt.questionSets[2].questions[0].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 4
+      startTime.getTime() + 25_000 * 4,
     );
     attempt.questionSets[2].questions[1].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 4.5
+      startTime.getTime() + 25_000 * 4.5,
     );
     attempt.questionSets[2].questions[2].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 7
+      startTime.getTime() + 25_000 * 7,
     );
 
     return attempt;
@@ -625,7 +626,7 @@ export async function getAttemptsByUserId(userId: string): Promise<Attempt[]> {
 }
 
 export async function getNumberOfAttemptsByUserId(
-  userId: string
+  userId: string,
 ): Promise<number> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -643,7 +644,7 @@ export async function getNumberOfAttemptsByUserId(
 }
 
 export async function getExamChallengeByExamId(
-  examId: ExamCreatorExam["id"]
+  examId: ExamCreatorExam["id"],
 ): Promise<ExamEnvironmentChallenge[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -652,7 +653,7 @@ export async function getExamChallengeByExamId(
 
     if (!exams.ok) {
       throw new Error(
-        `Failed to load mock exam: ${exams.status} - ${exams.statusText}`
+        `Failed to load mock exam: ${exams.status} - ${exams.statusText}`,
       );
     }
 
@@ -679,7 +680,7 @@ export async function getExamChallengeByExamId(
 
 export async function putExamEnvironmentChallenges(
   examId: string,
-  examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[]
+  examEnvironmentChallenges: Omit<ExamEnvironmentChallenge, "id">[],
 ): Promise<ExamEnvironmentChallenge[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
@@ -732,7 +733,7 @@ export async function putExamByIdToStaging(examId: string) {
 }
 
 export async function putExamByIdToProduction(
-  examId: string
+  examId: string,
 ): Promise<Response> {
   return await authorizedFetch(`/api/exams/${examId}/seed/production`, {
     method: "PUT",
@@ -767,6 +768,49 @@ export async function getExamMetricsById(examId: string) {
 
   const json = await res.json();
   const deserialized = deserializeToPrisma<GetExamMetricsById>(json);
+  return deserialized;
+}
+
+export async function getEventsByAttemptId(
+  attemptId: string,
+): Promise<Event[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    const attempt = await getAttemptById(attemptId);
+    const res = await fetch(`/mocks/api/events/attempts/${attemptId}.json`);
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load mock events: ${res.status} - ${res.statusText}`,
+      );
+    }
+
+    const json = await res.json();
+    const events = deserializeToPrisma<Event[]>(json);
+
+    const attemptQuestions = attempt.questionSets.flatMap((qs) => qs.questions);
+    const startTime = attempt.startTime.getTime();
+    return events.map((e) => {
+      const meta = {
+        question:
+          attemptQuestions[Math.floor(Math.random() * attemptQuestions.length)]
+            .id,
+      };
+      const timestamp = new Date(
+        startTime + Math.floor(Math.random() * events.length) * 1000,
+      );
+      return {
+        ...e,
+        meta,
+        timestamp,
+      };
+    });
+  }
+
+  const res = await authorizedFetch(`/api/events/attempts/${attemptId}`);
+  const json = await res.json();
+  console.debug(json);
+  const deserialized = deserializeToPrisma<Event[]>(json);
   return deserialized;
 }
 

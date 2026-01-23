@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
 use serde::{Deserialize, Serialize};
+use supabase_rs::SupabaseClient;
 use tracing::error;
 
 use crate::{
@@ -15,6 +16,7 @@ use crate::{
 pub struct ServerState {
     pub production_database: Database,
     pub staging_database: Database,
+    pub supabase: SupabaseClient,
     pub client_sync: Arc<Mutex<ClientSync>>,
     pub key: Key,
     pub env_vars: EnvVars,

@@ -34,6 +34,10 @@ import {
   ReferenceArea,
   Line,
   ComposedChart,
+  ReferenceLine,
+  Scatter,
+  CartesianGrid,
+  ScatterChart,
 } from "recharts";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -47,13 +51,14 @@ import { AuthContext } from "../contexts/auth";
 import {
   getAttemptById,
   getAttemptsByUserId,
+  getEventsByAttemptId,
   getModerationByAttemptId,
   getModerations,
   getNumberOfAttemptsByUserId,
   patchModerationStatusByAttemptId,
 } from "../utils/fetch";
 import { attemptsRoute } from "./attempts";
-import { Attempt } from "../types";
+import { Attempt, Event } from "../types";
 import { prettyDate, secondsToHumanReadable } from "../utils/question";
 import { queryClient } from "../contexts";
 import { BracketLayer } from "../components/diff-brackets";
@@ -68,6 +73,15 @@ function Edit() {
     queryKey: ["attempt", id],
     enabled: !!user,
     queryFn: () => getAttemptById(id!),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const eventsQuery = useQuery({
+    queryKey: ["events", id],
+    enabled: !!user,
+    queryFn: () => getEventsByAttemptId(id!),
+    staleTime: 3_600_000,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -98,14 +112,15 @@ function Edit() {
       {/* Floating widget: top right */}
       <UsersEditing />
       <Center>
-        {attemptQuery.isPending ? (
+        {attemptQuery.isPending || eventsQuery.isPending ? (
           <Spinner color={spinnerColor} size="xl" />
-        ) : attemptQuery.isError ? (
+        ) : attemptQuery.isError || eventsQuery.isError ? (
           <Text color="red.400" fontSize="lg">
-            Error loading exam: {attemptQuery.error.message}
+            Error loading exam:{" "}
+            {attemptQuery.error?.message ?? eventsQuery.error?.message}
           </Text>
         ) : (
-          <EditAttempt attempt={attemptQuery.data} />
+          <EditAttempt attempt={attemptQuery.data} events={eventsQuery.data} />
         )}
       </Center>
     </Box>
@@ -172,7 +187,13 @@ function UsersEditing() {
   );
 }
 
-function EditAttempt({ attempt }: { attempt: Attempt }) {
+function EditAttempt({
+  attempt,
+  events,
+}: {
+  attempt: Attempt;
+  events: Event[];
+}) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   // TODO: Consider sticking in user settings
   const [isSubmissionDiffToggled, setIsSubmissionDiffToggled] = useState(false);
@@ -255,7 +276,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
         // Find the index of the current attempt
         const flatModerations = moderationsData.pages.flat();
         const currentIndex = flatModerations.findIndex(
-          (m) => m.examAttemptId === attempt.id
+          (m) => m.examAttemptId === attempt.id,
         );
         const nextAttemptId =
           flatModerations.at(currentIndex + 1)?.examAttemptId ?? null;
@@ -285,35 +306,23 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
       isSubmissionTimeToggled,
       isSubmissionTimelineToggled,
       attempt.id,
+      events,
     ],
     queryFn: () => {
       let {
-        timeToAnswers,
+        questions,
         totalQuestions,
         answered,
         correct,
         timeToComplete,
         averageTimePerQuestion,
-      } = getAttemptStats(attempt);
-
-      if (isSubmissionTimeToggled) {
-        timeToAnswers.sort((a, b) => {
-          return a.value - b.value;
-        });
-      }
-
-      if (isSubmissionTimelineToggled) {
-        timeToAnswers = timeToAnswers.map((t, i) => {
-          if (i === 0) return { ...t, questionTimeDiff: t.value };
-
-          const prev = timeToAnswers[i - 1];
-
-          return { ...t, questionTimeDiff: t.value - prev.value };
-        });
-      }
+      } = getAttemptStats(attempt, {
+        isSubmissionTimeToggled,
+        isSubmissionTimelineToggled,
+      });
 
       return {
-        timeToAnswers,
+        questions,
         totalQuestions,
         answered,
         correct,
@@ -332,13 +341,36 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   }
 
   const {
-    timeToAnswers,
+    questions,
     totalQuestions,
     answered,
     correct,
     timeToComplete,
     averageTimePerQuestion,
   } = attemptStatsQuery.data;
+
+  const correctAnswers = questions.filter((q) => {
+    return q.isCorrect;
+  });
+  const incorrectAnswers = questions.filter((q) => {
+    return !!q.submissionTime && !q.isCorrect;
+  });
+  const attemptStartTime = attempt.startTime.getTime();
+  const questionVisits = events
+    .filter((e) => e.kind === "QUESTION_VISIT")
+    .map((e) => {
+      const questionNumber =
+        questions.findIndex((q) => q.id === e.meta?.question) + 1;
+      return {
+        questionNumber,
+        timeSinceStartInS: (e.timestamp.getTime() - attemptStartTime) / 1000,
+      };
+    });
+
+  const finalSubmissionTime = Math.max(
+    ...questions.map((q) => q.submissionTime?.getTime() ?? 0),
+    ...events.map((e) => e.timestamp.getTime()),
+  );
 
   return (
     <>
@@ -438,30 +470,76 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                   }
                 />
               </FormControl>
+              <FormControl alignItems={"center"} display={"flex"}>
+                <FormLabel htmlFor="submission-timeline" color="gray.400">
+                  Enable Application Focus
+                </FormLabel>
+                <Switch
+                  id="application-focus"
+                  isChecked={isSubmissionTimelineToggled}
+                  onChange={(e) =>
+                    setIsSubmissionTimelineToggled(e.target.checked)
+                  }
+                />
+              </FormControl>
             </SimpleGrid>
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart
-                data={timeToAnswers}
+                data={questions}
                 margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
               >
-                <Bar
+                {/* <Bar
                   type="monotone"
-                  dataKey="value"
+                  dataKey="timeSinceStartInS"
                   name="submission time"
                   // Custom fill for each bar
                   fill={"purple"}
                   yAxisId={"left"}
+                  xAxisId={"bottom"}
                 >
-                  {timeToAnswers.map((entry, index) => (
+                  {questions.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={entry.isCorrect ? "green" : "red"}
                     />
                   ))}
-                </Bar>
+                </Bar> */}
+                <ScatterChart>
+                  <Scatter
+                    type="monotone"
+                    dataKey="timeSinceStartInS"
+                    name="Correct Answer"
+                    fill={"green"}
+                    data={correctAnswers}
+                    yAxisId={"left"}
+                    xAxisId={"bottom"}
+                  />
+                  <Scatter
+                    type="monotone"
+                    dataKey="timeSinceStartInS"
+                    name="Incorrect Answer"
+                    fill={"red"}
+                    data={incorrectAnswers}
+                    yAxisId={"left"}
+                    xAxisId={"bottom"}
+                  />
+                  {/* <Scatter
+                    type="monotone"
+                    dataKey="timeSinceStartInS"
+                    name="QUESTION_VISIT"
+                    fill={"red"}
+                    data={questionVisits}
+                    // yAxisId={"left"}
+                    // xAxisId={"bottom"}
+                  >
+                    <YAxis yAxisId={"left"} dataKey="questionNumber" />
+                    <XAxis xAxisId={"bottom"} dataKey="secondsSinceStart" />
+                  </Scatter> */}
+                </ScatterChart>
                 {isSubmissionTimelineToggled && (
                   <Line
                     yAxisId="right"
+                    xAxisId={"bottom"}
                     type="monotone"
                     dataKey={"questionTimeDiff"}
                     stroke="#ff7300"
@@ -470,7 +548,8 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                   />
                 )}
                 <XAxis
-                  dataKey="name"
+                  dataKey="idx"
+                  xAxisId={"bottom"}
                   label={{
                     value: "question number",
                     position: "insideBottom",
@@ -479,6 +558,7 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                 />
                 <YAxis
                   width="auto"
+                  domain={[0, finalSubmissionTime / 1000]}
                   yAxisId={"left"}
                   label={{
                     value: "seconds since exam start",
@@ -499,27 +579,33 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                   }}
                 />
                 {isSubmissionDiffToggled &&
-                  timeToAnswers.map((entry, index) => {
+                  questions.map((entry, index) => {
                     if (index === 0) return null;
-                    const prev = timeToAnswers[index - 1];
+                    const prev = questions[index - 1];
+                    if (!entry.timeSinceStartInS || !prev.timeSinceStartInS)
+                      return null;
 
                     // Calculate the highest point of the two bars to anchor the bracket
-                    const peakValue = Math.max(prev.value, entry.value);
+                    const peakValue = Math.max(
+                      prev.timeSinceStartInS,
+                      entry.timeSinceStartInS,
+                    );
 
                     return (
                       <ReferenceArea
                         key={`bracket-${index}`}
-                        x1={prev.name} // Matches XAxis dataKey
-                        x2={entry.name}
+                        x1={prev.idx} // Matches XAxis dataKey
+                        x2={entry.idx}
                         y1={peakValue}
                         y2={peakValue}
                         strokeOpacity={0}
                         yAxisId={"left"}
+                        xAxisId={"bottom"}
                         fillOpacity={0} // Makes the area itself invisible
                         label={
                           <BracketLayer
-                            prevValue={prev.value}
-                            currValue={entry.value}
+                            prevValue={prev.timeSinceStartInS}
+                            currValue={entry.timeSinceStartInS}
                           />
                         }
                       />
@@ -527,12 +613,15 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                   })}
                 <ReChartsTooltip
                   cursor={false}
+                  axisId={"bottom"}
                   formatter={(value, name) => {
                     return [secondsToHumanReadable(Number(value)), name];
                   }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
+            {/* <EventChart attempt={attempt} events={events} /> */}
+
             <SimpleGrid
               // minChildWidth={"200px"}
               columns={{ base: 1, md: 2, lg: 3 }}
@@ -635,13 +724,30 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
                   {averageTimePerQuestion}s
                 </Text>
               </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="blue.400"
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Events
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {events.length}
+                </Text>
+              </Box>
             </SimpleGrid>
             {moderationQuery.data?.feedback && (
               <Text color="white" py={3}>
                 <b>Feedback</b>: {moderationQuery.data?.feedback}
               </Text>
             )}
-            <AllUserAttemptsContainer attempt={attempt} />
+            <AllUserAttemptsContainer
+              attempt={attempt}
+              options={{ isSubmissionTimeToggled, isSubmissionTimelineToggled }}
+            />
           </Flex>
         </Box>
       </Stack>
@@ -649,7 +755,13 @@ function EditAttempt({ attempt }: { attempt: Attempt }) {
   );
 }
 
-function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
+function AllUserAttemptsContainer({
+  attempt,
+  options,
+}: {
+  attempt: Attempt;
+  options: AttemptOptions;
+}) {
   const attemptsMutation = useMutation({
     mutationKey: ["user-attempts", attempt.userId],
     mutationFn: (userId: string) => getAttemptsByUserId(userId),
@@ -683,7 +795,7 @@ function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
           )
         </Button>
       ) : (
-        <AllUserAttempts attempts={attemptsMutation.data} />
+        <AllUserAttempts attempts={attemptsMutation.data} options={options} />
       )}
     </Center>
   );
@@ -698,7 +810,13 @@ function AllUserAttemptsContainer({ attempt }: { attempt: Attempt }) {
  * - Percentage correct
  *
  */
-function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
+function AllUserAttempts({
+  attempts,
+  options,
+}: {
+  attempts: Attempt[];
+  options: AttemptOptions;
+}) {
   if (attempts.length === 0) {
     return null;
   }
@@ -730,7 +848,7 @@ function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
                 averageTimePerQuestion,
                 timeToComplete,
                 answered,
-              } = getAttemptStats(attempt);
+              } = getAttemptStats(attempt, options);
               return (
                 <tr key={attempt.id} style={{ borderBottom: "1px solid #ccc" }}>
                   <td style={{ padding: "8px" }}>
@@ -760,61 +878,194 @@ function AllUserAttempts({ attempts }: { attempts: Attempt[] }) {
   );
 }
 
-function getAttemptStats(attempt: Attempt) {
+type QuestionData = {
+  isCorrect: boolean;
+  timeSinceStartInS: number | null;
+  idx: number;
+  questionTimeDiff?: number;
+} & Attempt["questionSets"][number]["questions"][number];
+type AttemptOptions = {
+  isSubmissionTimeToggled: boolean;
+  isSubmissionTimelineToggled: boolean;
+};
+
+function getAttemptStats(attempt: Attempt, options: AttemptOptions) {
   const startTimeInMS = attempt.startTime.getTime();
 
   const flattened = attempt.questionSets.flatMap((qs) => qs.questions);
   const totalQuestions = flattened.filter((q) => !!q.generated.length).length;
 
   let correct = 0;
-  const timeToAnswers: { name: number; value: number; isCorrect: boolean }[] =
-    [];
+  let questions: QuestionData[] = [];
   for (const question of flattened) {
-    const isAnswered = !!question.submissionTime;
-    if (!isAnswered) {
+    const submissionTime = question.submissionTime;
+    // if generation has 0 anwers, then question is not in generation, and should be skipped
+    const inGeneration = !!question.generated.length;
+    if (!inGeneration) {
       continue;
     }
     const allCorrectAnswerIds = question.answers
       .filter((a) => a.isCorrect)
       .map((a) => a.id);
     const allShownCorrectAnswers = question.generated.filter((ga) =>
-      allCorrectAnswerIds.includes(ga)
+      allCorrectAnswerIds.includes(ga),
     );
     // Every shown correct answer is selected
     const isCorrect = allShownCorrectAnswers.every((a) =>
-      question.selected.includes(a)
+      question.selected.includes(a),
     );
     if (isCorrect) {
       correct++;
     }
 
-    const timeToAnswer = {
-      name: timeToAnswers.length,
-      value: ((question.submissionTime?.getTime() ?? 0) - startTimeInMS) / 1000,
+    const timeSinceStartInS = submissionTime
+      ? (submissionTime.getTime() - startTimeInMS) / 1000
+      : null;
+
+    const q = {
+      ...question,
+      idx: questions.length,
+      timeSinceStartInS,
       isCorrect,
     };
-    timeToAnswers.push(timeToAnswer);
+    questions.push(q);
+  }
+
+  if (options.isSubmissionTimeToggled) {
+    questions.sort((a, b) => {
+      return a.timeSinceStartInS ?? 0 - (b.timeSinceStartInS ?? 0);
+    });
+  }
+
+  if (options.isSubmissionTimelineToggled) {
+    questions = questions.map((t, i) => {
+      if (!t.timeSinceStartInS) return t;
+      if (i === 0) return { ...t, questionTimeDiff: t.timeSinceStartInS };
+
+      const prev = questions[i - 1];
+
+      if (!prev.timeSinceStartInS) return t;
+
+      return {
+        ...t,
+        questionTimeDiff: t.timeSinceStartInS - prev.timeSinceStartInS,
+      };
+    });
   }
 
   const lastSubmission = Math.max(
     ...flattened.map((f) => {
       return f.submissionTime?.getTime() ?? 0;
-    })
+    }),
   );
   const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
-  const answered = timeToAnswers.length;
+  const answered = questions.length;
   const averageTimePerQuestion =
     answered > 0 ? (timeToComplete / answered).toFixed(2) : "0";
 
   return {
-    timeToAnswers,
+    questions,
     totalQuestions,
     answered,
     correct,
     timeToComplete,
     averageTimePerQuestion,
   };
+}
+
+function EventChart({
+  events,
+  attempt,
+}: {
+  attempt: Attempt;
+  events: Event[];
+}) {
+  const attemptQuestions = attempt.questionSets.flatMap((qs) => qs.questions);
+  const eventData = events.map((e) => {
+    const questionNumber =
+      attemptQuestions.findIndex((aq) => aq.id === e.meta?.question) + 1;
+
+    const secondsSinceStart =
+      (e.timestamp.getTime() - attempt.startTime.getTime()) / 1000;
+    return {
+      ...e,
+      questionNumber,
+      secondsSinceStart,
+    };
+  });
+  const scatterPoints = eventData.filter((d) => d.kind === "QUESTION_VISIT");
+  const referenceEvents = eventData.filter((d) =>
+    ["BLUR", "FOCUS"].includes(d.kind),
+  );
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <ComposedChart margin={{ top: 15, right: 20, bottom: 20, left: 20 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+
+        <XAxis
+          type="number"
+          dataKey="secondsSinceStart"
+          xAxisId="bottom"
+          label={{
+            value: "seconds since start",
+            position: "insideBottom",
+            offset: -10,
+          }}
+        />
+
+        <YAxis
+          type="number"
+          dataKey="questionNumber"
+          yAxisId="left"
+          allowDecimals={false}
+          label={{
+            value: "Question #",
+            angle: -90,
+            position: "insideLeft",
+          }}
+        />
+
+        <ReChartsTooltip
+          cursor={{ strokeDasharray: "3 3" }}
+          formatter={(value, name) => {
+            if (name === "secondsSinceStart") return [`${value}s`, "Time"];
+            if (name === "questionNumber") return [value, "Question"];
+            return [value, name];
+          }}
+        />
+
+        <Scatter
+          name="Question Visits"
+          data={scatterPoints}
+          fill="#8884d8"
+          yAxisId="left"
+          xAxisId="bottom"
+        >
+          <YAxis dataKey="questionNumber" />
+          <XAxis dataKey="secondsSinceStart" />
+        </Scatter>
+
+        {referenceEvents.map((e) => (
+          <ReferenceLine
+            key={e.id}
+            x={e.secondsSinceStart}
+            xAxisId="bottom"
+            yAxisId="left"
+            stroke={e.kind === "BLUR" ? "red" : "green"}
+            strokeDasharray="3 3"
+            label={{
+              value: e.kind,
+              position: "insideTopLeft",
+              fontSize: 10,
+              fill: e.kind === "BLUR" ? "red" : "green",
+            }}
+          />
+        ))}
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
 }
 
 export const editAttemptRoute = createRoute({

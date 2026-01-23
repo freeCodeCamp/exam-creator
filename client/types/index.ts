@@ -8,8 +8,10 @@ import type {
   ExamEnvironmentQuestionSet,
 } from "@prisma/client";
 
-export interface User
-  extends Omit<ExamCreatorUser, "id" | "github_id" | "version"> {
+export interface User extends Omit<
+  ExamCreatorUser,
+  "id" | "github_id" | "version"
+> {
   activity: Activity;
 }
 
@@ -71,3 +73,21 @@ export type QuestionStatus = {
 };
 
 export type QuestionSetStatus = QuestionStatus;
+
+export const EventKind = {
+  CAPTIONS_OPENED: "CAPTIONS_OPENED",
+  QUESTION_VISIT: "QUESTION_VISIT",
+  FOCUS: "FOCUS",
+  BLUR: "BLUR",
+  EXAM_EXIT: "EXAM_EXIT",
+} as const;
+
+type Meta = Record<string, unknown>;
+
+export interface Event {
+  id: string;
+  kind: keyof typeof EventKind;
+  timestamp: Date;
+  meta: Meta | null;
+  attempt_id: string;
+}

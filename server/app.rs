@@ -17,6 +17,7 @@ use mongodb::options::ClientOptions;
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
 use reqwest::Method;
 use std::sync::{Arc, Mutex};
+use supabase_rs::SupabaseClient;
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
@@ -98,9 +99,14 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
 
     let exam_metrics_by_id_cache = Arc::new(Mutex::new(vec![]));
 
+    let supabase_url = &env_vars.supabase_url;
+    let supabase_key = &env_vars.supabase_key;
+    let supabase = SupabaseClient::new(supabase_url, supabase_key)?;
+
     let server_state = ServerState {
         production_database,
         staging_database,
+        supabase,
         client_sync,
         key: Key::from(env_vars.cookie_key.as_bytes()),
         env_vars: env_vars.clone(),
@@ -228,6 +234,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/state/exams/{exam_id}",
             put(routes::discard_exam_state_by_id),
+        )
+        .route(
+            "/api/events/attempts/{attempt_id}",
+            get(routes::events::get_events_by_attempt_id),
         )
         .route(
             "/auth/login/github",

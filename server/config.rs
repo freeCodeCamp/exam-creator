@@ -40,6 +40,10 @@ pub struct EnvVars {
     pub sentry_dsn: Option<String>,
     /// Session TTL in seconds
     pub session_ttl_in_s: u64,
+    /// Supabase Project URL
+    pub supabase_url: String,
+    /// Supabase Private Key
+    pub supabase_key: String,
 }
 
 impl EnvVars {
@@ -205,6 +209,17 @@ impl EnvVars {
             }
         };
 
+        let Ok(supabase_url) = var("SUPABASE_URL") else {
+            error!("SUPABASE_URL not set");
+            panic!("SUPABASE_URL required");
+        };
+        assert!(!supabase_url.is_empty(), "SUPABASE_URL must not be empty");
+        let Ok(supabase_key) = var("SUPABASE_KEY") else {
+            error!("SUPABASE_KEY not set");
+            panic!("SUPABASE_KEY required");
+        };
+        assert!(!supabase_key.is_empty(), "SUPABASE_KEY must not be empty");
+
         let env_vars = Self {
             allowed_origins,
             cookie_key,
@@ -219,6 +234,8 @@ impl EnvVars {
             request_timeout_in_ms,
             sentry_dsn,
             session_ttl_in_s,
+            supabase_url,
+            supabase_key,
         };
 
         env_vars
@@ -241,6 +258,25 @@ pub struct Attempt {
     #[serde(rename = "startTime")]
     #[serde_as(as = "bson::serde_helpers::datetime::AsRfc3339String")]
     start_time: mongodb::bson::DateTime,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum EventKind {
+    CaptionsOpened,
+    QuestionVisit,
+    Focus,
+    Blur,
+    ExamExit,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Event {
+    id: String,
+    timestamp: String,
+    kind: EventKind,
+    meta: serde_json::Value,
+    attempt_id: ObjectId,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -16,7 +16,10 @@ function _recursiveDeserialize(value: JsonValue): unknown {
   // Value MUST be an ISO 8601 string to be converted to Date
   if (typeof value === "string") {
     const isIso8601 =
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value);
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:?\d{2})$/.test(
+        value,
+      );
+
     if (!isIso8601) {
       return value;
     }
@@ -61,6 +64,8 @@ function _recursiveDeserialize(value: JsonValue): unknown {
         ) {
           // @ts-expect-error
           newObj[key] = new Date(Number(propValue["$date"]["$numberLong"]));
+        } else {
+          newObj[key] = _recursiveDeserialize(propValue);
         }
       } else if (key === "$oid") {
         newObj = propValue as JsonObject;

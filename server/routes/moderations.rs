@@ -22,7 +22,7 @@ pub struct GetModerationsQuery {
     pub limit: Option<i64>,
     // pub exam: Option<ObjectId>,
     // Realistically, this can be -1, 0, 1
-    // pub sort: Option<i32>,
+    pub sort: Option<i32>,
 }
 
 #[instrument(skip_all, err(Debug))]
@@ -42,16 +42,16 @@ pub async fn get_moderations(
     //     // Could manually query attempts, but skipping becomes difficult
     //     filter.insert("examId")
     // }
-    // let sort = if let Some(sort) = params.sort {
-    //     doc! {"_id":  sort}
-    // } else {
-    //     doc! {}
-    // };
+    let sort = if let Some(sort) = params.sort {
+        doc! {"submissionDate":  sort}
+    } else {
+        doc! {}
+    };
 
     let mut exam_moderations_query = database
         .exam_environment_exam_moderation
         .find(filter)
-        // .sort(sort)
+        .sort(sort)
         .skip(skip);
     if let Some(limit) = params.limit {
         exam_moderations_query = exam_moderations_query.limit(limit);

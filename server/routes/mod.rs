@@ -13,6 +13,7 @@ use crate::{database::prisma, errors::Error, state::ServerState};
 
 pub mod attempts;
 pub mod auth;
+pub mod events;
 pub mod exam_challenge;
 pub mod exams;
 pub mod metrics;
