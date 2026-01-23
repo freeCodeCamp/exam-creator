@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, useMemo } from "react";
 import { InfiniteData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   createRoute,
@@ -25,19 +25,15 @@ import {
   Switch,
 } from "@chakra-ui/react";
 import {
-  Bar,
   Tooltip as ReChartsTooltip,
   XAxis,
   YAxis,
-  Cell,
   ResponsiveContainer,
   ReferenceArea,
   Line,
   ComposedChart,
-  ReferenceLine,
   Scatter,
   CartesianGrid,
-  ScatterChart,
 } from "recharts";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -195,7 +191,6 @@ function EditAttempt({
   events: Event[];
 }) {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
-  // TODO: Consider sticking in user settings
   const [isSubmissionDiffToggled, setIsSubmissionDiffToggled] = useState(false);
   const [isSubmissionTimeToggled, setIsSubmissionTimeToggled] = useState(false);
   const [isSubmissionTimelineToggled, setIsSubmissionTimelineToggled] =
@@ -332,10 +327,91 @@ function EditAttempt({
     },
   });
 
+  const chartData = useMemo(() => {
+    if (!attemptStatsQuery.data) return null;
+    const { questions } = attemptStatsQuery.data;
+    const attemptStartTime = attempt.startTime.getTime();
+
+    const correctAnswers = questions.filter((q) => q.isCorrect);
+
+    const incorrectAnswers = questions.filter(
+      (q) => !q.isCorrect && !!q.submissionTime,
+    );
+
+    const questionIdToIndexMap = new Map<string, number>();
+    questions.forEach((q) => {
+      questionIdToIndexMap.set(q.id, q.idx);
+    });
+
+    const visitEvents = events
+      .filter((e) => e.kind === "QUESTION_VISIT")
+      .map((e) => {
+        const idx = questionIdToIndexMap.get(e.meta?.question ?? "");
+        if (idx === undefined) return null;
+
+        return {
+          idx,
+          timeSinceStartInS: (e.timestamp.getTime() - attemptStartTime) / 1000, // y-axis
+          kind: "QUESTION_VISIT",
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
+
+    // BLUR -> FOCUS
+    const focusGaps = [];
+    // sort events by time to ensure correct pairing
+    const sortedEvents = [...events].sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+    );
+
+    let lastBlurEvent: Event | null = null;
+
+    for (const e of sortedEvents) {
+      if (e.kind === "BLUR") {
+        lastBlurEvent = e;
+      } else if (e.kind === "FOCUS" && lastBlurEvent) {
+        const blurTime =
+          (lastBlurEvent.timestamp.getTime() - attemptStartTime) / 1000;
+        const focusTime = (e.timestamp.getTime() - attemptStartTime) / 1000;
+
+        // Map to the question active during the blur, if possible
+        const questionId = lastBlurEvent.meta?.question || e.meta?.question;
+        const idx = questionId
+          ? questionIdToIndexMap.get(questionId)
+          : undefined;
+
+        if (idx !== undefined) {
+          focusGaps.push({
+            idx,
+            blurTime,
+            focusTime,
+            timeSinceStartInS: blurTime,
+          });
+        }
+
+        lastBlurEvent = null;
+      }
+    }
+
+    const finalSubmissionTime = Math.max(
+      ...questions.map((q) => q.submissionTime?.getTime() ?? 0),
+      ...events.map((e) => e.timestamp.getTime()),
+    );
+
+    return {
+      correctAnswers,
+      incorrectAnswers,
+      visitEvents,
+      focusGaps,
+      finalSubmissionTime,
+    };
+  }, [attemptStatsQuery.data, events, attempt]);
+
   if (
     attemptStatsQuery.isFetching ||
     attemptStatsQuery.isError ||
-    !attemptStatsQuery.isSuccess
+    !attemptStatsQuery.isSuccess ||
+    !chartData
   ) {
     return <Spinner />;
   }
@@ -349,28 +425,13 @@ function EditAttempt({
     averageTimePerQuestion,
   } = attemptStatsQuery.data;
 
-  const correctAnswers = questions.filter((q) => {
-    return q.isCorrect;
-  });
-  const incorrectAnswers = questions.filter((q) => {
-    return !!q.submissionTime && !q.isCorrect;
-  });
-  const attemptStartTime = attempt.startTime.getTime();
-  const questionVisits = events
-    .filter((e) => e.kind === "QUESTION_VISIT")
-    .map((e) => {
-      const questionNumber =
-        questions.findIndex((q) => q.id === e.meta?.question) + 1;
-      return {
-        questionNumber,
-        timeSinceStartInS: (e.timestamp.getTime() - attemptStartTime) / 1000,
-      };
-    });
-
-  const finalSubmissionTime = Math.max(
-    ...questions.map((q) => q.submissionTime?.getTime() ?? 0),
-    ...events.map((e) => e.timestamp.getTime()),
-  );
+  const {
+    correctAnswers,
+    incorrectAnswers,
+    visitEvents,
+    focusGaps,
+    finalSubmissionTime,
+  } = chartData;
 
   return (
     <>
@@ -470,76 +531,31 @@ function EditAttempt({
                   }
                 />
               </FormControl>
-              <FormControl alignItems={"center"} display={"flex"}>
-                <FormLabel htmlFor="submission-timeline" color="gray.400">
-                  Enable Application Focus
-                </FormLabel>
-                <Switch
-                  id="application-focus"
-                  isChecked={isSubmissionTimelineToggled}
-                  onChange={(e) =>
-                    setIsSubmissionTimelineToggled(e.target.checked)
-                  }
-                />
-              </FormControl>
             </SimpleGrid>
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart
-                data={questions}
                 margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
               >
-                {/* <Bar
-                  type="monotone"
-                  dataKey="timeSinceStartInS"
-                  name="submission time"
-                  // Custom fill for each bar
-                  fill={"purple"}
-                  yAxisId={"left"}
-                  xAxisId={"bottom"}
-                >
-                  {questions.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.isCorrect ? "green" : "red"}
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                {focusGaps.map((f) => {
+                  const stroke = "red";
+                  const opacity = 0.3;
+                  const y1 = f.blurTime;
+                  const y2 = f.focusTime;
+                  return (
+                    <ReferenceArea
+                      {...{ y1, y2, stroke, opacity }}
+                      xAxisId={"bottom"}
+                      yAxisId={"left"}
                     />
-                  ))}
-                </Bar> */}
-                <ScatterChart>
-                  <Scatter
-                    type="monotone"
-                    dataKey="timeSinceStartInS"
-                    name="Correct Answer"
-                    fill={"green"}
-                    data={correctAnswers}
-                    yAxisId={"left"}
-                    xAxisId={"bottom"}
-                  />
-                  <Scatter
-                    type="monotone"
-                    dataKey="timeSinceStartInS"
-                    name="Incorrect Answer"
-                    fill={"red"}
-                    data={incorrectAnswers}
-                    yAxisId={"left"}
-                    xAxisId={"bottom"}
-                  />
-                  {/* <Scatter
-                    type="monotone"
-                    dataKey="timeSinceStartInS"
-                    name="QUESTION_VISIT"
-                    fill={"red"}
-                    data={questionVisits}
-                    // yAxisId={"left"}
-                    // xAxisId={"bottom"}
-                  >
-                    <YAxis yAxisId={"left"} dataKey="questionNumber" />
-                    <XAxis xAxisId={"bottom"} dataKey="secondsSinceStart" />
-                  </Scatter> */}
-                </ScatterChart>
+                  );
+                })}
+
                 {isSubmissionTimelineToggled && (
                   <Line
+                    data={questions}
                     yAxisId="right"
-                    xAxisId={"bottom"}
+                    xAxisId="bottom"
                     type="monotone"
                     dataKey={"questionTimeDiff"}
                     stroke="#ff7300"
@@ -547,9 +563,14 @@ function EditAttempt({
                     dot={false}
                   />
                 )}
+
                 <XAxis
                   dataKey="idx"
                   xAxisId={"bottom"}
+                  type="number"
+                  domain={["dataMin", "dataMax"]}
+                  tickCount={totalQuestions}
+                  allowDecimals={false}
                   label={{
                     value: "question number",
                     position: "insideBottom",
@@ -557,27 +578,64 @@ function EditAttempt({
                   }}
                 />
                 <YAxis
-                  width="auto"
-                  domain={[0, finalSubmissionTime / 1000]}
+                  width={60}
+                  domain={[
+                    0,
+                    Math.ceil(
+                      (finalSubmissionTime - attempt.startTime.getTime()) /
+                        1000,
+                    ),
+                  ]}
                   yAxisId={"left"}
+                  type="number"
                   label={{
-                    value: "seconds since exam start",
+                    value: "seconds since start",
                     position: "insideBottomLeft",
                     angle: -90,
-                    offset: 20,
+                    offset: 10,
                   }}
                 />
                 <YAxis
-                  width="auto"
+                  width={40}
                   yAxisId={"right"}
                   orientation="right"
                   label={{
-                    value: "time between questions [s]",
+                    value: "diff [s]",
                     position: "insideTopRight",
                     angle: -90,
-                    offset: 20,
+                    offset: 10,
                   }}
                 />
+
+                <Scatter
+                  name="Correct"
+                  data={correctAnswers}
+                  dataKey="timeSinceStartInS"
+                  fill="green"
+                  yAxisId="left"
+                  xAxisId="bottom"
+                />
+
+                <Scatter
+                  name="Incorrect"
+                  data={incorrectAnswers}
+                  dataKey="timeSinceStartInS"
+                  fill="red"
+                  yAxisId="left"
+                  xAxisId="bottom"
+                />
+
+                <Scatter
+                  name="Visit"
+                  data={visitEvents}
+                  dataKey="timeSinceStartInS"
+                  fill="transparent"
+                  stroke="purple"
+                  shape="circle"
+                  yAxisId="left"
+                  xAxisId="bottom"
+                />
+
                 {isSubmissionDiffToggled &&
                   questions.map((entry, index) => {
                     if (index === 0) return null;
@@ -585,7 +643,6 @@ function EditAttempt({
                     if (!entry.timeSinceStartInS || !prev.timeSinceStartInS)
                       return null;
 
-                    // Calculate the highest point of the two bars to anchor the bracket
                     const peakValue = Math.max(
                       prev.timeSinceStartInS,
                       entry.timeSinceStartInS,
@@ -594,14 +651,14 @@ function EditAttempt({
                     return (
                       <ReferenceArea
                         key={`bracket-${index}`}
-                        x1={prev.idx} // Matches XAxis dataKey
+                        x1={prev.idx}
                         x2={entry.idx}
                         y1={peakValue}
                         y2={peakValue}
                         strokeOpacity={0}
                         yAxisId={"left"}
                         xAxisId={"bottom"}
-                        fillOpacity={0} // Makes the area itself invisible
+                        fillOpacity={0}
                         label={
                           <BracketLayer
                             prevValue={prev.timeSinceStartInS}
@@ -612,21 +669,44 @@ function EditAttempt({
                     );
                   })}
                 <ReChartsTooltip
-                  cursor={false}
-                  axisId={"bottom"}
-                  formatter={(value, name) => {
-                    return [secondsToHumanReadable(Number(value)), name];
+                  cursor={{ strokeDasharray: "3 3" }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      if (data.blurTime) {
+                        return (
+                          <Box bg="gray.800" p={2} border="1px solid gray">
+                            <Text color="blue.300">
+                              Blur: {secondsToHumanReadable(data.blurTime)}
+                            </Text>
+                            <Text color="green.300">
+                              Focus: {secondsToHumanReadable(data.focusTime)}
+                            </Text>
+                            <Text color="white">Question: {data.idx + 1}</Text>
+                          </Box>
+                        );
+                      }
+                      return (
+                        <Box bg="gray.800" p={2} border="1px solid gray">
+                          <Text color="white">
+                            {secondsToHumanReadable(
+                              Number(data.timeSinceStartInS),
+                            )}
+                          </Text>
+                          <Text color="gray.400">Question: {data.idx + 1}</Text>
+                          {data.kind && (
+                            <Text color="purple.300">{data.kind}</Text>
+                          )}
+                        </Box>
+                      );
+                    }
+                    return null;
                   }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
-            {/* <EventChart attempt={attempt} events={events} /> */}
 
-            <SimpleGrid
-              // minChildWidth={"200px"}
-              columns={{ base: 1, md: 2, lg: 3 }}
-              spacing={4}
-            >
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
               <Box
                 bg="gray.700"
                 p={2}
@@ -654,7 +734,7 @@ function EditAttempt({
                 <Text fontSize="2xl" fontWeight="bold" color="white">
                   {answered}
                   <Text as="span" fontSize="sm" color="gray.400" ml={2}>
-                    ({((answered / totalQuestions) * 100).toFixed(1)}%)
+                    {((answered / totalQuestions) * 100).toFixed(1)}%
                   </Text>
                 </Text>
               </Box>
@@ -801,15 +881,6 @@ function AllUserAttemptsContainer({
   );
 }
 
-/**
- * Shows all attempts for the same exam in a table with:
- * - Date taken (start time)
- * - Correct answers
- * - Average time
- * - Total time
- * - Percentage correct
- *
- */
 function AllUserAttempts({
   attempts,
   options,
@@ -933,7 +1004,7 @@ function getAttemptStats(attempt: Attempt, options: AttemptOptions) {
 
   if (options.isSubmissionTimeToggled) {
     questions.sort((a, b) => {
-      return a.timeSinceStartInS ?? 0 - (b.timeSinceStartInS ?? 0);
+      return (a.timeSinceStartInS ?? 0) - (b.timeSinceStartInS ?? 0);
     });
   }
 
@@ -972,100 +1043,6 @@ function getAttemptStats(attempt: Attempt, options: AttemptOptions) {
     timeToComplete,
     averageTimePerQuestion,
   };
-}
-
-function EventChart({
-  events,
-  attempt,
-}: {
-  attempt: Attempt;
-  events: Event[];
-}) {
-  const attemptQuestions = attempt.questionSets.flatMap((qs) => qs.questions);
-  const eventData = events.map((e) => {
-    const questionNumber =
-      attemptQuestions.findIndex((aq) => aq.id === e.meta?.question) + 1;
-
-    const secondsSinceStart =
-      (e.timestamp.getTime() - attempt.startTime.getTime()) / 1000;
-    return {
-      ...e,
-      questionNumber,
-      secondsSinceStart,
-    };
-  });
-  const scatterPoints = eventData.filter((d) => d.kind === "QUESTION_VISIT");
-  const referenceEvents = eventData.filter((d) =>
-    ["BLUR", "FOCUS"].includes(d.kind),
-  );
-
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart margin={{ top: 15, right: 20, bottom: 20, left: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-
-        <XAxis
-          type="number"
-          dataKey="secondsSinceStart"
-          xAxisId="bottom"
-          label={{
-            value: "seconds since start",
-            position: "insideBottom",
-            offset: -10,
-          }}
-        />
-
-        <YAxis
-          type="number"
-          dataKey="questionNumber"
-          yAxisId="left"
-          allowDecimals={false}
-          label={{
-            value: "Question #",
-            angle: -90,
-            position: "insideLeft",
-          }}
-        />
-
-        <ReChartsTooltip
-          cursor={{ strokeDasharray: "3 3" }}
-          formatter={(value, name) => {
-            if (name === "secondsSinceStart") return [`${value}s`, "Time"];
-            if (name === "questionNumber") return [value, "Question"];
-            return [value, name];
-          }}
-        />
-
-        <Scatter
-          name="Question Visits"
-          data={scatterPoints}
-          fill="#8884d8"
-          yAxisId="left"
-          xAxisId="bottom"
-        >
-          <YAxis dataKey="questionNumber" />
-          <XAxis dataKey="secondsSinceStart" />
-        </Scatter>
-
-        {referenceEvents.map((e) => (
-          <ReferenceLine
-            key={e.id}
-            x={e.secondsSinceStart}
-            xAxisId="bottom"
-            yAxisId="left"
-            stroke={e.kind === "BLUR" ? "red" : "green"}
-            strokeDasharray="3 3"
-            label={{
-              value: e.kind,
-              position: "insideTopLeft",
-              fontSize: 10,
-              fill: e.kind === "BLUR" ? "red" : "green",
-            }}
-          />
-        ))}
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
 }
 
 export const editAttemptRoute = createRoute({
