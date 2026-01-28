@@ -17,7 +17,6 @@ import {
   MenuList,
   MenuItem,
 } from "@chakra-ui/react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import { ChevronDownIcon } from "lucide-react";
@@ -25,7 +24,6 @@ import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { ModerationCard } from "../components/moderation-card";
-import { getModerations } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import {
   UsersWebSocketActivityContext,
@@ -35,6 +33,7 @@ import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
+import { moderationsInfiniteQuery } from "../hooks/queries";
 
 export function Attempts() {
   const { logout } = useContext(AuthContext)!;
@@ -56,54 +55,21 @@ export function Attempts() {
   //   refetchOnWindowFocus: false,
   // });
 
-  const {
-    data,
-    error,
-    isError,
-    isPending,
-    isSuccess,
-    isFetching,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["filteredModerations", moderationStatusFilter, sort],
-    queryFn: ({ pageParam }) => {
-      if (pageParam === null) {
-        return [];
-      }
-      return getModerations({
-        status: moderationStatusFilter,
-        limit: 5,
-        skip: pageParam,
-        // exam: examFilter?.id,
-        sort,
-      });
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < 5) {
-        return null;
-      }
-      return allPages.flat().length;
-    },
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
+  const mods = moderationsInfiniteQuery({ moderationStatusFilter, sort });
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastCardRef = useCallback(
     (node: HTMLDivElement | null) => {
-      if (isFetchingNextPage) return;
+      if (mods.isFetchingNextPage) return;
       if (observerRef.current) observerRef.current.disconnect();
       observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage();
+        if (entries[0].isIntersecting && mods.hasNextPage) {
+          mods.fetchNextPage();
         }
       });
       if (node) observerRef.current.observe(node);
     },
-    [isFetchingNextPage, hasNextPage, fetchNextPage],
+    [mods.isFetchingNextPage, mods.hasNextPage, mods.fetchNextPage],
   );
 
   useEffect(() => {
@@ -211,8 +177,8 @@ export function Attempts() {
                           color={"white"}
                           colorScheme="green"
                           fontWeight="bold"
-                          isDisabled={isPending || isFetching}
-                          isLoading={isPending || isFetching}
+                          isDisabled={mods.isPending || mods.isFetching}
+                          isLoading={mods.isPending || mods.isFetching}
                           justifyContent={"flex-start"}
                           loadingText={"Filtering..."}
                           onClick={() => setModerationStatusFilter(status)}
@@ -287,8 +253,8 @@ export function Attempts() {
                         color={"white"}
                         colorScheme="green"
                         fontWeight="bold"
-                        isDisabled={isPending || isFetching}
-                        isLoading={isPending || isFetching}
+                        isDisabled={mods.isPending || mods.isFetching}
+                        isLoading={mods.isPending || mods.isFetching}
                         justifyContent={"flex-start"}
                         loadingText={"Filtering..."}
                         onClick={() => setSort(name === "Ascending" ? 1 : -1)}
@@ -313,20 +279,20 @@ export function Attempts() {
             </HStack>
           </Flex>
           <Box>
-            {isPending ? (
+            {mods.isPending ? (
               <Center py={12}>
                 <Spinner color={accent} size="xl" />
               </Center>
-            ) : isError ? (
+            ) : mods.isError ? (
               <Center>
                 <Text color="red.400" fontSize="lg">
-                  {error.message}
+                  {mods.error.message}
                 </Text>
               </Center>
             ) : (
               <SimpleGrid columns={1} spacing={8}>
-                {isSuccess &&
-                  data.pages.flat().map((moderation, i, moderations) => {
+                {mods.isSuccess &&
+                  mods.data.pages.flat().map((moderation, i, moderations) => {
                     const isLastCard = i === moderations.length - 1;
                     return (
                       <Box
@@ -340,7 +306,7 @@ export function Attempts() {
                       </Box>
                     );
                   })}
-                {data?.pages?.length === 0 && (
+                {mods.data?.pages?.length === 0 && (
                   <Center>
                     <Text color="gray.400" fontSize="lg">
                       No moderations found for "{moderationStatusFilter}"
@@ -350,18 +316,20 @@ export function Attempts() {
                 )}
               </SimpleGrid>
             )}
-            {isFetchingNextPage && (
+            {mods.isFetchingNextPage && (
               <Center py={6}>
                 <Spinner color={accent} size="lg" />
               </Center>
             )}
-            {!isFetchingNextPage && isSuccess && !hasNextPage && (
-              <Center py={6}>
-                <Text color="gray.400" fontSize="md">
-                  No more moderations to load.
-                </Text>
-              </Center>
-            )}
+            {!mods.isFetchingNextPage &&
+              mods.isSuccess &&
+              !mods.hasNextPage && (
+                <Center py={6}>
+                  <Text color="gray.400" fontSize="md">
+                    No more moderations to load.
+                  </Text>
+                </Center>
+              )}
           </Box>
         </Stack>
       </Center>
