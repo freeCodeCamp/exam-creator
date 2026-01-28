@@ -19,6 +19,13 @@
   - captions opened
     - vertical lines overlayed on answer graph
 
+## [5.1.1] - 2026-01-28
+
+### Fixed
+
+- client: keyboard shortcuts correctly initialised
+- client: navigate to next attempt after moderation
+
 ## [5.1.0] - 2026-01-22
 
 ### Added
