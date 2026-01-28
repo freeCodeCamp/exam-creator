@@ -59,8 +59,8 @@ import {
 import { attemptsRoute } from "./attempts";
 import { Attempt, Event } from "../types";
 import { prettyDate, secondsToHumanReadable } from "../utils/question";
-import { queryClient } from "../contexts";
 import { BracketLayer } from "../components/diff-brackets";
+import { moderationKeys } from "../hooks/queries";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -255,7 +255,7 @@ function EditAttempt({
         buttonBox.removeEventListener("keydown", handleButtonBoxKeyPress);
       }
     };
-  }, []);
+  }, [buttonBoxRef.current, approveButtonRef.current, denyButtonRef.current]);
 
   const patchModerationStatusByAttemptIdMutation = useMutation({
     mutationKey: ["patch-moderation-status"],
@@ -266,11 +266,12 @@ function EditAttempt({
       });
     },
     retry: false,
-    onSuccess: () => {
+    onSuccess: (_a, _b, _c, ctx) => {
       // Navigate to next attempt
-      const moderationsData = queryClient.getQueryData<
+      const queriesData = ctx.client.getQueriesData<
         InfiniteData<Awaited<ReturnType<typeof getModerations>>, unknown>
-      >(["filteredModerations", filter]);
+      >({ queryKey: moderationKeys.all });
+      const moderationsData = queriesData?.[0]?.[1];
       if (moderationsData) {
         // Find the index of the current attempt
         const flatModerations = moderationsData.pages.flat();
