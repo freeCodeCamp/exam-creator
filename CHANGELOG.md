@@ -19,6 +19,12 @@
   - captions opened
     - vertical lines overlayed on answer graph
 
+## [5.1.2] - 2026-01-28
+
+### Fixed
+
+- client: attempt chart tooltip
+
 ## [5.1.1] - 2026-01-28
 
 ### Fixed

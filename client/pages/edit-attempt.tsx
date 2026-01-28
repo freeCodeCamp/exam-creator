@@ -24,20 +24,6 @@ import {
   FormLabel,
   Switch,
 } from "@chakra-ui/react";
-import {
-  Tooltip as ReChartsTooltip,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  ReferenceArea,
-  Line,
-  ComposedChart,
-  Scatter,
-  CartesianGrid,
-  Legend,
-  DefaultLegendContentProps,
-  DefaultLegendContent,
-} from "recharts";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 import { rootRoute } from "./root";
@@ -59,8 +45,27 @@ import {
 import { attemptsRoute } from "./attempts";
 import { Attempt, Event } from "../types";
 import { prettyDate, secondsToHumanReadable } from "../utils/question";
-import { BracketLayer } from "../components/diff-brackets";
 import { moderationKeys } from "../hooks/queries";
+import {
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
+  ReferenceArea,
+  Line,
+  XAxis,
+  YAxis,
+  Legend,
+  Scatter,
+  DefaultLegendContent,
+  DefaultLegendContentProps,
+  TooltipContentProps,
+} from "recharts";
+import { BracketLayer } from "../components/diff-brackets";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -553,7 +558,7 @@ function EditAttempt({
               <ComposedChart
                 margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <CartesianGrid opacity={0.2} />
                 {isEventsToggled &&
                   focusGaps.map((f) => {
                     const stroke = "red";
@@ -563,7 +568,7 @@ function EditAttempt({
                     return (
                       <ReferenceArea
                         {...{ y1, y2, stroke, opacity }}
-                        xAxisId={"bottom"}
+                        key={f.idx}
                         yAxisId={"left"}
                       />
                     );
@@ -573,7 +578,6 @@ function EditAttempt({
                   <Line
                     data={questions.filter((q) => !!q.questionTimeDiff)}
                     yAxisId="right"
-                    xAxisId="bottom"
                     type="monotone"
                     dataKey={"questionTimeDiff"}
                     stroke="#ff7300"
@@ -584,7 +588,6 @@ function EditAttempt({
 
                 <XAxis
                   dataKey="idx"
-                  xAxisId={"bottom"}
                   type="number"
                   domain={["dataMin", "dataMax"]}
                   tickCount={totalQuestions}
@@ -597,6 +600,7 @@ function EditAttempt({
                 />
                 <YAxis
                   width={60}
+                  dataKey={"timeSinceStartInS"}
                   domain={[
                     0,
                     Math.ceil(
@@ -633,7 +637,6 @@ function EditAttempt({
                   dataKey="timeSinceStartInS"
                   fill="green"
                   yAxisId="left"
-                  xAxisId="bottom"
                 />
 
                 <Scatter
@@ -642,7 +645,6 @@ function EditAttempt({
                   dataKey="timeSinceStartInS"
                   fill="red"
                   yAxisId="left"
-                  xAxisId="bottom"
                 />
 
                 {isEventsToggled && (
@@ -654,7 +656,6 @@ function EditAttempt({
                     stroke="purple"
                     shape="circle"
                     yAxisId="left"
-                    xAxisId="bottom"
                   />
                 )}
 
@@ -679,7 +680,6 @@ function EditAttempt({
                         y2={peakValue}
                         strokeOpacity={0}
                         yAxisId={"left"}
-                        xAxisId={"bottom"}
                         fillOpacity={0}
                         label={
                           <BracketLayer
@@ -690,40 +690,10 @@ function EditAttempt({
                       />
                     );
                   })}
-                <ReChartsTooltip
+                <RechartsTooltip
                   cursor={{ strokeDasharray: "3 3" }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      if (data.blurTime) {
-                        return (
-                          <Box bg="gray.800" p={2} border="1px solid gray">
-                            <Text color="blue.300">
-                              Blur: {secondsToHumanReadable(data.blurTime)}
-                            </Text>
-                            <Text color="green.300">
-                              Focus: {secondsToHumanReadable(data.focusTime)}
-                            </Text>
-                            <Text color="white">Question: {data.idx + 1}</Text>
-                          </Box>
-                        );
-                      }
-                      return (
-                        <Box bg="gray.800" p={2} border="1px solid gray">
-                          <Text color="white">
-                            {secondsToHumanReadable(
-                              Number(data.timeSinceStartInS),
-                            )}
-                          </Text>
-                          <Text color="gray.400">Question: {data.idx + 1}</Text>
-                          {data.kind && (
-                            <Text color="purple.300">{data.kind}</Text>
-                          )}
-                        </Box>
-                      );
-                    }
-                    return null;
-                  }}
+                  content={TooltipContent}
+                  shared={false}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -840,6 +810,26 @@ function EditAttempt({
                   {events.length}
                 </Text>
               </Box>
+              <Box
+                bg="gray.700"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="blue.400"
+              >
+                <Text fontSize="sm" color="gray.400" mb={1}>
+                  Total Unfocussed Time
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="white">
+                  {focusGaps
+                    .reduce(
+                      (acc, curr) => acc + (curr.focusTime - curr.blurTime),
+                      0,
+                    )
+                    .toFixed(2)}
+                  s
+                </Text>
+              </Box>
             </SimpleGrid>
             {moderationQuery.data?.feedback && (
               <Text color="white" py={3}>
@@ -854,6 +844,36 @@ function EditAttempt({
         </Box>
       </Stack>
     </>
+  );
+}
+
+function TooltipContent({
+  active,
+  payload,
+}: TooltipContentProps<ValueType, NameType>) {
+  const showTooltip = active && payload && payload.length;
+  if (!showTooltip) {
+    return null;
+  }
+  const data = payload[0].payload;
+  const label =
+    typeof data.isCorrect === "boolean"
+      ? data.isCorrect
+        ? "Correct"
+        : "Incorrect"
+      : data.kind;
+  return (
+    <Flex
+      flexDirection={"column"}
+      color="white"
+      background={"rgba(113, 148, 172, 0.27)"}
+      border="1px solid rgba(0,40,255,0.3)"
+      padding={2}
+    >
+      <Text>Label: {label}</Text>
+      <Text>Question: {data.idx}</Text>
+      <Text>Time [s]: {data.timeSinceStartInS}</Text>
+    </Flex>
   );
 }
 
