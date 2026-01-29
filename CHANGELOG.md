@@ -19,6 +19,13 @@
   - captions opened
     - vertical lines overlayed on answer graph
 
+## [5.2.0] - 2026-01-29
+
+### Added
+
+- client: focus time popover
+- client: vertically sizable attempt chart
+
 ## [5.1.2] - 2026-01-28
 
 ### Fixed

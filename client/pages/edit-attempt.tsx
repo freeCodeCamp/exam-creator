@@ -23,6 +23,13 @@ import {
   FormControl,
   FormLabel,
   Switch,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverBody,
+  Portal,
 } from "@chakra-ui/react";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -437,13 +444,8 @@ function EditAttempt({
     averageTimePerQuestion,
   } = attemptStatsQuery.data;
 
-  const {
-    correctAnswers,
-    incorrectAnswers,
-    visitEvents,
-    focusGaps,
-    finalSubmissionTime,
-  } = chartData;
+  const { correctAnswers, incorrectAnswers, visitEvents, focusGaps } =
+    chartData;
 
   return (
     <>
@@ -554,150 +556,160 @@ function EditAttempt({
                 />
               </FormControl>
             </SimpleGrid>
-            <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart
-                margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
-              >
-                <CartesianGrid opacity={0.2} />
-                {isEventsToggled &&
-                  focusGaps.map((f) => {
-                    const stroke = "red";
-                    const opacity = 0.3;
-                    const y1 = f.blurTime;
-                    const y2 = f.focusTime;
-                    return (
-                      <ReferenceArea
-                        {...{ y1, y2, stroke, opacity }}
-                        key={f.idx}
-                        yAxisId={"left"}
-                      />
-                    );
-                  })}
+            <Box resize={"vertical"} overflow={"auto"} minHeight={300}>
+              <ResponsiveContainer width="100%" minHeight={300}>
+                <ComposedChart
+                  margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
+                >
+                  <CartesianGrid opacity={0.2} />
+                  {isEventsToggled &&
+                    focusGaps.map((f) => {
+                      const stroke = "red";
+                      const opacity = 0.3;
+                      const y1 = f.blurTime;
+                      const y2 = f.focusTime;
+                      const time = (y2 - y1).toFixed(2);
+                      return (
+                        <Popover key={f.idx} placement="top" isLazy>
+                          <PopoverTrigger>
+                            <ReferenceArea
+                              {...{ y1, y2, stroke, opacity }}
+                              yAxisId={"left"}
+                            />
+                          </PopoverTrigger>
+                          <Portal>
+                            <PopoverContent width={time.length * 20 + "px"}>
+                              <PopoverArrow />
+                              <PopoverCloseButton />
+                              <PopoverBody>{time}s</PopoverBody>
+                            </PopoverContent>
+                          </Portal>
+                        </Popover>
+                      );
+                    })}
 
-                {isSubmissionTimelineToggled && (
-                  <Line
-                    data={questions.filter((q) => !!q.questionTimeDiff)}
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey={"questionTimeDiff"}
-                    stroke="#ff7300"
-                    strokeWidth={2}
-                    dot={false}
+                  {isSubmissionTimelineToggled && (
+                    <Line
+                      data={questions.filter((q) => !!q.questionTimeDiff)}
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey={"questionTimeDiff"}
+                      stroke="#ff7300"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  )}
+
+                  <XAxis
+                    dataKey="idx"
+                    type="number"
+                    domain={["dataMin", "dataMax"]}
+                    tickCount={totalQuestions}
+                    allowDecimals={false}
+                    label={{
+                      value: "question number",
+                      position: "insideBottom",
+                      offset: 0,
+                    }}
                   />
-                )}
+                  <YAxis
+                    width={60}
+                    dataKey={"timeSinceStartInS"}
+                    tickCount={30}
+                    yAxisId={"left"}
+                    type="number"
+                    label={{
+                      value: "seconds since start",
+                      position: "insideBottomLeft",
+                      angle: -90,
+                      offset: 10,
+                    }}
+                  />
+                  <YAxis
+                    width={40}
+                    yAxisId={"right"}
+                    orientation="right"
+                    label={{
+                      value: "diff [s]",
+                      position: "insideTopRight",
+                      angle: -90,
+                      offset: 10,
+                    }}
+                  />
 
-                <XAxis
-                  dataKey="idx"
-                  type="number"
-                  domain={["dataMin", "dataMax"]}
-                  tickCount={totalQuestions}
-                  allowDecimals={false}
-                  label={{
-                    value: "question number",
-                    position: "insideBottom",
-                    offset: 0,
-                  }}
-                />
-                <YAxis
-                  width={60}
-                  dataKey={"timeSinceStartInS"}
-                  domain={[
-                    0,
-                    Math.ceil(
-                      (finalSubmissionTime - attempt.startTime.getTime()) /
-                        1000,
-                    ),
-                  ]}
-                  yAxisId={"left"}
-                  type="number"
-                  label={{
-                    value: "seconds since start",
-                    position: "insideBottomLeft",
-                    angle: -90,
-                    offset: 10,
-                  }}
-                />
-                <YAxis
-                  width={40}
-                  yAxisId={"right"}
-                  orientation="right"
-                  label={{
-                    value: "diff [s]",
-                    position: "insideTopRight",
-                    angle: -90,
-                    offset: 10,
-                  }}
-                />
+                  <Legend
+                    verticalAlign="top"
+                    height={36}
+                    content={legendFill}
+                  />
 
-                <Legend verticalAlign="top" height={36} content={legendFill} />
-
-                <Scatter
-                  name="Correct"
-                  data={correctAnswers}
-                  dataKey="timeSinceStartInS"
-                  fill="green"
-                  yAxisId="left"
-                />
-
-                <Scatter
-                  name="Incorrect"
-                  data={incorrectAnswers}
-                  dataKey="timeSinceStartInS"
-                  fill="red"
-                  yAxisId="left"
-                />
-
-                {isEventsToggled && (
                   <Scatter
-                    name="Visit"
-                    data={visitEvents}
+                    name="Correct"
+                    data={correctAnswers}
                     dataKey="timeSinceStartInS"
-                    fill="transparent"
-                    stroke="purple"
-                    shape="circle"
+                    fill="green"
                     yAxisId="left"
                   />
-                )}
 
-                {isSubmissionDiffToggled &&
-                  questions.map((entry, index) => {
-                    if (index === 0) return null;
-                    const prev = questions[index - 1];
-                    if (!entry.timeSinceStartInS || !prev.timeSinceStartInS)
-                      return null;
+                  <Scatter
+                    name="Incorrect"
+                    data={incorrectAnswers}
+                    dataKey="timeSinceStartInS"
+                    fill="red"
+                    yAxisId="left"
+                  />
 
-                    const peakValue = Math.max(
-                      prev.timeSinceStartInS,
-                      entry.timeSinceStartInS,
-                    );
+                  {isEventsToggled && (
+                    <Scatter
+                      name="Visit"
+                      data={visitEvents}
+                      dataKey="timeSinceStartInS"
+                      fill="transparent"
+                      stroke="purple"
+                      shape="circle"
+                      yAxisId="left"
+                    />
+                  )}
 
-                    return (
-                      <ReferenceArea
-                        key={`bracket-${index}`}
-                        x1={prev.idx}
-                        x2={entry.idx}
-                        y1={peakValue}
-                        y2={peakValue}
-                        strokeOpacity={0}
-                        yAxisId={"left"}
-                        fillOpacity={0}
-                        label={
-                          <BracketLayer
-                            prevValue={prev.timeSinceStartInS}
-                            currValue={entry.timeSinceStartInS}
-                          />
-                        }
-                      />
-                    );
-                  })}
-                <RechartsTooltip
-                  cursor={{ strokeDasharray: "3 3" }}
-                  content={TooltipContent}
-                  shared={false}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+                  {isSubmissionDiffToggled &&
+                    questions.map((entry, index) => {
+                      if (index === 0) return null;
+                      const prev = questions[index - 1];
+                      if (!entry.timeSinceStartInS || !prev.timeSinceStartInS)
+                        return null;
 
+                      const peakValue = Math.max(
+                        prev.timeSinceStartInS,
+                        entry.timeSinceStartInS,
+                      );
+
+                      return (
+                        <ReferenceArea
+                          key={`bracket-${index}`}
+                          x1={prev.idx}
+                          x2={entry.idx}
+                          y1={peakValue}
+                          y2={peakValue}
+                          strokeOpacity={0}
+                          yAxisId={"left"}
+                          fillOpacity={0}
+                          label={
+                            <BracketLayer
+                              prevValue={prev.timeSinceStartInS}
+                              currValue={entry.timeSinceStartInS}
+                            />
+                          }
+                        />
+                      );
+                    })}
+                  <RechartsTooltip
+                    cursor={{ strokeDasharray: "3 3" }}
+                    content={TooltipContent}
+                    shared={false}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </Box>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
               <Box
                 bg="gray.700"
