@@ -3541,7 +3541,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "5.1.2"
+version = "5.2.0"
 dependencies = [
  "axum",
  "axum-extra",
