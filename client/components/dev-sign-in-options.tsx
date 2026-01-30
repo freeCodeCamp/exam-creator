@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  Stack,
-  FormControl,
-  Input,
-  Heading,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Box, Button, Stack, Field, Input, Heading } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -38,35 +30,30 @@ export function DevSignInOptions() {
 
   return (
     <Box w="full" mt={4}>
-      <Heading
-        as="h3"
-        size="md"
-        mb={4}
-        color={useColorModeValue("teal.400", "teal.300")}
-      >
+      <Heading as="h3" size="md" mb={4} color={"teal.300"}>
         Dev Sign In
       </Heading>
-      <Stack spacing={4}>
-        <FormControl>
+      <Stack gap={4}>
+        <Field.Root>
           <Input
             placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            bg={useColorModeValue("gray.700", "gray.700")}
+            bg={"gray.700"}
             color="white"
           />
-        </FormControl>
-        <FormControl>
+        </Field.Root>
+        <Field.Root>
           <Input
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            bg={useColorModeValue("gray.700", "gray.700")}
+            bg={"gray.700"}
             color="white"
           />
-        </FormControl>
+        </Field.Root>
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           onClick={() => signinMutation.mutate({ name, email })}
         >
           Sign In as Dev User

@@ -3,17 +3,13 @@ import {
   Box,
   Badge,
   SimpleGrid,
-  FormControl,
-  FormLabel,
+  Field,
   Input,
   NumberInput,
-  NumberInputField,
   IconButton,
-  FormErrorMessage,
   Spinner,
   Checkbox,
   Text,
-  useColorModeValue,
   Textarea,
 } from "@chakra-ui/react";
 import {
@@ -51,12 +47,10 @@ export function EditExamConfig({
   const [prereqInput, setPrereqInput] = useState("");
   const [challengeInput, setChallengeInput] = useState("");
 
-  const accent = useColorModeValue("teal.400", "teal.300");
-
   return (
-    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mb={4}>
-      <FormControl>
-        <FormLabel color="gray.300">Exam Name</FormLabel>
+    <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} mb={4}>
+      <Field.Root>
+        <Field.Label>Exam Name</Field.Label>
         <Input
           type="text"
           placeholder="Exam Name..."
@@ -66,12 +60,10 @@ export function EditExamConfig({
               name: e.target.value,
             })
           }
-          bg="gray.700"
-          color="gray.100"
         />
-      </FormControl>
-      <FormControl>
-        <FormLabel color="gray.300">Accessibility Note</FormLabel>
+      </Field.Root>
+      <Field.Root>
+        <Field.Label>Accessibility Note</Field.Label>
         <Textarea
           placeholder="Accessibility Note..."
           value={config.note ?? ""}
@@ -80,46 +72,42 @@ export function EditExamConfig({
               note: e.target.value,
             })
           }
-          bg="gray.700"
-          color="gray.100"
         />
-      </FormControl>
-      <FormControl>
-        <FormLabel color="gray.300">Total Time [s]</FormLabel>
-        <NumberInput
-          value={config.totalTimeInS}
-          onChange={(_, value) =>
+      </Field.Root>
+      <Field.Root>
+        <Field.Label>Total Time [s]</Field.Label>
+        <NumberInput.Root
+          value={config.totalTimeInS.toString()}
+          onValueChange={(v) =>
             setConfig({
-              totalTimeInS: value,
+              totalTimeInS: Number(v.value),
             })
           }
           min={0}
         >
-          <NumberInputField bg="gray.700" color="gray.100" />
-        </NumberInput>
-      </FormControl>
-      <FormControl>
-        <FormLabel color="gray.300">Retake (Cooldown) Time [s]</FormLabel>
-        <NumberInput
-          value={config.retakeTimeInS}
-          onChange={(_, value) =>
+          <NumberInput.Input />
+        </NumberInput.Root>
+      </Field.Root>
+      <Field.Root>
+        <Field.Label>Retake (Cooldown) Time [s]</Field.Label>
+        <NumberInput.Root
+          value={config.retakeTimeInS.toString()}
+          onValueChange={(v) =>
             setConfig({
-              retakeTimeInS: value,
+              retakeTimeInS: Number(v.value),
             })
           }
           min={0}
         >
-          <NumberInputField bg="gray.700" color="gray.100" />
-        </NumberInput>
-      </FormControl>
+          <NumberInput.Input />
+        </NumberInput.Root>
+      </Field.Root>
 
-      <FormControl>
-        <FormLabel color="gray.300">Prerequisites</FormLabel>
+      <Field.Root>
+        <Field.Label>Prerequisites</Field.Label>
         <Input
           type="text"
           placeholder="Add ObjectID and press Enter"
-          bg="gray.700"
-          color="gray.100"
           value={prereqInput || ""}
           onChange={(e) => setPrereqInput(e.target.value)}
           onKeyDown={(e) => {
@@ -138,10 +126,10 @@ export function EditExamConfig({
               }
             }
           }}
-          mb={2}
+          mb={1}
         />
         <Box
-          bg="gray.700"
+          bg="bg.emphasized"
           borderRadius="md"
           px={2}
           py={1}
@@ -151,11 +139,12 @@ export function EditExamConfig({
           display="flex"
           flexWrap="wrap"
           alignItems="flex-start"
+          width="100%"
         >
           {exam.prerequisites?.map((id, idx) => (
             <Badge
               key={id}
-              colorScheme="teal"
+              colorPalette="teal"
               variant="solid"
               mr={2}
               mb={1}
@@ -168,41 +157,40 @@ export function EditExamConfig({
               <span style={{ marginRight: 6 }}>{id}</span>
               <IconButton
                 aria-label="Remove prerequisite"
-                icon={<span>✕</span>}
                 size="xs"
-                colorScheme="red"
+                colorPalette="red"
                 variant="ghost"
                 ml={1}
                 onClick={() => {
                   setExam({
                     prerequisites: exam.prerequisites.filter(
-                      (_, i) => i !== idx
+                      (_, i) => i !== idx,
                     ),
                   });
                 }}
-              />
+              >
+                <span>✕</span>
+              </IconButton>
             </Badge>
           ))}
         </Box>
-        <Text color="gray.400" fontSize="xs" mt={1}>
+        <Text color="fg.muted" fontSize="xs" mt={1}>
           Enter a 24-character hex ObjectID and press Enter to add. Click ✕ to
           remove.
         </Text>
-      </FormControl>
+      </Field.Root>
 
-      <FormControl>
-        <FormLabel color="gray.300">Related Challenge IDs</FormLabel>
+      <Field.Root>
+        <Field.Label>Related Challenge IDs</Field.Label>
         {examEnvironmentChallengesQuery.isError && (
-          <FormErrorMessage>
+          <Field.ErrorText>
             Error loading challenges:{" "}
             {examEnvironmentChallengesQuery.error.message}
-          </FormErrorMessage>
+          </Field.ErrorText>
         )}
         <Input
           type="text"
           placeholder="Add ObjectID and press Enter"
-          bg="gray.700"
-          color="gray.100"
           value={challengeInput || ""}
           disabled={
             examEnvironmentChallengesQuery.isPending ||
@@ -217,7 +205,7 @@ export function EditExamConfig({
                 value &&
                 ObjectId.isValid(value) &&
                 !examEnvironmentChallenges.some(
-                  (ch) => ch.challengeId === value
+                  (ch) => ch.challengeId === value,
                 )
               ) {
                 setExamEnvironmentChallenges((prev) => [
@@ -228,27 +216,28 @@ export function EditExamConfig({
               }
             }
           }}
-          mb={2}
+          mb={1}
         />
         <Box
-          bg="gray.700"
+          bg="bg.emphasized"
           borderRadius="md"
           px={2}
-          py={1}
+          py={2}
           minH="40px"
           maxH="120px"
           overflowY="auto"
           display="flex"
           flexWrap="wrap"
           alignItems="flex-start"
+          width="100%"
         >
           {examEnvironmentChallengesQuery.isPending ? (
-            <Spinner color={accent} size="md" />
+            <Spinner color={"fg.info"} size="md" />
           ) : (
             examEnvironmentChallenges.map(({ challengeId }, idx) => (
               <Badge
                 key={challengeId}
-                colorScheme="teal"
+                colorPalette="teal"
                 variant="solid"
                 mr={2}
                 mb={1}
@@ -261,58 +250,61 @@ export function EditExamConfig({
                 <span style={{ marginRight: 6 }}>{challengeId}</span>
                 <IconButton
                   aria-label="Remove challenge id"
-                  icon={<span>✕</span>}
                   size="xs"
-                  colorScheme="red"
+                  colorPalette="red"
                   variant="ghost"
                   ml={1}
                   onClick={() => {
                     setExamEnvironmentChallenges((prev) =>
-                      prev.filter((_, i) => i !== idx)
+                      prev.filter((_, i) => i !== idx),
                     );
                   }}
-                />
+                >
+                  <span>✕</span>
+                </IconButton>
               </Badge>
             ))
           )}
         </Box>
-        <Text color="gray.400" fontSize="xs" mt={1}>
+        <Text color="fg.muted" fontSize="xs" mt={1}>
           Enter a 24-character hex ObjectID and press Enter to add. Click ✕ to
           remove.
         </Text>
-      </FormControl>
-      <FormControl>
-        <FormLabel color="gray.300">Deprecated</FormLabel>
-        <Checkbox
-          isChecked={exam.deprecated}
-          onChange={(e) =>
+      </Field.Root>
+      <Field.Root>
+        <Field.Label>Deprecated</Field.Label>
+        <Checkbox.Root
+          checked={exam.deprecated}
+          onCheckedChange={(v) =>
             setExam({
-              deprecated: e.target.checked,
+              deprecated: !!v.checked,
             })
           }
-          bg="gray.700"
-          color="gray.100"
-          colorScheme="red"
+          colorPalette="red"
         >
-          Deprecated
-        </Checkbox>
-      </FormControl>
+          <Checkbox.HiddenInput />
+          <Checkbox.Control mt={1} />
 
-      <FormControl>
-        <FormLabel color="gray.300">Passing Percent [%]</FormLabel>
-        <NumberInput
-          value={config.passingPercent}
-          onChange={(_, value) =>
+          <Checkbox.Label>Deprecated</Checkbox.Label>
+        </Checkbox.Root>
+      </Field.Root>
+
+      <Field.Root>
+        <Field.Label>Passing Percent [%]</Field.Label>
+        <NumberInput.Root
+          value={config.passingPercent.toString()}
+          onValueChange={(v) =>
             setConfig({
-              passingPercent: value,
+              passingPercent: Number(v.value),
             })
           }
           min={0}
           max={100}
         >
-          <NumberInputField bg="gray.700" color="gray.100" />
-        </NumberInput>
-      </FormControl>
+          <NumberInput.Control />
+          <NumberInput.Input />
+        </NumberInput.Root>
+      </Field.Root>
     </SimpleGrid>
   );
 }

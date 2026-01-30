@@ -11,24 +11,16 @@ import {
   Button,
   Center,
   Text,
-  useColorModeValue,
   Avatar,
-  Tooltip,
   HStack,
   Spinner,
   SimpleGrid,
   Stack,
   Heading,
   Flex,
-  FormControl,
-  FormLabel,
+  Field,
   Switch,
   Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverArrow,
-  PopoverCloseButton,
-  PopoverBody,
   Portal,
 } from "@chakra-ui/react";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
@@ -73,6 +65,7 @@ import {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
+import { Tooltip } from "../components/tooltip";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -97,14 +90,14 @@ function Edit() {
     refetchOnWindowFocus: false,
   });
 
-  const bg = useColorModeValue("black", "black");
-  const spinnerColor = useColorModeValue("teal.400", "teal.300");
+  const bg = "black";
+  const spinnerColor = "teal.300";
 
   return (
     <Box minH="100vh" bg={bg} py={14} px={2} position="relative">
-      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           variant="outline"
           size="sm"
           onClick={() => navigate({ to: attemptsRoute.to })}
@@ -112,7 +105,7 @@ function Edit() {
           Back to Attempts
         </Button>
         <Button
-          colorScheme="red"
+          colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
@@ -154,8 +147,8 @@ function UsersEditing() {
     return usersPath === window.location.pathname;
   });
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const avatarTextColor = useColorModeValue("gray.100", "gray.200");
+  const cardBg = "gray.800";
+  const avatarTextColor = "gray.200";
   return (
     <Box
       position="fixed"
@@ -171,26 +164,27 @@ function UsersEditing() {
       alignItems="center"
       gap={4}
     >
-      <HStack spacing={-2}>
+      <HStack gap={-2}>
         {usersError ? (
           <Text color="red.400" fontSize="sm">
             {usersError.message}
           </Text>
         ) : (
           filteredUsers.map((user, idx) => (
-            <Tooltip label={user.name} key={user.email}>
-              <Avatar
-                src={user.picture ?? undefined}
-                name={user.name}
-                textColor={avatarTextColor}
-                size="sm"
-                border="2px solid"
-                borderColor={cardBg}
-                zIndex={5 - idx}
-                ml={idx === 0 ? 0 : -2}
-                boxShadow="md"
-              />
-            </Tooltip>
+            <Avatar.Root
+              key={user.email}
+              size="sm"
+              border="2px solid"
+              borderColor={cardBg}
+              zIndex={5 - idx}
+              ml={idx === 0 ? 0 : -2}
+              boxShadow="md"
+            >
+              <Avatar.Image src={user.picture ?? undefined} />
+              <Tooltip content={user.name}>
+                <Avatar.Fallback color={avatarTextColor} name={user.name} />
+              </Tooltip>
+            </Avatar.Root>
           ))
         )}
       </HStack>
@@ -309,8 +303,8 @@ function EditAttempt({
     },
   });
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const cardBg = "gray.800";
+  const accent = "teal.300";
 
   const attemptStatsQuery = useQuery({
     queryKey: [
@@ -467,12 +461,12 @@ function EditAttempt({
       >
         <Button
           ref={approveButtonRef}
-          colorScheme="green"
+          colorPalette="green"
           px={4}
           fontWeight="bold"
           fontSize={"2xl"}
-          isLoading={patchModerationStatusByAttemptIdMutation.isPending}
-          isDisabled={patchModerationStatusByAttemptIdMutation.isPending}
+          loading={patchModerationStatusByAttemptIdMutation.isPending}
+          disabled={patchModerationStatusByAttemptIdMutation.isPending}
           onClick={() => {
             patchModerationStatusByAttemptIdMutation.mutate("Approved");
           }}
@@ -481,12 +475,12 @@ function EditAttempt({
         </Button>
         <Button
           ref={denyButtonRef}
-          colorScheme="red"
+          colorPalette="red"
           px={4}
           fontWeight="bold"
           fontSize={"2xl"}
-          isLoading={patchModerationStatusByAttemptIdMutation.isPending}
-          isDisabled={patchModerationStatusByAttemptIdMutation.isPending}
+          loading={patchModerationStatusByAttemptIdMutation.isPending}
+          disabled={patchModerationStatusByAttemptIdMutation.isPending}
           onClick={() => {
             patchModerationStatusByAttemptIdMutation.mutate("Denied");
           }}
@@ -494,7 +488,7 @@ function EditAttempt({
           Deny
         </Button>
       </Box>
-      <Stack spacing={8} w="full" maxW="7xl">
+      <Stack gap={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Flex
             direction={"row"}
@@ -512,49 +506,49 @@ function EditAttempt({
             <Text color={accent}>{prettyDate(attempt.startTime)}</Text>
           </Flex>
           <Flex direction={"column"} mb={4}>
-            <SimpleGrid minChildWidth={"230px"} spacing={4}>
-              <FormControl alignItems={"center"} display={"flex"}>
-                <FormLabel htmlFor="submission-diff" color="gray.400">
+            <SimpleGrid minChildWidth={"230px"} gap={4}>
+              <Field.Root alignItems={"center"} display={"flex"}>
+                <Field.Label htmlFor="submission-diff" color="gray.400">
                   Enable Submission Diff
-                </FormLabel>
-                <Switch
+                </Field.Label>
+                <Switch.Root
                   id="submission-diff"
-                  isChecked={isSubmissionDiffToggled}
-                  onChange={(e) => setIsSubmissionDiffToggled(e.target.checked)}
+                  checked={isSubmissionDiffToggled}
+                  onCheckedChange={(e) => setIsSubmissionDiffToggled(e.checked)}
                 />
-              </FormControl>
-              <FormControl alignItems={"center"} display={"flex"}>
-                <FormLabel htmlFor="submission-time-sort" color="gray.400">
+              </Field.Root>
+              <Field.Root alignItems={"center"} display={"flex"}>
+                <Field.Label htmlFor="submission-time-sort" color="gray.400">
                   Sort by Submission Time
-                </FormLabel>
-                <Switch
+                </Field.Label>
+                <Switch.Root
                   id="submission-time-sort"
-                  isChecked={isSubmissionTimeToggled}
-                  onChange={(e) => setIsSubmissionTimeToggled(e.target.checked)}
+                  checked={isSubmissionTimeToggled}
+                  onCheckedChange={(e) => setIsSubmissionTimeToggled(e.checked)}
                 />
-              </FormControl>
-              <FormControl alignItems={"center"} display={"flex"}>
-                <FormLabel htmlFor="submission-timeline" color="gray.400">
+              </Field.Root>
+              <Field.Root alignItems={"center"} display={"flex"}>
+                <Field.Label htmlFor="submission-timeline" color="gray.400">
                   Enable Submission Frequency
-                </FormLabel>
-                <Switch
+                </Field.Label>
+                <Switch.Root
                   id="submission-timeline"
-                  isChecked={isSubmissionTimelineToggled}
-                  onChange={(e) =>
-                    setIsSubmissionTimelineToggled(e.target.checked)
+                  checked={isSubmissionTimelineToggled}
+                  onCheckedChange={(e) =>
+                    setIsSubmissionTimelineToggled(e.checked)
                   }
                 />
-              </FormControl>
-              <FormControl alignItems={"center"} display={"flex"}>
-                <FormLabel htmlFor="event-switch" color="gray.400">
+              </Field.Root>
+              <Field.Root alignItems={"center"} display={"flex"}>
+                <Field.Label htmlFor="event-switch" color="gray.400">
                   Enable Events
-                </FormLabel>
-                <Switch
+                </Field.Label>
+                <Switch.Root
                   id="event-switch"
-                  isChecked={isEventsToggled}
-                  onChange={(e) => setIsEventsToggled(e.target.checked)}
+                  checked={isEventsToggled}
+                  onCheckedChange={(e) => setIsEventsToggled(e.checked)}
                 />
-              </FormControl>
+              </Field.Root>
             </SimpleGrid>
             <Box resize={"vertical"} overflow={"auto"} minHeight={300}>
               <ResponsiveContainer width="100%" minHeight={300}>
@@ -570,21 +564,24 @@ function EditAttempt({
                       const y2 = f.focusTime;
                       const time = (y2 - y1).toFixed(2);
                       return (
-                        <Popover key={f.idx} placement="top" isLazy>
-                          <PopoverTrigger>
+                        <Popover.Root
+                          key={f.idx}
+                          positioning={{ placement: "top" }}
+                          lazyMount
+                        >
+                          <Popover.Trigger>
                             <ReferenceArea
                               {...{ y1, y2, stroke, opacity }}
                               yAxisId={"left"}
                             />
-                          </PopoverTrigger>
+                          </Popover.Trigger>
                           <Portal>
-                            <PopoverContent width={time.length * 20 + "px"}>
-                              <PopoverArrow />
-                              <PopoverCloseButton />
-                              <PopoverBody>{time}s</PopoverBody>
-                            </PopoverContent>
+                            <Popover.Content width={time.length * 20 + "px"}>
+                              <Popover.Arrow />
+                              <Popover.Body>{time}s</Popover.Body>
+                            </Popover.Content>
                           </Portal>
-                        </Popover>
+                        </Popover.Root>
                       );
                     })}
 
@@ -710,7 +707,7 @@ function EditAttempt({
                 </ComposedChart>
               </ResponsiveContainer>
             </Box>
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
               <Box
                 bg="gray.700"
                 p={2}
@@ -925,11 +922,11 @@ function AllUserAttemptsContainer({
     <Center mt={2}>
       {!attemptsMutation.data ? (
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           size="lg"
           onClick={() => attemptsMutation.mutate(attempt.userId)}
           disabled={attemptsMutation.isPending}
-          isLoading={attemptsMutation.isPending}
+          loading={attemptsMutation.isPending}
         >
           Fetch All User Attempts (
           {numberOfAttemptsQuery.isFetching ? (

@@ -1,23 +1,20 @@
 import {
   Card,
-  CardBody,
-  CardHeader,
   HStack,
   Avatar,
-  Tooltip,
   Badge,
   Text,
-  useColorModeValue,
   Button,
   Flex,
   Checkbox,
-  CardFooter,
+  CheckboxCheckedChangeDetails,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
 import type { ExamCreatorExam } from "@prisma/client";
 import { useContext } from "react";
 import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
+import { Tooltip } from "./tooltip";
 
 interface ExamCardProps {
   exam: Omit<ExamCreatorExam, "questionSets">;
@@ -36,8 +33,6 @@ export function ExamCard({
 }: ExamCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
 
   // Find users currently editing/viewing this exam
   const editingUsers = users.filter((u) => {
@@ -53,14 +48,13 @@ export function ExamCard({
     }
   };
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    onSelectionChange?.(exam.id, e.target.checked);
+  const handleCheckboxChange = (d: CheckboxCheckedChangeDetails) => {
+    onSelectionChange?.(exam.id, !!d.checked);
   };
 
   return (
     <Button
-      variant="unstyled"
+      variant="plain"
       w="full"
       h="auto"
       p={0}
@@ -70,35 +64,37 @@ export function ExamCard({
       transition="all 0.15s"
       display="block"
       textAlign="left"
+      bg="bg.panel"
     >
-      <Card
-        bg={cardBg}
+      <Card.Root
         borderRadius="xl"
         boxShadow="md"
         p={3}
         h="100%"
         minH="120px"
-        _hover={{ borderColor: accent, boxShadow: "lg" }}
+        _hover={{ borderColor: "fg.info", boxShadow: "lg" }}
         borderWidth={2}
-        borderColor={isSelected ? accent : "transparent"}
+        borderColor={isSelected ? "fg.info" : "transparent"}
         transition="all 0.15s"
       >
-        <CardHeader pb={2} padding={1}>
+        <Card.Header pb={2} padding={1}>
           <Flex align="center" justify="space-between">
             <Flex align="center" gap={3} flex="1 1 0%" minW={0}>
               {selectionMode && (
-                <Checkbox
-                  isChecked={isSelected}
-                  onChange={handleCheckboxChange}
-                  colorScheme="teal"
+                <Checkbox.Root
+                  checked={isSelected}
+                  onCheckedChange={handleCheckboxChange}
+                  colorPalette="teal"
                   size="lg"
-                />
+                >
+                  <Checkbox.Control />
+                </Checkbox.Root>
               )}
               <Text
                 fontSize="xl"
                 fontWeight="bold"
-                color={accent}
-                noOfLines={1}
+                color={"fg.info"}
+                lineClamp={1}
                 flex={1}
                 minW={0}
                 textOverflow="ellipsis"
@@ -110,7 +106,7 @@ export function ExamCard({
             </Flex>
             {exam.deprecated && (
               <Badge
-                colorScheme="red"
+                colorPalette="red"
                 ml={2}
                 flexShrink={0}
                 minW="90px"
@@ -120,9 +116,9 @@ export function ExamCard({
               </Badge>
             )}
           </Flex>
-        </CardHeader>
-        <CardBody pt={2} padding={1}>
-          <HStack spacing={-2}>
+        </Card.Header>
+        <Card.Body pt={2} padding={1}>
+          <HStack gap={-2}>
             {usersError ? (
               <Text>{usersError.message}</Text>
             ) : editingUsers.length === 0 ? (
@@ -131,53 +127,55 @@ export function ExamCard({
               </Text>
             ) : (
               editingUsers.slice(0, 5).map((user, idx) => (
-                <Tooltip label={user.name} key={user.name}>
-                  <Avatar
-                    src={user.picture ?? undefined}
-                    name={user.name}
-                    size="sm"
-                    border="2px solid"
-                    borderColor={cardBg}
-                    zIndex={5 - idx}
-                    ml={idx === 0 ? 0 : -2}
-                    boxShadow="md"
-                  />
-                </Tooltip>
+                <Avatar.Root
+                  key={user.name}
+                  size="sm"
+                  border="2px solid"
+                  borderColor={"border.emphasized"}
+                  zIndex={5 - idx}
+                  ml={idx === 0 ? 0 : -2}
+                  boxShadow="md"
+                >
+                  <Avatar.Image src={user.picture ?? undefined} />
+                  <Tooltip content={user.name}>
+                    <Avatar.Fallback name={user.name} />
+                  </Tooltip>
+                </Avatar.Root>
               ))
             )}
             {editingUsers.length > 5 && (
-              <Avatar
+              <Avatar.Root
                 size="sm"
                 bg="gray.700"
                 color="gray.200"
                 ml={-2}
                 zIndex={0}
-                name={`+${editingUsers.length - 5} more`}
               >
-                +{editingUsers.length - 5}
-              </Avatar>
+                <Avatar.Fallback name={`+${editingUsers.length - 5} more`}>
+                  +{editingUsers.length - 5}
+                </Avatar.Fallback>
+              </Avatar.Root>
             )}
           </HStack>
-        </CardBody>
-        <CardFooter padding="0" justifyContent={"space-evenly"}>
+        </Card.Body>
+        <Card.Footer padding="0" justifyContent={"space-evenly"}>
           {databaseEnvironments.map((env) => (
             <Tooltip
-              label={`This exam is seeded in the ${env} database`}
+              content={`This exam is seeded in the ${env} database`}
               key={env}
             >
               <Badge
                 key={env}
-                colorScheme={env === "Production" ? "green" : "blue"}
-                flexShrink={0}
+                colorPalette={env === "Production" ? "green" : "blue"}
                 minW="90px"
-                textAlign="center"
+                justifyContent={"center"}
               >
                 {env}
               </Badge>
             </Tooltip>
           ))}
-        </CardFooter>
-      </Card>
+        </Card.Footer>
+      </Card.Root>
     </Button>
   );
 }

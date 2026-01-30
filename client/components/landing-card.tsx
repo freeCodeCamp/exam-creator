@@ -1,16 +1,7 @@
-import {
-  useColorModeValue,
-  Card,
-  CardHeader,
-  Flex,
-  CardBody,
-  HStack,
-  Tooltip,
-  Text,
-  Avatar,
-} from "@chakra-ui/react";
+import { Card, Flex, HStack, Text, Avatar } from "@chakra-ui/react";
 import { ReactNode } from "react";
 import { User } from "../types";
+import { Tooltip } from "./tooltip";
 
 interface LandingCardProps {
   filteredUsers: User[];
@@ -18,71 +9,71 @@ interface LandingCardProps {
 }
 
 export function LandingCard({ filteredUsers, children }: LandingCardProps) {
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
   return (
-    <Card
-      bg={cardBg}
+    <Card.Root
       borderRadius="xl"
       boxShadow="md"
       px={4}
       py={3}
       h="100%"
       minH="120px"
-      _hover={{ borderColor: accent, boxShadow: "lg" }}
+      _hover={{ borderColor: "border.info", boxShadow: "lg" }}
       borderWidth={2}
       borderColor="transparent"
       transition="all 0.15s"
     >
-      <CardHeader pb={2} pt={0} pl={0}>
+      <Card.Header pb={2} pt={0} pl={0}>
         <Flex align="center" justify="space-between">
           <Text
             fontSize="xl"
             fontWeight="bold"
-            color={accent}
-            noOfLines={1}
+            color={"fg.info"}
+            lineClamp={1}
             maxW="80%"
           >
             {children}
           </Text>
         </Flex>
-      </CardHeader>
-      <CardBody pt={2} pl={0}>
-        <HStack spacing={-2}>
+      </Card.Header>
+      <Card.Body pt={2} pl={0}>
+        <HStack gap={-2}>
           {filteredUsers.length === 0 ? (
             <Text color="gray.400" fontSize="sm">
               No one editing
             </Text>
           ) : (
             filteredUsers.slice(0, 5).map((user, idx) => (
-              <Tooltip label={user.name} key={user.name}>
-                <Avatar
-                  src={user.picture ?? undefined}
-                  name={user.name}
-                  size="sm"
-                  border="2px solid"
-                  borderColor={cardBg}
-                  zIndex={5 - idx}
-                  ml={idx === 0 ? 0 : -2}
-                  boxShadow="md"
-                />
-              </Tooltip>
+              <Avatar.Root
+                key={user.name}
+                size="sm"
+                border="2px solid"
+                borderColor={"border.inverted"}
+                zIndex={5 - idx}
+                ml={idx === 0 ? 0 : -2}
+                boxShadow="md"
+              >
+                <Avatar.Image src={user.picture ?? undefined} />
+                <Tooltip content={user.name}>
+                  <Avatar.Fallback name={user.name} />
+                </Tooltip>
+              </Avatar.Root>
             ))
           )}
           {filteredUsers.length > 5 && (
-            <Avatar
+            <Avatar.Root
               size="sm"
               bg="gray.700"
               color="gray.200"
               ml={-2}
               zIndex={0}
-              name={`+${filteredUsers.length - 5} more`}
             >
-              +{filteredUsers.length - 5}
-            </Avatar>
+              <Avatar.Fallback name={`+${filteredUsers.length - 5} more`}>
+                +{filteredUsers.length - 5}
+              </Avatar.Fallback>
+            </Avatar.Root>
           )}
         </HStack>
-      </CardBody>
-    </Card>
+      </Card.Body>
+    </Card.Root>
   );
 }

@@ -1,14 +1,6 @@
 import React, { useState } from "react";
 import { GiMagnifyingGlass } from "react-icons/gi";
-import {
-  Input,
-  IconButton,
-  Box,
-  HStack,
-  useColorModeValue,
-  Fade,
-  Badge,
-} from "@chakra-ui/react";
+import { Input, IconButton, Box, HStack, Badge } from "@chakra-ui/react";
 import type { ExamCreatorExam } from "@prisma/client";
 
 type QuestionSearchProps = {
@@ -84,58 +76,55 @@ export function QuestionSearch({
   }
 
   const handleSearchKeyPress = (
-    event: React.KeyboardEvent<HTMLInputElement>
+    event: React.KeyboardEvent<HTMLInputElement>,
   ) => {
     if (event.key === "Enter") {
       setSearchIds(findIdsOfNearestMatches(searchTerm));
     }
   };
 
-  const bg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
-
   return (
     <Box position="relative" mb={4}>
-      <HStack spacing={2}>
+      <HStack gap={2}>
         <IconButton
           aria-label="Search"
-          icon={<GiMagnifyingGlass />}
-          colorScheme="teal"
+          colorPalette="teal"
           variant={searchVisible ? "solid" : "ghost"}
           onClick={handleSearchToggle}
           size="sm"
-        />
-        <Fade in={searchVisible}>
-          <Box>
-            <Input
-              size="sm"
-              width="220px"
-              bg={bg}
-              color="gray.100"
-              borderColor={accent}
-              placeholder="Search Questions..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyPress}
-              autoFocus
-              mr={2}
-            />
-            <IconButton
-              aria-label="Close search"
-              icon={<span>&times;</span>}
-              size="sm"
-              colorScheme="gray"
-              variant="ghost"
-              ml={2}
-              onClick={handleSearchToggle}
-            />
-            {(searchIds.length > 0 || searchTerm.length !== 0) && (
-              <Badge colorScheme="teal" ml={2}>
-                {searchIds.length} found
-              </Badge>
-            )}
-          </Box>
-        </Fade>
+        >
+          <GiMagnifyingGlass />
+        </IconButton>
+        <Box>
+          <Input
+            size="sm"
+            width="220px"
+            bg={"bg.muted"}
+            color="gray.100"
+            borderColor={"border.info"}
+            placeholder="Search Questions..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onKeyDown={handleSearchKeyPress}
+            autoFocus
+            mr={2}
+          />
+          <IconButton
+            aria-label="Close search"
+            size="sm"
+            colorPalette="gray"
+            variant="ghost"
+            ml={2}
+            onClick={handleSearchToggle}
+          >
+            <span>&times;</span>
+          </IconButton>
+          {(searchIds.length > 0 || searchTerm.length !== 0) && (
+            <Badge colorPalette="teal" ml={2}>
+              {searchIds.length} found
+            </Badge>
+          )}
+        </Box>
       </HStack>
     </Box>
   );

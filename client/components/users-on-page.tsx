@@ -1,12 +1,7 @@
 import { useContext } from "react";
-import {
-  HStack,
-  Text,
-  Avatar,
-  Tooltip,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { HStack, Text, Avatar } from "@chakra-ui/react";
 
+import { Tooltip } from "./tooltip";
 import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 
 export function UsersOnPage({ page }: { page: string }) {
@@ -16,40 +11,43 @@ export function UsersOnPage({ page }: { page: string }) {
     return user.activity.page.pathname === page;
   });
 
-  const bg = useColorModeValue("black", "black");
+  const bg = "black";
   return (
-    <HStack spacing={-2} ml={4}>
+    <HStack gap={-2} ml={4}>
       {usersError ? (
         <Text color="red.400" fontSize="sm">
           {usersError.message}
         </Text>
       ) : (
         filteredUsers.slice(0, 5).map((user, idx) => (
-          <Tooltip label={user.name} key={user.email}>
-            <Avatar
-              src={user.picture ?? undefined}
-              name={user.name}
-              size="md"
-              border="2px solid"
-              borderColor={bg}
-              zIndex={5 - idx}
-              ml={idx === 0 ? 0 : -3}
-              boxShadow="md"
-            />
-          </Tooltip>
+          <Avatar.Root
+            key={user.email}
+            size="md"
+            border="2px solid"
+            borderColor={bg}
+            zIndex={5 - idx}
+            ml={idx === 0 ? 0 : -3}
+            boxShadow="md"
+          >
+            <Avatar.Image src={user.picture ?? undefined} />
+            <Tooltip content={user.name}>
+              <Avatar.Fallback name={user.name} />
+            </Tooltip>
+          </Avatar.Root>
         ))
       )}
       {filteredUsers.length > 5 && (
-        <Avatar
+        <Avatar.Root
           size="md"
           bg="gray.700"
           color="gray.200"
           ml={-3}
           zIndex={0}
-          name={`+${filteredUsers.length - 5} more`}
         >
-          +{filteredUsers.length - 5}
-        </Avatar>
+          <Avatar.Fallback name={`+${filteredUsers.length - 5} more`}>
+            +{filteredUsers.length - 5}
+          </Avatar.Fallback>
+        </Avatar.Root>
       )}
     </HStack>
   );

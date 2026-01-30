@@ -2,11 +2,9 @@ import React from "react";
 import { parseMarkdown } from "../utils/question";
 import {
   Box,
-  Collapse,
+  Collapsible,
   useDisclosure,
   Card,
-  CardHeader,
-  CardBody,
   Heading,
   IconButton,
   Flex,
@@ -39,7 +37,7 @@ export function QuestionAccordion({
   title,
   subtitle,
   children,
-  borderColor = "gray.700",
+  borderColor = "bg.muted",
   borderStyle = "solid",
   borderWidth = "1px",
   generationCount,
@@ -48,7 +46,7 @@ export function QuestionAccordion({
   stagingCount,
   productionCount,
 }: AccordionProps) {
-  const { isOpen, onToggle } = useDisclosure();
+  const { open, onToggle } = useDisclosure();
 
   return (
     <Box position="relative" marginTop={1}>
@@ -72,8 +70,7 @@ export function QuestionAccordion({
           zIndex={0}
         />
       )}
-      <Card
-        bg="gray.800"
+      <Card.Root
         borderRadius="xl"
         boxShadow="md"
         borderWidth={isLoading ? "0" : borderWidth}
@@ -81,7 +78,7 @@ export function QuestionAccordion({
         borderStyle={borderStyle}
         position="relative"
         zIndex={1}
-        sx={
+        css={
           dualBorder
             ? {
                 boxShadow: `0 0 0 3px #ECC94B, 0 0 0 6px #48BB78`,
@@ -98,11 +95,11 @@ export function QuestionAccordion({
             top="-10px"
             left="50%"
             transform="translateX(-50%)"
-            spacing={1}
+            gap={1}
             zIndex={1}
           >
             <Badge
-              colorScheme="yellow"
+              colorPalette="yellow"
               fontSize="xs"
               px={2}
               borderRadius="md"
@@ -112,7 +109,7 @@ export function QuestionAccordion({
               S: {stagingCount}
             </Badge>
             <Badge
-              colorScheme="green"
+              colorPalette="green"
               fontSize="xs"
               px={2}
               borderRadius="md"
@@ -128,12 +125,12 @@ export function QuestionAccordion({
             top="-10px"
             left="50%"
             transform="translateX(-50%)"
-            colorScheme={
+            colorPalette={
               borderColor === "green.400"
                 ? "green"
                 : borderColor === "yellow.400"
-                ? "yellow"
-                : "red"
+                  ? "yellow"
+                  : "red"
             }
             fontSize="xs"
             px={2}
@@ -143,15 +140,15 @@ export function QuestionAccordion({
               borderColor === "green.400"
                 ? "green.500"
                 : borderColor === "yellow.400"
-                ? "yellow.500"
-                : "red.500"
+                  ? "yellow.500"
+                  : "red.500"
             }
             color="white"
           >
             {generationCount} {generationCount === 1 ? "exam" : "exams"}
           </Badge>
         ) : null}
-        <CardHeader
+        <Card.Header
           px={4}
           py={3}
           cursor="pointer"
@@ -160,31 +157,33 @@ export function QuestionAccordion({
         >
           <Flex align="center" justify="space-between">
             <Box maxW="100%" overflowX="auto">
-              <Heading size="md" color="teal.300" maxW="100%">
+              <Heading color="teal.400" size="md" maxW="100%">
                 {title}
               </Heading>
               <Box
-                color="gray.300"
                 fontSize="sm"
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(subtitle) }}
                 whiteSpace="pre-line"
               />
             </Box>
             <IconButton
-              aria-label={isOpen ? "Collapse" : "Expand"}
-              icon={isOpen ? <ChevronUp /> : <ChevronDown />}
+              aria-label={open ? "Collapse" : "Expand"}
               variant="ghost"
-              colorScheme="teal"
+              colorPalette="teal"
               size="sm"
               onClick={onToggle}
               ml={2}
-            />
+            >
+              {open ? <ChevronUp /> : <ChevronDown />}
+            </IconButton>
           </Flex>
-        </CardHeader>
-        <Collapse in={isOpen}>
-          {isOpen && <CardBody pt={0}>{children}</CardBody>}
-        </Collapse>
-      </Card>
+        </Card.Header>
+        <Collapsible.Root open={open} lazyMount>
+          <Collapsible.Content>
+            <Card.Body pt={0}>{children}</Card.Body>
+          </Collapsible.Content>
+        </Collapsible.Root>
+      </Card.Root>
     </Box>
   );
 }

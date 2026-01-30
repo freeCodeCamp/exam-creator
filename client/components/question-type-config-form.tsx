@@ -8,13 +8,10 @@ import {
   Box,
   Button,
   HStack,
-  Select,
+  NativeSelect,
   NumberInput,
-  NumberInputField,
-  FormControl,
-  FormLabel,
+  Field,
   Stack,
-  useColorModeValue,
 } from "@chakra-ui/react";
 
 type QuestionTypeConfigFormProps = {
@@ -37,8 +34,6 @@ export function QuestionTypeConfigForm({
   const [numberOfCorrectAnswers, setNumberOfCorrectAnswers] = useState(1);
   const [numberOfIncorrectAnswers, setNumberOfIncorrectAnswers] = useState(0);
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-
   const options = questionSets.reduce((acc, curr) => {
     if (!acc.includes(curr.type)) {
       return [...acc, curr.type];
@@ -49,7 +44,7 @@ export function QuestionTypeConfigForm({
   if (!isCreatingQuestionTypeConfig) {
     return (
       <Button
-        colorScheme="teal"
+        colorPalette="teal"
         variant="outline"
         size="sm"
         mt={2}
@@ -61,101 +56,111 @@ export function QuestionTypeConfigForm({
   }
 
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4} mt={2}>
-      <Stack spacing={3}>
-        <FormControl>
-          <FormLabel color="gray.300" fontSize="sm" mb={1}>
+    <Box
+      borderColor="border.info"
+      borderWidth={1}
+      borderRadius="lg"
+      p={4}
+      mb={4}
+      mt={2}
+    >
+      <Stack gap={3}>
+        <Field.Root>
+          <Field.Label fontSize="sm" mb={1}>
             Question Type
-          </FormLabel>
-          <Select
-            onChange={(e) =>
-              setSelectedQuestionType(
-                e.target.value as ExamEnvironmentQuestionType
-              )
-            }
-            value={selectedQuestionType ?? ""}
-            bg="gray.700"
-            color="gray.100"
-            maxW="200px"
-            size="sm"
-          >
-            <option value="">Select Question Type</option>
-            {options.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl>
-          <FormLabel color="gray.300" fontSize="sm" mb={1}>
+          </Field.Label>
+          <NativeSelect.Root maxW="200px" size="sm">
+            <NativeSelect.Field
+              value={selectedQuestionType ?? ""}
+              onChange={(e) =>
+                setSelectedQuestionType(
+                  e.target.value as ExamEnvironmentQuestionType,
+                )
+              }
+            >
+              <option value="">Select Question Type</option>
+              {options.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontSize="sm" mb={1}>
             Number of Type
-          </FormLabel>
-          <NumberInput
+          </Field.Label>
+          <NumberInput.Root
             min={1}
-            value={numberOfSet}
-            onChange={(_, value) => setNumberOfSet(value)}
+            value={numberOfSet.toString()}
+            onValueChange={(d) => setNumberOfSet(d.valueAsNumber)}
             maxW="120px"
             size="sm"
           >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
-        <FormControl>
-          <FormLabel color="gray.300" fontSize="sm" mb={1}>
+            <NumberInput.Control color="gray.100" />
+            <NumberInput.Input />
+          </NumberInput.Root>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontSize="sm" mb={1}>
             Number of Questions
-          </FormLabel>
-          <NumberInput
+          </Field.Label>
+          <NumberInput.Root
             min={1}
-            value={numberOfQuestions}
-            onChange={(_, value) => setNumberOfQuestions(value)}
+            value={numberOfQuestions.toString()}
+            onValueChange={(d) => setNumberOfQuestions(d.valueAsNumber)}
             maxW="120px"
             size="sm"
             // Optionally restrict for MultipleChoice
             max={selectedQuestionType === "MultipleChoice" ? 1 : undefined}
           >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
-        <FormControl>
-          <FormLabel color="gray.300" fontSize="sm" mb={1}>
+            <NumberInput.Control />
+            <NumberInput.Input />
+          </NumberInput.Root>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontSize="sm" mb={1}>
             Number of Correct Answers
-          </FormLabel>
-          <NumberInput
+          </Field.Label>
+          <NumberInput.Root
             min={1}
-            value={numberOfCorrectAnswers}
-            onChange={(_, value) => setNumberOfCorrectAnswers(value)}
+            value={numberOfCorrectAnswers.toString()}
+            onValueChange={(d) => setNumberOfCorrectAnswers(d.valueAsNumber)}
             maxW="120px"
             size="sm"
           >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
-        <FormControl>
-          <FormLabel color="gray.300" fontSize="sm" mb={1}>
+            <NumberInput.Control />
+            <NumberInput.Input />
+          </NumberInput.Root>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontSize="sm" mb={1}>
             Number of Incorrect Answers
-          </FormLabel>
-          <NumberInput
+          </Field.Label>
+          <NumberInput.Root
             min={0}
-            value={numberOfIncorrectAnswers}
-            onChange={(_, value) => setNumberOfIncorrectAnswers(value)}
+            value={numberOfIncorrectAnswers.toString()}
+            onValueChange={(d) => setNumberOfIncorrectAnswers(d.valueAsNumber)}
             maxW="120px"
             size="sm"
           >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
+            <NumberInput.Control />
+            <NumberInput.Input />
+          </NumberInput.Root>
+        </Field.Root>
         <HStack>
           <Button
             onClick={() => setIsCreatingQuestionTypeConfig(false)}
-            colorScheme="gray"
+            colorPalette="gray"
             variant="ghost"
             size="sm"
           >
             Cancel
           </Button>
           <Button
-            colorScheme="teal"
+            colorPalette="teal"
             size="sm"
             onClick={() => {
               if (!selectedQuestionType) return;
@@ -173,7 +178,7 @@ export function QuestionTypeConfigForm({
               });
               setIsCreatingQuestionTypeConfig(false);
             }}
-            isDisabled={!selectedQuestionType}
+            disabled={!selectedQuestionType}
           >
             Save
           </Button>

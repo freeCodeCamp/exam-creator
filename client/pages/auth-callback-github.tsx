@@ -1,12 +1,5 @@
 import { createRoute, Navigate, useSearch } from "@tanstack/react-router";
-import {
-  Box,
-  Center,
-  Stack,
-  useColorModeValue,
-  Text,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Center, Stack, Text, Spinner } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 
 import { rootRoute } from "./root";
@@ -29,16 +22,16 @@ export function AuthCallbackGithub() {
     retry: false,
   });
 
-  const bg = useColorModeValue("black", "black");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const bg = "black";
+  const cardBg = "gray.800";
+  const accent = "teal.300";
 
   if (callbackQuery.isPending) {
     return (
       <Box minH="100vh" bg={bg}>
         <Center minH="100vh">
           <Stack
-            spacing={8}
+            gap={8}
             w="full"
             maxW="md"
             bg={cardBg}
@@ -74,7 +67,7 @@ export function AuthCallbackGithub() {
     <Box minH="100vh" bg={bg}>
       <Center minH="100vh">
         <Stack
-          spacing={8}
+          gap={8}
           w="full"
           maxW="md"
           bg={cardBg}

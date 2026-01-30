@@ -5,11 +5,9 @@ import {
   Center,
   Heading,
   Stack,
-  useColorModeValue,
   Text,
   Spinner,
   Alert,
-  AlertIcon,
   CloseButton,
 } from "@chakra-ui/react";
 
@@ -38,15 +36,15 @@ export function Login() {
     }
   }, [user]);
 
-  const bg = useColorModeValue("black", "black");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const bg = "black";
+  const cardBg = "gray.800";
+  const accent = "teal.300";
 
   return (
     <Box minH="100vh" bg={bg}>
       <Center minH="100vh">
         <Stack
-          spacing={8}
+          gap={8}
           w="full"
           maxW="md"
           bg={cardBg}
@@ -56,8 +54,8 @@ export function Login() {
           align="center"
         >
           {error && (
-            <Alert status="error" borderRadius="md">
-              <AlertIcon />
+            <Alert.Root status="error" borderRadius="md">
+              <Alert.Indicator />
               <Text flex="1">{error}</Text>
               <CloseButton
                 onClick={() => setError(null)}
@@ -65,7 +63,7 @@ export function Login() {
                 right="8px"
                 top="8px"
               />
-            </Alert>
+            </Alert.Root>
           )}
           {isLoading ? (
             <>
@@ -83,7 +81,7 @@ export function Login() {
                 Please authenticate to continue.
               </Text>
               <Button
-                colorScheme="teal"
+                colorPalette="teal"
                 size="lg"
                 fontWeight="bold"
                 onClick={login}

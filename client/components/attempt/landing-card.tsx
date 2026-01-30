@@ -1,22 +1,19 @@
 import {
-  useColorModeValue,
   Card,
-  CardHeader,
   Flex,
-  CardBody,
   HStack,
-  Tooltip,
   Text,
   Avatar,
-  CardFooter,
   Badge,
   Spinner,
   Grid,
   GridItem,
 } from "@chakra-ui/react";
-import { User } from "../../types";
 import { useQuery } from "@tanstack/react-query";
+
+import { User } from "../../types";
 import { getModerationsCount } from "../../utils/fetch";
+import { Tooltip } from "../tooltip";
 
 interface AttemptsLandingCardProps {
   filteredUsers: User[];
@@ -32,72 +29,71 @@ export function AttemptsLandingCard({
     refetchOnWindowFocus: false,
   });
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
   return (
-    <Card
-      bg={cardBg}
+    <Card.Root
       borderRadius="xl"
       boxShadow="md"
       px={4}
       py={3}
       h="100%"
       minH="120px"
-      _hover={{ borderColor: accent, boxShadow: "lg" }}
+      _hover={{ borderColor: "teal.300", boxShadow: "lg" }}
       borderWidth={2}
       borderColor="transparent"
       transition="all 0.15s"
     >
-      <CardHeader pb={2} pt={0} pl={0}>
+      <Card.Header pb={2} pt={0} pl={0}>
         <Flex align="center" justify="space-between">
           <Text
             fontSize="xl"
             fontWeight="bold"
-            color={accent}
-            noOfLines={1}
+            color={"fg.info"}
+            lineClamp={1}
             maxW="80%"
           >
             Attempts
           </Text>
         </Flex>
-      </CardHeader>
-      <CardBody pt={2} pl={0}>
-        <HStack spacing={-2}>
+      </Card.Header>
+      <Card.Body pt={2} pl={0}>
+        <HStack gap={-2}>
           {filteredUsers.length === 0 ? (
             <Text color="gray.400" fontSize="sm">
               No one editing
             </Text>
           ) : (
             filteredUsers.slice(0, 5).map((user, idx) => (
-              <Tooltip label={user.name} key={user.name}>
-                <Avatar
-                  src={user.picture ?? undefined}
-                  name={user.name}
-                  size="sm"
-                  border="2px solid"
-                  borderColor={cardBg}
-                  zIndex={5 - idx}
-                  ml={idx === 0 ? 0 : -2}
-                  boxShadow="md"
-                />
-              </Tooltip>
+              <Avatar.Root
+                key={user.name}
+                border="2px solid"
+                borderColor={"border.inverted"}
+                zIndex={5 - idx}
+                ml={idx === 0 ? 0 : -2}
+                boxShadow="md"
+                size="sm"
+              >
+                <Avatar.Image src={user.picture ?? undefined} />
+                <Tooltip content={user.name}>
+                  <Avatar.Fallback name={user.name} />
+                </Tooltip>
+              </Avatar.Root>
             ))
           )}
           {filteredUsers.length > 5 && (
-            <Avatar
-              size="sm"
+            <Avatar.Root
               bg="gray.700"
               color="gray.200"
               ml={-2}
               zIndex={0}
-              name={`+${filteredUsers.length - 5} more`}
+              size="sm"
             >
-              +{filteredUsers.length - 5}
-            </Avatar>
+              <Avatar.Image>+{filteredUsers.length - 5}</Avatar.Image>
+              <Avatar.Fallback name={`+${filteredUsers.length - 5} more`} />
+            </Avatar.Root>
           )}
         </HStack>
-      </CardBody>
-      <CardFooter padding="0" flexDirection="column" pl={0}>
+      </Card.Body>
+      <Card.Footer padding="0" flexDirection="column" pl={0}>
         {moderationsCountQuery.isError ? (
           <Text color="red.400" fontSize="sm">
             {moderationsCountQuery.error.message}
@@ -109,8 +105,8 @@ export function AttemptsLandingCard({
         {moderationsCountQuery.isSuccess && (
           <ModerationSummary moderationsCount={moderationsCountQuery.data} />
         )}
-      </CardFooter>
-    </Card>
+      </Card.Footer>
+    </Card.Root>
   );
 }
 
@@ -137,17 +133,17 @@ function ModerationSummary({ moderationsCount }: ModerationSummaryProps) {
       {statusOrder.map((statusKey) => (
         <GridItem key={`staging-${statusKey}`}>
           <Tooltip
-            label={`${staging[statusKey]} ${statusKey} attempt${
+            content={`${staging[statusKey]} ${statusKey} attempt${
               staging[statusKey] !== 1 ? "s" : ""
             }`}
           >
             <Badge
-              colorScheme={
+              colorPalette={
                 statusKey === "approved"
                   ? "green"
                   : statusKey === "denied"
-                  ? "red"
-                  : "yellow"
+                    ? "red"
+                    : "yellow"
               }
               fontSize="xs"
               px={2}
@@ -169,17 +165,17 @@ function ModerationSummary({ moderationsCount }: ModerationSummaryProps) {
       {statusOrder.map((statusKey) => (
         <GridItem key={`production-${statusKey}`}>
           <Tooltip
-            label={`${production[statusKey]} ${statusKey} attempt${
+            content={`${production[statusKey]} ${statusKey} attempt${
               production[statusKey] !== 1 ? "s" : ""
             }`}
           >
             <Badge
-              colorScheme={
+              colorPalette={
                 statusKey === "approved"
                   ? "green"
                   : statusKey === "denied"
-                  ? "red"
-                  : "yellow"
+                    ? "red"
+                    : "yellow"
               }
               fontSize="xs"
               px={2}

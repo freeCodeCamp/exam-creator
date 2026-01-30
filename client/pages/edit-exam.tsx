@@ -8,18 +8,11 @@ import {
   Heading,
   Stack,
   Text,
-  useColorModeValue,
   Avatar,
-  Tooltip,
   HStack,
-  Divider,
+  Separator,
   Spinner,
   Table,
-  Thead,
-  Tr,
-  Th,
-  Tbody,
-  Td,
   Flex,
 } from "@chakra-ui/react";
 import type {
@@ -49,6 +42,7 @@ import { examsRoute } from "./exams";
 import { EditExamGenerationVariability } from "../components/edit-exam-generation-variability";
 import { EditExamConfig } from "../components/edit-exam-config";
 import { ConfigView } from "../components/config-view";
+import { Tooltip } from "../components/tooltip";
 
 function Edit() {
   const { id } = useParams({ from: "/exams/$id" });
@@ -68,14 +62,12 @@ function Edit() {
     // refetchInterval: 5000,
   });
 
-  const bg = useColorModeValue("black", "black");
-  const spinnerColor = useColorModeValue("teal.400", "teal.300");
   return (
-    <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
+    <Box minH="100vh" bg={"bg"} py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}
-      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           variant="outline"
           size="sm"
           onClick={() => navigate({ to: examsRoute.to })}
@@ -83,7 +75,7 @@ function Edit() {
           Back to Exams
         </Button>
         <Button
-          colorScheme="red"
+          colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
@@ -95,9 +87,9 @@ function Edit() {
       <UsersEditing />
       <Center>
         {examQuery.isPending ? (
-          <Spinner color={spinnerColor} size="xl" />
+          <Spinner color={"fg.info"} size="xl" />
         ) : examQuery.isError ? (
-          <Text color="red.400" fontSize="lg">
+          <Text color="fg.error" fontSize="lg">
             Error loading exam: {examQuery.error.message}
           </Text>
         ) : (
@@ -116,15 +108,13 @@ function UsersEditing() {
     return usersPath === window.location.pathname;
   });
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const avatarTextColor = useColorModeValue("gray.100", "gray.200");
+  const avatarTextColor = "gray.200";
   return (
     <Box
       position="fixed"
       top={4}
       right="16rem"
       zIndex={100}
-      bg={cardBg}
       borderRadius="xl"
       boxShadow="lg"
       px={2}
@@ -133,26 +123,26 @@ function UsersEditing() {
       alignItems="center"
       gap={4}
     >
-      <HStack spacing={-2}>
+      <HStack gap={-2}>
         {usersError ? (
           <Text color="red.400" fontSize="sm">
             {usersError.message}
           </Text>
         ) : (
           filteredUsers.map((user, idx) => (
-            <Tooltip label={user.name} key={user.email}>
-              <Avatar
-                src={user.picture ?? undefined}
-                name={user.name}
-                textColor={avatarTextColor}
-                size="sm"
-                border="2px solid"
-                borderColor={cardBg}
-                zIndex={5 - idx}
-                ml={idx === 0 ? 0 : -2}
-                boxShadow="md"
-              />
-            </Tooltip>
+            <Avatar.Root
+              key={user.email}
+              size="sm"
+              border="2px solid"
+              zIndex={5 - idx}
+              ml={idx === 0 ? 0 : -2}
+              boxShadow="md"
+            >
+              <Avatar.Image src={user.picture ?? undefined} />
+              <Tooltip content={user.name}>
+                <Avatar.Fallback color={avatarTextColor} name={user.name} />
+              </Tooltip>
+            </Avatar.Root>
           ))
         )}
       </HStack>
@@ -167,7 +157,7 @@ function examReducer(state: ExamCreatorExam, action: Partial<ExamCreatorExam>) {
 
 function configReducer(
   state: ExamEnvironmentConfig,
-  action: Partial<ExamEnvironmentConfig>
+  action: Partial<ExamEnvironmentConfig>,
 ) {
   const newState = { ...state, ...action };
   return newState;
@@ -237,22 +227,22 @@ function EditExam({ exam: examData }: EditExamProps) {
     }
   }, [examEnvironmentChallengesQuery.data]);
 
-  const cardBg = useColorModeValue("gray.900", "gray.900");
-  const accent = useColorModeValue("teal.400", "teal.300");
-
   // { [type]: { numberOfSet: number, numberOfQuestions: number } }
-  const questionsBySet = questionSets.reduce((acc, qs) => {
-    if (qs.type in acc) {
-      acc[qs.type].numberOfSet += 1;
-      acc[qs.type].numberOfQuestions += qs.questions.length;
-    } else {
-      acc[qs.type] = {
-        numberOfSet: 1,
-        numberOfQuestions: qs.questions.length,
-      };
-    }
-    return acc;
-  }, {} as { [key: string]: { numberOfSet: number; numberOfQuestions: number } });
+  const questionsBySet = questionSets.reduce(
+    (acc, qs) => {
+      if (qs.type in acc) {
+        acc[qs.type].numberOfSet += 1;
+        acc[qs.type].numberOfQuestions += qs.questions.length;
+      } else {
+        acc[qs.type] = {
+          numberOfSet: 1,
+          numberOfQuestions: qs.questions.length,
+        };
+      }
+      return acc;
+    },
+    {} as { [key: string]: { numberOfSet: number; numberOfQuestions: number } },
+  );
 
   return (
     <>
@@ -264,15 +254,17 @@ function EditExam({ exam: examData }: EditExamProps) {
           examEnvironmentChallenges,
         }}
       />
-      <Stack spacing={8} w="full" maxW="7xl">
-        <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
+      <Stack gap={8} w="full" maxW="7xl">
+        <Box
+          bg={"gray.contrast"}
+          borderRadius="xl"
+          boxShadow="lg"
+          p={8}
+          mb={4}
+          w="full"
+        >
           <Flex direction="row">
-            <Heading
-              color={accent}
-              fontWeight="extrabold"
-              fontSize="2xl"
-              mb={2}
-            >
+            <Heading fontWeight="extrabold" fontSize="2xl" mb={2}>
               Edit Exam
             </Heading>
             <Box marginLeft={2}>
@@ -299,38 +291,40 @@ function EditExam({ exam: examData }: EditExamProps) {
                 setExamEnvironmentChallenges,
               }}
             />
-            <Divider my={4} borderColor="gray.600" />
-            <Heading size="md" color={accent} mb={2} id="current-configs-main">
+            <Separator my={4} />
+            <Heading size="md" mb={2} id="current-configs-main">
               Configure Question Distribution
             </Heading>
 
-            <Text color="gray.300" mb={2}>
+            <Text mb={2}>
               This section allows you to configure how many questions you want
               to add to the exam for a specific topic.
             </Text>
 
             <Box mb={4}>
-              <Box overflowX="auto" borderRadius="md" bg="black" p={2}>
-                <Table variant="simple" size="sm" colorScheme="teal">
-                  <Thead>
-                    <Tr>
-                      <Th color="teal.300">Set Type</Th>
-                      <Th color="gray.200">Number of Set</Th>
-                      <Th color="gray.200">Number of Questions (total)</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
+              <Box overflowX="auto" borderRadius="md" p={2}>
+                <Table.Root variant="outline" size="sm" colorPalette="teal">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader color="teal.300">
+                        Set Type
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader>Number of Set</Table.ColumnHeader>
+                      <Table.ColumnHeader>
+                        Number of Questions (total)
+                      </Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
                     {Object.entries(questionsBySet).map(([type, data]) => (
-                      <Tr key={type}>
-                        <Td color="gray.100" fontWeight="bold">
-                          {type}
-                        </Td>
-                        <Td color="gray.100">{data.numberOfSet}</Td>
-                        <Td color="gray.100">{data.numberOfQuestions}</Td>
-                      </Tr>
+                      <Table.Row key={type}>
+                        <Table.Cell fontWeight="bold">{type}</Table.Cell>
+                        <Table.Cell>{data.numberOfSet}</Table.Cell>
+                        <Table.Cell>{data.numberOfQuestions}</Table.Cell>
+                      </Table.Row>
                     ))}
-                  </Tbody>
-                </Table>
+                  </Table.Body>
+                </Table.Root>
               </Box>
             </Box>
             <EditExamGenerationVariability
@@ -338,35 +332,37 @@ function EditExam({ exam: examData }: EditExamProps) {
               generatedExamsStagingData={generatedExamsStagingQuery.data}
               generatedExamsProductionData={generatedExamsProductionQuery.data}
             />
-            <Divider my={4} borderColor="gray.600" />
-            <TagConfigForm
-              questionSets={questionSets}
-              setConfig={setConfig}
-              config={config}
-            />
-            <QuestionTypeConfigForm
-              questionSets={questionSets}
-              setConfig={setConfig}
-              config={config}
-            />
-            <Heading size="sm" color={accent} mt={6} mb={2}>
+            <Separator my={4} />
+            <HStack justifyContent={"space-evenly"} alignItems={"start"}>
+              <TagConfigForm
+                questionSets={questionSets}
+                setConfig={setConfig}
+                config={config}
+              />
+              <QuestionTypeConfigForm
+                questionSets={questionSets}
+                setConfig={setConfig}
+                config={config}
+              />
+            </HStack>
+            <Heading size="sm" mt={6} mb={2}>
               Current Configs
             </Heading>
-            <Text color="gray.300" mb={2}>
+            <Text mb={2}>
               These are the current configs which the algorithm will select
               random questions from:
             </Text>
             <ConfigView {...{ config, setConfig }} />
 
-            <Divider my={4} borderColor="gray.600" />
-            <Heading size="md" color={accent} mt={8} mb={2} id="exam-questions">
+            <Separator my={4} />
+            <Heading size="md" mt={8} mb={2} id="exam-questions">
               Exam Questions
             </Heading>
-            <Text color="gray.300" mb={2}>
+            <Text mb={2}>
               You can create new questions here. Your questions are not saved to
               the database until you click the "Save to Database" button.
             </Text>
-            <Box bg="gray.700" borderRadius="lg" p={4} mt={2}>
+            <Box borderRadius="lg" p={4} mt={2}>
               <QuestionForm
                 searchIds={searchIds}
                 questionSets={questionSets}

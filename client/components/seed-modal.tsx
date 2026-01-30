@@ -1,23 +1,16 @@
 import {
   Button,
-  FormControl,
+  Field,
   Text,
-  FormHelperText,
-  FormLabel,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
+  Dialog,
+  DialogCloseTrigger,
 } from "@chakra-ui/react";
 import { UseMutationResult } from "@tanstack/react-query";
 import { useState } from "react";
 
 interface SeedStagingModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   handleSeedSelectedToStaging: () => void;
   seedExamToStagingMutation: UseMutationResult<
@@ -29,7 +22,7 @@ interface SeedStagingModalProps {
 }
 
 export function SeedStagingModal({
-  isOpen,
+  open,
   onClose,
   handleSeedSelectedToStaging,
   seedExamToStagingMutation,
@@ -41,18 +34,17 @@ export function SeedStagingModal({
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={() => {
+    <Dialog.Root
+      open={open}
+      onOpenChange={() => {
         setVal("");
         onClose();
       }}
     >
-      <ModalOverlay />
-      <ModalContent backgroundColor={"gray.700"} color={"white"}>
-        <ModalHeader>Modal Title</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+      <Dialog.Content backgroundColor={"gray.700"} color={"white"}>
+        <Dialog.Header>Modal Title</Dialog.Header>
+        <DialogCloseTrigger />
+        <Dialog.Body>
           {seedExamToStagingMutation.isPending ? (
             <Text>Seeding exams to staging in progress...</Text>
           ) : (
@@ -62,18 +54,18 @@ export function SeedStagingModal({
             </Text>
           )}
 
-          <FormControl isInvalid={val !== "seed staging"} mt={4}>
-            <FormLabel>Confirmation</FormLabel>
+          <Field.Root invalid={val !== "seed staging"} mt={4}>
+            <Field.Label>Confirmation</Field.Label>
             <Input type="text" value={val} onChange={handleInputChange} />
-            <FormHelperText color="#c4c8d0">
+            <Field.HelperText color="#c4c8d0">
               Type "seed staging" to confirm
-            </FormHelperText>
-          </FormControl>
-        </ModalBody>
+            </Field.HelperText>
+          </Field.Root>
+        </Dialog.Body>
 
-        <ModalFooter>
+        <Dialog.Footer>
           <Button
-            colorScheme="blue"
+            colorPalette="blue"
             mr={3}
             onClick={() => {
               setVal("");
@@ -84,25 +76,25 @@ export function SeedStagingModal({
           </Button>
           <Button
             variant={"outline"}
-            colorScheme="yellow"
+            colorPalette="yellow"
             onClick={() => {
               setVal("");
               handleSeedSelectedToStaging();
             }}
-            isDisabled={val !== "seed staging"}
+            disabled={val !== "seed staging"}
             loadingText="Seeding..."
-            isLoading={seedExamToStagingMutation.isPending}
+            loading={seedExamToStagingMutation.isPending}
           >
             Seed Staging
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }
 
 interface SeedProductionModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   handleSeedSelectedToProduction: () => void;
   seedExamToProductionMutation: UseMutationResult<
@@ -114,7 +106,7 @@ interface SeedProductionModalProps {
 }
 
 export function SeedProductionModal({
-  isOpen,
+  open,
   onClose,
   handleSeedSelectedToProduction,
   seedExamToProductionMutation,
@@ -126,18 +118,17 @@ export function SeedProductionModal({
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={() => {
+    <Dialog.Root
+      open={open}
+      onOpenChange={() => {
         setVal("");
         onClose();
       }}
     >
-      <ModalOverlay />
-      <ModalContent backgroundColor={"gray.700"} color={"white"}>
-        <ModalHeader>Modal Title</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+      <Dialog.Content backgroundColor={"gray.700"} color={"white"}>
+        <Dialog.Header>Modal Title</Dialog.Header>
+        <Dialog.CloseTrigger />
+        <Dialog.Body>
           {seedExamToProductionMutation.isPending ? (
             <Text>Seeding exams to production in progress...</Text>
           ) : (
@@ -147,18 +138,18 @@ export function SeedProductionModal({
             </Text>
           )}
 
-          <FormControl isInvalid={val !== "seed production"} mt={4}>
-            <FormLabel>Confirmation</FormLabel>
+          <Field.Root invalid={val !== "seed production"} mt={4}>
+            <Field.Label>Confirmation</Field.Label>
             <Input type="text" value={val} onChange={handleInputChange} />
-            <FormHelperText color="#c4c8d0">
+            <Field.HelperText color="#c4c8d0">
               Type "seed production" to confirm
-            </FormHelperText>
-          </FormControl>
-        </ModalBody>
+            </Field.HelperText>
+          </Field.Root>
+        </Dialog.Body>
 
-        <ModalFooter>
+        <Dialog.Footer>
           <Button
-            colorScheme="blue"
+            colorPalette="blue"
             mr={3}
             onClick={() => {
               setVal("");
@@ -169,19 +160,19 @@ export function SeedProductionModal({
           </Button>
           <Button
             variant={"outline"}
-            colorScheme="yellow"
+            colorPalette="yellow"
             onClick={() => {
               setVal("");
               handleSeedSelectedToProduction();
             }}
-            isDisabled={val !== "seed production"}
+            disabled={val !== "seed production"}
             loadingText="Seeding..."
-            isLoading={seedExamToProductionMutation.isPending}
+            loading={seedExamToProductionMutation.isPending}
           >
             Seed Production
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

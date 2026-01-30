@@ -7,21 +7,13 @@ import {
   Spinner,
   Stack,
   Text,
-  useColorModeValue,
   Avatar,
-  Tooltip,
   SimpleGrid,
   Flex,
   Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
+  Portal,
   useDisclosure,
-  useToast,
 } from "@chakra-ui/react";
 import { useContext, useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -56,23 +48,24 @@ import {
   SeedStagingModal,
 } from "../components/seed-modal";
 import { useUsersOnPath } from "../hooks/use-users-on-path";
+import { toaster } from "../components/toaster";
+import { Tooltip } from "../components/tooltip";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
-  const toast = useToast();
 
   const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
 
   const {
-    isOpen: stagingIsOpen,
+    open: stagingIsOpen,
     onOpen: stagingOnOpen,
     onClose: stagingOnClose,
   } = useDisclosure();
   const {
-    isOpen: productionIsOpen,
+    open: productionIsOpen,
     onOpen: productionOnOpen,
     onClose: productionOnClose,
   } = useDisclosure();
@@ -127,12 +120,12 @@ export function Exams() {
       stagingOnClose();
       handleDeselectAll();
       examsQuery.refetch();
-      toast({
+      toaster.create({
         title: "Exams seeded to staging",
         description: "The selected exams have been seeded to staging.",
-        status: "success",
+        type: "success",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       });
     },
   });
@@ -146,12 +139,12 @@ export function Exams() {
       productionOnClose();
       handleDeselectAll();
       examsQuery.refetch();
-      toast({
+      toaster.create({
         title: "Exams seeded to production",
         description: "The selected exams have been seeded to production.",
-        status: "success",
+        type: "success",
         duration: 5000,
-        isClosable: true,
+        closable: true,
       });
     },
   });
@@ -214,17 +207,13 @@ export function Exams() {
     });
   }, []);
 
-  const bg = useColorModeValue("black", "black");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
-
   // Intentionally avoid subscribing to users here to prevent full-page re-renders on presence updates.
 
   return (
-    <Box minH="100vh" bg={bg} py={12} px={4}>
-      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
+    <Box minH="100vh" bg={"bg"} py={12} px={4}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           variant="outline"
           size="sm"
           onClick={() => navigate({ to: landingRoute.to })}
@@ -232,7 +221,7 @@ export function Exams() {
           Back to Dashboard
         </Button>
         <Button
-          colorScheme="red"
+          colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
@@ -241,39 +230,38 @@ export function Exams() {
         </Button>
       </HStack>
       <Center>
-        <Stack spacing={8} w="full" maxW="7xl">
+        <Stack gap={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
-            bg={cardBg}
+            bg={"bg"}
             borderRadius="xl"
             p={8}
             boxShadow="lg"
-            mb={4}
+            mb={2}
           >
-            <Stack spacing={1}>
-              <Heading color={accent} fontWeight="extrabold" fontSize="3xl">
+            <Stack gap={1}>
+              <Heading color={"fg.info"} fontWeight="extrabold" fontSize="3xl">
                 Exam Creator
               </Heading>
-              <Text color="gray.300" fontSize="lg">
+              <Text color="fg.muted" fontSize="lg">
                 Create exams for the Exam Environment.
               </Text>
             </Stack>
             <ExamsUsersOnPageAvatars />
-            <HStack spacing={4} ml={8}>
+            <HStack gap={4} ml={8}>
               <Button
-                leftIcon={selectionMode ? <X size={18} /> : undefined}
-                colorScheme={selectionMode ? "red" : "blue"}
+                colorPalette={selectionMode ? "red" : "blue"}
                 variant="outline"
                 px={6}
                 fontWeight="bold"
                 onClick={toggleSelectionMode}
               >
+                {selectionMode ? <X size={18} /> : null}
                 {selectionMode ? "Cancel Selection" : "Select Exams"}
               </Button>
               <Button
-                leftIcon={<Plus size={18} />}
-                colorScheme="teal"
+                colorPalette="teal"
                 variant="solid"
                 px={6}
                 fontWeight="bold"
@@ -282,27 +270,28 @@ export function Exams() {
                 onClick={() => {
                   createExamMutation.mutate();
                 }}
-                isLoading={createExamMutation.isPending}
-                isDisabled={createExamMutation.isPending}
+                loading={createExamMutation.isPending}
+                disabled={createExamMutation.isPending}
                 loadingText="Creating Exam"
               >
+                <Plus size={18} />
                 New Exam
               </Button>
             </HStack>
             {createExamMutation.isError && (
-              <Alert
+              <Alert.Root
                 status="error"
                 position="absolute"
                 tabIndex={100}
                 top={0}
                 left={0}
               >
-                <AlertIcon />
-                <AlertTitle>Unable to create exam!</AlertTitle>
-                <AlertDescription>
+                <Alert.Indicator />
+                <Alert.Title>Unable to create exam!</Alert.Title>
+                <Alert.Description>
                   {createExamMutation.error.message}
-                </AlertDescription>
-              </Alert>
+                </Alert.Description>
+              </Alert.Root>
             )}
           </Flex>
 
@@ -310,127 +299,149 @@ export function Exams() {
             <Flex
               justify="space-between"
               align="center"
-              bg={cardBg}
+              bg={"bg.subtle"}
               borderRadius="xl"
               p={6}
               boxShadow="lg"
-              mb={4}
+              mb={2}
             >
-              <HStack spacing={4}>
-                <Text color="gray.300" fontSize="md">
+              <HStack gap={4}>
+                <Text color="fg" fontSize="md">
                   {selectedExams.size} exam{selectedExams.size !== 1 ? "s" : ""}{" "}
                   selected
                 </Text>
                 <Button
                   size="sm"
                   variant="outline"
-                  colorScheme="teal"
+                  colorPalette="teal"
                   onClick={handleSelectAll}
-                  isDisabled={!examsQuery.data}
+                  disabled={!examsQuery.data}
                 >
                   Select All
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  colorScheme="red"
+                  colorPalette="red"
                   onClick={handleDeselectAll}
-                  isDisabled={selectedExams.size === 0}
+                  disabled={selectedExams.size === 0}
                 >
                   Deselect All
                 </Button>
               </HStack>
-              <Menu>
-                <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                  Actions
-                </MenuButton>
-                <MenuList backgroundColor="gray.800">
-                  <MenuItem
-                    as={Button}
-                    backgroundColor="gray.800"
-                    borderRadius={0}
-                    boxShadow="md"
-                    color={"white"}
-                    colorScheme="green"
-                    fontWeight="bold"
-                    isDisabled={
-                      selectedExams.size === 0 || examByIdMutation.isPending
-                    }
-                    isLoading={examByIdMutation.isPending}
-                    justifyContent={"flex-start"}
-                    leftIcon={<Download size={18} />}
-                    loadingText={"Prepping Export"}
-                    onClick={handleExportSelected}
-                    _hover={{ bg: "green.500" }}
-                  >
-                    Export Selected
-                  </MenuItem>
-                  <MenuItem
-                    as={Button}
-                    backgroundColor="gray.800"
-                    borderRadius={0}
-                    boxShadow="md"
-                    color={"white"}
-                    colorScheme="green"
-                    fontWeight="bold"
-                    isDisabled={
-                      selectedExams.size === 0 ||
-                      seedExamToStagingMutation.isPending
-                    }
-                    isLoading={seedExamToStagingMutation.isPending}
-                    justifyContent={"flex-start"}
-                    leftIcon={<CodeXml size={18} />}
-                    loadingText={"Seed in progress"}
-                    onClick={stagingOnOpen}
-                    _hover={{ bg: "green.500" }}
-                  >
-                    Seed to Staging
-                  </MenuItem>
-                  <MenuItem
-                    as={Button}
-                    backgroundColor="gray.800"
-                    borderRadius={0}
-                    boxShadow="md"
-                    color={"white"}
-                    colorScheme="green"
-                    fontWeight="bold"
-                    isDisabled={
-                      selectedExams.size === 0 ||
-                      seedExamToProductionMutation.isPending
-                    }
-                    isLoading={seedExamToProductionMutation.isPending}
-                    justifyContent={"flex-start"}
-                    leftIcon={<AppWindow size={18} />}
-                    loadingText={"Seed in progress"}
-                    onClick={productionOnOpen}
-                    _hover={{ bg: "green.500" }}
-                  >
-                    Seed to Production
-                  </MenuItem>
-                  {/* TODO: Probably never going to create such functionality */}
-                  <MenuItem
-                    as={Button}
-                    backgroundColor="gray.800"
-                    borderRadius={0}
-                    boxShadow="md"
-                    color={"white"}
-                    colorScheme="green"
-                    fontWeight="bold"
-                    isDisabled={true}
-                    justifyContent={"flex-start"}
-                    leftIcon={<Trash2 size={18} />}
-                    _hover={{ bg: "green.500" }}
-                  >
-                    Delete (TBD)
-                  </MenuItem>
-                </MenuList>
-              </Menu>
+              <Menu.Root>
+                <Menu.Trigger asChild>
+                  <Button bg="bg" color="fg">
+                    Actions
+                    <ChevronDownIcon />
+                  </Button>
+                </Menu.Trigger>
+                <Portal>
+                  <Menu.Positioner>
+                    <Menu.Content backgroundColor="bg" borderColor="border">
+                      <Menu.Item
+                        value="export-selected"
+                        asChild
+                        backgroundColor="bg"
+                        borderRadius={0}
+                        boxShadow="md"
+                        color={"white"}
+                        colorPalette="green"
+                        fontWeight="bold"
+                        justifyContent={"flex-start"}
+                        _hover={{ bg: "green.500" }}
+                      >
+                        <Button
+                          loadingText={"Prepping Export"}
+                          disabled={
+                            selectedExams.size === 0 ||
+                            examByIdMutation.isPending
+                          }
+                          onClick={handleExportSelected}
+                          loading={examByIdMutation.isPending}
+                        >
+                          <Download size={18} />
+                          Export Selected
+                        </Button>
+                      </Menu.Item>
+                      <Menu.Item
+                        asChild
+                        value="seed-to-staging"
+                        backgroundColor="bg"
+                        borderRadius={0}
+                        boxShadow="md"
+                        color={"white"}
+                        colorPalette="green"
+                        fontWeight="bold"
+                        justifyContent={"flex-start"}
+                        _hover={{ bg: "green.500" }}
+                      >
+                        <Button
+                          disabled={
+                            selectedExams.size === 0 ||
+                            seedExamToStagingMutation.isPending
+                          }
+                          loading={seedExamToStagingMutation.isPending}
+                          loadingText={"Seed in progress"}
+                          onClick={stagingOnOpen}
+                        >
+                          <CodeXml size={18} />
+                          Seed to Staging
+                        </Button>
+                      </Menu.Item>
+                      <Menu.Item
+                        value={"seed-to-production"}
+                        asChild
+                        backgroundColor="bg"
+                        borderRadius={0}
+                        boxShadow="md"
+                        color={"white"}
+                        colorPalette="green"
+                        fontWeight="bold"
+                        justifyContent={"flex-start"}
+                        _hover={{ bg: "green.500" }}
+                      >
+                        <Button
+                          disabled={
+                            selectedExams.size === 0 ||
+                            seedExamToProductionMutation.isPending
+                          }
+                          loading={seedExamToProductionMutation.isPending}
+                          loadingText={"Seed in progress"}
+                          onClick={productionOnOpen}
+                        >
+                          <AppWindow size={18} />
+                          Seed to Production
+                        </Button>
+                      </Menu.Item>
+                      {/* TODO: Probably never going to create such functionality */}
+                      <Menu.Item
+                        value="delete"
+                        asChild
+                        backgroundColor="bg"
+                        borderRadius={0}
+                        boxShadow="md"
+                        color={"white"}
+                        colorPalette="green"
+                        fontWeight="bold"
+                        justifyContent={"flex-start"}
+                        _hover={{ bg: "green.500" }}
+                      >
+                        <Button disabled={true}>
+                          <Trash2 size={18} />
+                          Delete (TBD)
+                        </Button>
+                      </Menu.Item>
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Portal>
+              </Menu.Root>
             </Flex>
           )}
           <Box>
             {examsQuery.isPending ? (
               <Center py={12}>
-                <Spinner color={accent} size="xl" />
+                <Spinner color={"fg.info"} size="xl" />
               </Center>
             ) : examsQuery.isError ? (
               <Center>
@@ -439,7 +450,7 @@ export function Exams() {
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid minChildWidth={"380px"} spacing={8}>
+              <SimpleGrid minChildWidth={"380px"} gap={8}>
                 {examsQuery.data.map(({ exam, databaseEnvironments }) => (
                   <ExamCard
                     key={exam.id}
@@ -456,13 +467,13 @@ export function Exams() {
         </Stack>
       </Center>
       <SeedStagingModal
-        isOpen={stagingIsOpen}
+        open={stagingIsOpen}
         onClose={stagingOnClose}
         handleSeedSelectedToStaging={handleSeedSelectedToStaging}
         seedExamToStagingMutation={seedExamToStagingMutation}
       />
       <SeedProductionModal
-        isOpen={productionIsOpen}
+        open={productionIsOpen}
         onClose={productionOnClose}
         handleSeedSelectedToProduction={handleSeedSelectedToProduction}
         seedExamToProductionMutation={seedExamToProductionMutation}
@@ -473,41 +484,44 @@ export function Exams() {
 
 function ExamsUsersOnPageAvatars() {
   const { users: usersOnPage, error: usersError } = useUsersOnPath("/exams");
-  const bg = useColorModeValue("black", "black");
+  const bg = "black";
 
   return (
-    <HStack spacing={-2} ml={4}>
+    <HStack gap={-2} ml={4}>
       {usersError ? (
         <Text color="red.400" fontSize="sm">
           {usersError.message}
         </Text>
       ) : (
         usersOnPage.slice(0, 5).map((user, idx) => (
-          <Tooltip label={user.name} key={user.email}>
-            <Avatar
-              src={user.picture ?? undefined}
-              name={user.name}
-              size="md"
-              border="2px solid"
-              borderColor={bg}
-              zIndex={5 - idx}
-              ml={idx === 0 ? 0 : -3}
-              boxShadow="md"
-            />
-          </Tooltip>
+          <Avatar.Root
+            key={user.email}
+            size="md"
+            border="2px solid"
+            borderColor={bg}
+            zIndex={5 - idx}
+            ml={idx === 0 ? 0 : -3}
+            boxShadow="md"
+          >
+            <Avatar.Image src={user.picture ?? undefined} />
+            <Tooltip content={user.name}>
+              <Avatar.Fallback name={user.name} />
+            </Tooltip>
+          </Avatar.Root>
         ))
       )}
       {usersOnPage.length > 5 && (
-        <Avatar
+        <Avatar.Root
           size="md"
           bg="gray.700"
           color="gray.200"
           ml={-3}
           zIndex={0}
-          name={`+${usersOnPage.length - 5} more`}
         >
-          +{usersOnPage.length - 5}
-        </Avatar>
+          <Avatar.Fallback name={`+${usersOnPage.length - 5} more`}>
+            +{usersOnPage.length - 5}
+          </Avatar.Fallback>
+        </Avatar.Root>
       )}
     </HStack>
   );

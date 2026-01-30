@@ -1,10 +1,4 @@
-import {
-  Box,
-  Button,
-  useColorModeValue,
-  useDisclosure,
-  useToast,
-} from "@chakra-ui/react";
+import { Box, Button, useDisclosure } from "@chakra-ui/react";
 import { CodeXml, Save } from "lucide-react";
 import {
   postValidateConfigByExamId,
@@ -21,6 +15,7 @@ import { useMutation } from "@tanstack/react-query";
 import { GenerateModal } from "./generate-modal";
 import { deserializeToPrisma } from "../utils/serde";
 import { queryClient } from "../contexts";
+import { toaster } from "./toaster";
 
 interface EditExamActionsProps {
   exam: ExamCreatorExam;
@@ -35,9 +30,8 @@ export function EditExamActions({
   questionSets,
   examEnvironmentChallenges,
 }: EditExamActionsProps) {
-  const toast = useToast();
   const {
-    isOpen: generateIsOpen,
+    open: generateIsOpen,
     onOpen: generateOnOpen,
     onClose: generateOnClose,
   } = useDisclosure();
@@ -47,13 +41,11 @@ export function EditExamActions({
       await postValidateConfigByExamId(examId);
     },
     onError(error) {
-      toast({
+      toaster.create({
         title: "Invalid Exam Configuration",
         description: error.message,
-        status: "error",
-        duration: null,
-        isClosable: true,
-        position: "bottom",
+        type: "loading",
+        closable: true,
       });
     },
   });
@@ -79,44 +71,41 @@ export function EditExamActions({
       // Update upstream queries cache with new data
       queryClient.setQueryData(
         ["exam", exam.id],
-        deserializeToPrisma(examData)
+        deserializeToPrisma(examData),
       );
       queryClient.setQueryData(
         ["exam-challenges", exam.id],
-        deserializeToPrisma(examEnvironmentChallengesData)
+        deserializeToPrisma(examEnvironmentChallengesData),
       );
       invalidConfigMutation.mutate(exam.id);
-      toast({
+      toaster.create({
         title: "Exam Saved",
         description: "Your exam has been saved to the temporary database.",
-        status: "success",
+        type: "success",
         duration: 1000,
-        isClosable: true,
-        position: "top-right",
+        closable: true,
       });
     },
     onError(error: Error) {
       console.error(error);
-      toast({
+      toaster.create({
         title: "Error Saving Exam",
         description: error.message || "An error occurred saving exam.",
-        status: "error",
+        type: "error",
         duration: 5000,
-        isClosable: true,
-        position: "top-right",
+        closable: true,
       });
     },
     retry: false,
   });
 
-  const cardBg = useColorModeValue("gray.900", "gray.900");
   return (
     <Box
       position="fixed"
       top={3}
       right="1rem"
       zIndex={100}
-      bg={cardBg}
+      bg={"bg.panel"}
       borderRadius="xl"
       boxShadow="lg"
       px={2}
@@ -127,12 +116,12 @@ export function EditExamActions({
       gap={4}
     >
       <Button
-        leftIcon={<Save size={18} />}
-        colorScheme="teal"
+        color="fg.inverted"
+        colorPalette="teal"
         variant="solid"
         px={4}
         fontWeight="bold"
-        isLoading={handleDatabaseSave.isPending}
+        loading={handleDatabaseSave.isPending}
         onClick={() =>
           handleDatabaseSave.mutate({
             exam,
@@ -142,20 +131,22 @@ export function EditExamActions({
           })
         }
       >
+        <Save size={18} />
         Save to Database
       </Button>
       <Button
-        leftIcon={<CodeXml size={18} />}
-        colorScheme="teal"
+        colorPalette="teal"
+        color="fg.inverted"
         variant="solid"
         px={4}
         fontWeight="bold"
         onClick={generateOnOpen}
       >
+        <CodeXml size={18} />
         Generate Exams
       </Button>
       <GenerateModal
-        isOpen={generateIsOpen}
+        open={generateIsOpen}
         onClose={generateOnClose}
         examId={exam.id}
       />

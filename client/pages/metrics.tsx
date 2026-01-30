@@ -7,10 +7,8 @@ import {
   Spinner,
   Stack,
   Text,
-  useColorModeValue,
   SimpleGrid,
   Flex,
-  Tooltip,
   Avatar,
 } from "@chakra-ui/react";
 import { useContext, useEffect } from "react";
@@ -26,6 +24,7 @@ import { landingRoute } from "./landing";
 import { ExamMetricsCard } from "../components/exam-metrics-card";
 import { DatabaseStatus } from "../components/database-status";
 import { useUsersOnPath } from "../hooks/use-users-on-path";
+import { Tooltip } from "../components/tooltip";
 
 export function Metrics() {
   const { user, logout } = useContext(AuthContext)!;
@@ -47,16 +46,16 @@ export function Metrics() {
     });
   }, []);
 
-  const bg = useColorModeValue("black", "black");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const bg = "black";
+  const cardBg = "gray.800";
+  const accent = "teal.300";
 
   return (
     <Box minH="100vh" bg={bg} py={12} px={4}>
-      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <DatabaseStatus />
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           variant="outline"
           size="sm"
           onClick={() => navigate({ to: landingRoute.to })}
@@ -64,7 +63,7 @@ export function Metrics() {
           Back to Dashboard
         </Button>
         <Button
-          colorScheme="red"
+          colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
@@ -73,7 +72,7 @@ export function Metrics() {
         </Button>
       </HStack>
       <Center>
-        <Stack spacing={8} w="full" maxW="7xl">
+        <Stack gap={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
@@ -83,7 +82,7 @@ export function Metrics() {
             boxShadow="lg"
             mb={4}
           >
-            <Stack spacing={1}>
+            <Stack gap={1}>
               <Heading color={accent} fontWeight="extrabold" fontSize="3xl">
                 Exam Metrics
               </Heading>
@@ -105,7 +104,7 @@ export function Metrics() {
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid minChildWidth={"380px"} spacing={8}>
+              <SimpleGrid minChildWidth={"380px"} gap={8}>
                 {metricsQuery.data.map(({ exam, numberOfAttempts }) => (
                   <ExamMetricsCard
                     key={exam.id}
@@ -124,41 +123,44 @@ export function Metrics() {
 
 function UsersOnPageAvatars() {
   const { users: usersOnPage, error: usersError } = useUsersOnPath("/metrics");
-  const bg = useColorModeValue("black", "black");
+  const bg = "black";
 
   return (
-    <HStack spacing={-2} ml={4}>
+    <HStack gap={-2} ml={4}>
       {usersError ? (
         <Text color="red.400" fontSize="sm">
           {usersError.message}
         </Text>
       ) : (
         usersOnPage.slice(0, 5).map((user, idx) => (
-          <Tooltip label={user.name} key={user.email}>
-            <Avatar
-              src={user.picture ?? undefined}
-              name={user.name}
-              size="md"
-              border="2px solid"
-              borderColor={bg}
-              zIndex={5 - idx}
-              ml={idx === 0 ? 0 : -3}
-              boxShadow="md"
-            />
-          </Tooltip>
+          <Avatar.Root
+            key={user.email}
+            size="md"
+            border="2px solid"
+            borderColor={bg}
+            zIndex={5 - idx}
+            ml={idx === 0 ? 0 : -3}
+            boxShadow="md"
+          >
+            <Avatar.Image src={user.picture ?? undefined} />
+            <Tooltip content={user.name}>
+              <Avatar.Fallback name={user.name} />
+            </Tooltip>
+          </Avatar.Root>
         ))
       )}
       {usersOnPage.length > 5 && (
-        <Avatar
+        <Avatar.Root
           size="md"
           bg="gray.700"
           color="gray.200"
           ml={-3}
           zIndex={0}
-          name={`+${usersOnPage.length - 5} more`}
         >
-          +{usersOnPage.length - 5}
-        </Avatar>
+          <Avatar.Fallback name={`+${usersOnPage.length - 5} more`}>
+            +{usersOnPage.length - 5}
+          </Avatar.Fallback>
+        </Avatar.Root>
       )}
     </HStack>
   );

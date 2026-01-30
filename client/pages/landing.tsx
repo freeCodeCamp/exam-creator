@@ -6,9 +6,7 @@ import {
   HStack,
   Stack,
   Text,
-  useColorModeValue,
   Avatar,
-  Tooltip,
   SimpleGrid,
   Flex,
 } from "@chakra-ui/react";
@@ -28,16 +26,13 @@ import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
 import { metricsRoute } from "./metrics";
 import { AttemptsLandingCard } from "../components/attempt/landing-card";
+import { Tooltip } from "../components/tooltip";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
   const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
-
-  const bg = useColorModeValue("black", "black");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
 
   useEffect(() => {
     updateActivity({
@@ -51,14 +46,14 @@ export function Landing() {
   const { users: usersOnMetrics } = useUsersOnPath("/metrics");
 
   return (
-    <Box minH="100vh" bg={bg} py={12} px={4}>
+    <Box minH="100vh" bg={"bg"} py={12} px={4}>
       {/* Logout button top right */}
       <Button
         position="fixed"
         top={3}
         right={8}
         zIndex={101}
-        colorScheme="red"
+        colorPalette="red"
         variant="outline"
         size="sm"
         onClick={() => logout()}
@@ -66,61 +61,68 @@ export function Landing() {
         Logout
       </Button>
       <Center>
-        <Stack spacing={8} w="full" maxW="7xl">
+        <Stack gap={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
-            bg={cardBg}
+            bg={"bg"}
             borderRadius="xl"
             p={8}
             boxShadow="lg"
             mb={4}
           >
-            <Stack spacing={1}>
-              <Heading color={accent} fontWeight="extrabold" fontSize="3xl">
+            <Stack gap={1}>
+              <Heading
+                color={"fg.success"}
+                fontWeight="extrabold"
+                fontSize="3xl"
+              >
                 Exam Creator
               </Heading>
-              <Text color="gray.300" fontSize="lg">
+              <Text color="fg.muted" fontSize="lg">
                 Create and moderate exams and attempts.
               </Text>
             </Stack>
-            <HStack spacing={-2} ml={4}>
+            <HStack gap={-2} ml={4}>
               {usersError ? (
-                <Text color="red.400" fontSize="sm">
+                <Text color="fg.error" fontSize="sm">
                   {usersError.message}
                 </Text>
               ) : (
                 users.slice(0, 5).map((user, idx) => (
-                  <Tooltip label={user.name} key={user.email}>
-                    <Avatar
-                      src={user.picture ?? undefined}
-                      name={user.name}
-                      size="md"
-                      border="2px solid"
-                      borderColor={bg}
-                      zIndex={5 - idx}
-                      ml={idx === 0 ? 0 : -3}
-                      boxShadow="md"
-                    />
-                  </Tooltip>
+                  <Avatar.Root
+                    key={user.email}
+                    size="md"
+                    border="2px solid"
+                    borderColor={"bg.inverted"}
+                    zIndex={5 - idx}
+                    ml={idx === 0 ? 0 : -3}
+                    boxShadow="md"
+                  >
+                    <Avatar.Image src={user.picture ?? undefined} />
+                    <Tooltip content={user.name}>
+                      <Avatar.Fallback name={user.name} />
+                    </Tooltip>
+                  </Avatar.Root>
                 ))
               )}
               {users.length > 5 && (
-                <Avatar
+                <Avatar.Root
                   size="md"
                   bg="gray.700"
                   color="gray.200"
                   ml={-3}
                   zIndex={0}
-                  name={`+${users.length - 5} more`}
                 >
-                  +{users.length - 5}
-                </Avatar>
+                  <Avatar.Fallback name={`+${users.length - 5} more`}>
+                    +{users.length - 5}
+                  </Avatar.Fallback>
+                </Avatar.Root>
               )}
             </HStack>
           </Flex>
           <Box>
-            <SimpleGrid minChildWidth={"380px"} spacing={8}>
+            <SimpleGrid minChildWidth={"380px"} gap={8}>
               <Button
                 onClick={() => navigate({ to: examsRoute.to })}
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
@@ -128,10 +130,11 @@ export function Landing() {
                 transition="all 0.15s"
                 display="block"
                 textAlign="left"
-                variant="unstyled"
+                variant="plain"
                 w="full"
                 h="auto"
                 p={0}
+                bg={"bg.subtle"}
               >
                 <LandingCard filteredUsers={usersOnExams}>Exams</LandingCard>
               </Button>
@@ -142,15 +145,12 @@ export function Landing() {
                 transition="all 0.15s"
                 display="block"
                 textAlign="left"
-                variant="unstyled"
+                variant="plain"
                 w="full"
                 h="auto"
                 p={0}
-                // disabled={true}
+                bg={"bg.subtle"}
               >
-                {/* <LandingCard filteredUsers={usersOnAttempts}>
-                  Attempts
-                </LandingCard> */}
                 <AttemptsLandingCard filteredUsers={usersOnAttempts} />
               </Button>
               <Button
@@ -160,10 +160,11 @@ export function Landing() {
                 transition="all 0.15s"
                 display="block"
                 textAlign="left"
-                variant="unstyled"
+                variant="plain"
                 w="full"
                 h="auto"
                 p={0}
+                bg={"bg.subtle"}
               >
                 <LandingCard filteredUsers={usersOnMetrics}>
                   Exam Metrics

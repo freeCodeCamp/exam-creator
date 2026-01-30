@@ -1,38 +1,27 @@
 import {
   Button,
-  FormControl,
+  Field,
   Text,
-  FormHelperText,
-  FormLabel,
   Input,
   NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
+  Dialog,
+  DialogBody,
   Stack,
   Progress,
-  useToast,
-  Select,
+  NativeSelect,
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { putGenerateExam } from "../utils/fetch";
 import { queryClient } from "../contexts";
+import { toaster } from "./toaster";
 
 interface GenerateModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   examId: string;
 }
 
-export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
+export function GenerateModal({ open, onClose, examId }: GenerateModalProps) {
   const [val, setVal] = useState("");
   const [count, setCount] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -46,15 +35,13 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
   >("Staging");
   const abortRef = useRef<AbortController | null>(null);
 
-  const toast = useToast();
-
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setVal(e.target.value);
   }
 
   // Reset state when modal opens/closes
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       setProgress(0);
       setError(null);
       setGenerationAlgorithmErrors([]);
@@ -65,7 +52,7 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
       abortRef.current?.abort();
       abortRef.current = null;
     }
-  }, [isOpen, examId]);
+  }, [open, examId]);
 
   function clampCount(n: number) {
     if (Number.isNaN(n)) return 1;
@@ -74,7 +61,7 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
 
   // Helper: iterate JSON NL from ReadableStream
   async function* iterateJsonLines(
-    stream: ReadableStream<Uint8Array<ArrayBuffer>>
+    stream: ReadableStream<Uint8Array<ArrayBuffer>>,
   ) {
     const textDecoder = new TextDecoder("utf-8");
     const reader = stream.getReader();
@@ -144,20 +131,20 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
           const uniqueErrors = Array.from(new Set(genErrors));
           setGenerationAlgorithmErrors(uniqueErrors);
         }
-        toast({
+        toaster.create({
           title: `Generation Timeout in ${databaseEnvironment}`,
           description: `Generation process timed out before all exams could be generated. Please try again.`,
-          status: "warning",
+          type: "warning",
           duration: 7000,
-          isClosable: true,
+          closable: true,
         });
       } else {
-        toast({
+        toaster.create({
           title: `Generated Exams to ${databaseEnvironment}`,
           description: `All generated exams have been seeded to the database.`,
-          status: "success",
+          type: "success",
           duration: 5000,
-          isClosable: true,
+          closable: true,
         });
       }
       await queryClient.refetchQueries({
@@ -180,9 +167,9 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={() => {
+    <Dialog.Root
+      open={open}
+      onOpenChange={() => {
         setVal("");
         setCount(1);
         setIsGenerating(false);
@@ -191,11 +178,10 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
         onClose();
       }}
     >
-      <ModalOverlay />
-      <ModalContent backgroundColor={"gray.700"} color={"white"}>
-        <ModalHeader>Generate Exams to {databaseEnvironment}</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
+      <Dialog.Content backgroundColor={"gray.700"} color={"white"}>
+        <Dialog.Header>Generate Exams to {databaseEnvironment}</Dialog.Header>
+        <Dialog.CloseTrigger />
+        <DialogBody>
           {isGenerating ? (
             <>
               <Text>
@@ -211,19 +197,23 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
               exams?
             </Text>
           )}
-          <Stack mt={3} spacing={3}>
-            <Stack key={examId} spacing={1}>
+          <Stack mt={3} gap={3}>
+            <Stack key={examId} gap={1}>
               <Text fontSize="sm" color="gray.300">
                 {examId}
               </Text>
-              <Progress
+              <Progress.Root
                 size="sm"
-                colorScheme="yellow"
+                colorPalette="yellow"
                 value={progress ?? 0}
                 max={count}
-                hasStripe
-                isAnimated
-              />
+                striped
+                animated
+              >
+                <Progress.Track>
+                  <Progress.Range />
+                </Progress.Track>
+              </Progress.Root>
               <Text fontSize="xs" color="gray.400">
                 {progress ?? 0}/{count}
               </Text>
@@ -235,7 +225,7 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
             </Text>
           )}
           {generationAlgorithmErrors.length > 0 && (
-            <Stack mt={3} spacing={2}>
+            <Stack mt={3} gap={2}>
               <Text color="orange.300">
                 Some errors occurred during generation:
               </Text>
@@ -246,82 +236,83 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
               ))}
             </Stack>
           )}
-          <FormControl isDisabled={isGenerating}>
-            <FormLabel>Database Environment</FormLabel>
-            <Select
-              value={databaseEnvironment}
-              isRequired
-              onChange={(e) => {
-                const value = e.currentTarget.value as "Staging" | "Production";
-                setDatabaseEnvironment(value);
-              }}
-            >
-              <option value="Staging">Staging</option>
-              <option value="Production">Production</option>
-            </Select>
-          </FormControl>
+          <Field.Root disabled={isGenerating}>
+            <Field.Label>Database Environment</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                onChange={(e) => {
+                  const value = e.currentTarget.value as
+                    | "Staging"
+                    | "Production";
+                  setDatabaseEnvironment(value);
+                }}
+                value={databaseEnvironment}
+              >
+                <option value="Staging">Staging</option>
+                <option value="Production">Production</option>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
 
-          <FormControl
-            isInvalid={val !== `generate ${databaseEnvironment}`}
-            isDisabled={isGenerating}
+          <Field.Root
+            invalid={val !== `generate ${databaseEnvironment}`}
+            disabled={isGenerating}
             mt={4}
           >
-            <FormLabel>Confirmation</FormLabel>
+            <Field.Label>Confirmation</Field.Label>
             <Input type="text" value={val} onChange={handleInputChange} />
-            <FormHelperText color="#c4c8d0">
+            <Field.HelperText color="#c4c8d0">
               Type "generate {databaseEnvironment}" to confirm
-            </FormHelperText>
-          </FormControl>
+            </Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt={4} isDisabled={isGenerating}>
-            <FormLabel>Number of Generations</FormLabel>
-            <NumberInput
+          <Field.Root mt={4} disabled={isGenerating}>
+            <Field.Label>Number of Generations</Field.Label>
+            <NumberInput.Root
               min={1}
               max={100}
-              value={count}
-              onChange={(valueString, valueNumber) => {
+              value={count.toString()}
+              onValueChange={(v) => {
                 const next = clampCount(
-                  Number.isNaN(valueNumber)
-                    ? parseInt(valueString)
-                    : valueNumber
+                  Number.isNaN(v.valueAsNumber)
+                    ? parseInt(v.value)
+                    : v.valueAsNumber,
                 );
                 setCount(next);
               }}
-              isDisabled={isGenerating}
+              disabled={isGenerating}
             >
-              <NumberInputField />
-              <NumberInputStepper>
-                <NumberIncrementStepper />
-                <NumberDecrementStepper />
-              </NumberInputStepper>
-            </NumberInput>
-            <FormHelperText color="#c4c8d0">
+              <NumberInput.Control />
+              <NumberInput.Input />
+            </NumberInput.Root>
+            <Field.HelperText color="#c4c8d0">
               Enter a value between 1 and 100
-            </FormHelperText>
-          </FormControl>
-        </ModalBody>
+            </Field.HelperText>
+          </Field.Root>
+        </DialogBody>
 
-        <ModalFooter>
+        <Dialog.Footer>
           <Button
-            colorScheme="blue"
+            colorPalette="blue"
             mr={3}
             onClick={() => {
               setVal("");
               setCount(1);
               onClose();
             }}
-            isDisabled={isGenerating}
+            disabled={isGenerating}
           >
             Close
           </Button>
           <Button
             variant={"outline"}
-            colorScheme="yellow"
+            colorPalette="yellow"
             onClick={async () => {
               setVal("");
               await startGeneration();
             }}
-            isDisabled={
+            disabled={
               val !== `generate ${databaseEnvironment}` ||
               !examId ||
               isGenerating ||
@@ -329,12 +320,12 @@ export function GenerateModal({ isOpen, onClose, examId }: GenerateModalProps) {
               count > 100
             }
             loadingText="Generating..."
-            isLoading={isGenerating}
+            loading={isGenerating}
           >
             Generate in {databaseEnvironment}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

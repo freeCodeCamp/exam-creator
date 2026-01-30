@@ -8,21 +8,13 @@ import {
   Heading,
   Stack,
   Text,
-  useColorModeValue,
   HStack,
   Spinner,
   Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Divider,
-  Tooltip,
+  Separator,
   SimpleGrid,
-  FormControl,
-  FormLabel,
-  FormHelperText,
+  Field,
   NumberInput,
-  NumberInputField,
   Flex,
 } from "@chakra-ui/react";
 import type {
@@ -42,6 +34,7 @@ import { AuthContext } from "../contexts/auth";
 import { metricsRoute } from "./metrics";
 import { parseMarkdown, secondsToHumanReadable } from "../utils/question";
 import { TimeTakenDistribution } from "../components/time-taken-distribution";
+import { Tooltip } from "../components/tooltip";
 
 function View() {
   const { id } = useParams({ from: "/metrics/exams/$id" });
@@ -57,14 +50,14 @@ function View() {
     refetchOnWindowFocus: false,
   });
 
-  const bg = useColorModeValue("black", "black");
-  const spinnerColor = useColorModeValue("teal.400", "teal.300");
+  const bg = "black";
+  const spinnerColor = "teal.300";
   return (
     <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}
-      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           variant="outline"
           size="sm"
           onClick={() => navigate({ to: metricsRoute.to })}
@@ -72,7 +65,7 @@ function View() {
           Back to Exams Metrics
         </Button>
         <Button
-          colorScheme="red"
+          colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
@@ -128,14 +121,14 @@ function ViewExamMetrics({
         const flattened = a.questionSets.flatMap((qs) => qs.questions);
 
         const questionsAnswered = flattened.filter(
-          (f) => !!f.submissionTime
+          (f) => !!f.submissionTime,
         ).length;
         if (questionsAnswered < minQuestionsAnswered) {
           return false;
         }
 
         const lastSubmission = Math.max(
-          ...flattened.map((f) => f.submissionTime?.getTime() ?? 0)
+          ...flattened.map((f) => f.submissionTime?.getTime() ?? 0),
         );
         const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
@@ -161,12 +154,12 @@ function ViewExamMetrics({
     };
   }, [exam]);
 
-  const cardBg = useColorModeValue("gray.900", "gray.900");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const cardBg = "gray.900";
+  const accent = "teal.300";
 
   function handleNumberChange(
     n: number,
-    setter: React.Dispatch<React.SetStateAction<number>>
+    setter: React.Dispatch<React.SetStateAction<number>>,
   ) {
     if (isNaN(n) || n < 0) {
       setter(0);
@@ -177,12 +170,12 @@ function ViewExamMetrics({
 
   return (
     <>
-      <Stack spacing={8} w="full" maxW="7xl">
+      <Stack gap={8} w="full" maxW="7xl">
         <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
             {exam.config.name}
           </Heading>
-          <Divider my={4} borderColor="gray.600" />
+          <Separator my={4} borderColor="gray.600" />
           <Heading size="md" color={accent} mt={6} mb={2}>
             Exam Metrics
           </Heading>
@@ -193,66 +186,69 @@ function ViewExamMetrics({
           <Heading size="sm" gridColumn="span 3">
             Adjust Histogram Parameters
           </Heading>
-          <SimpleGrid minChildWidth={"230px"} spacing={6} mb={4} mt={2}>
-            <FormControl>
-              <Tooltip label="Minimum attempt time in seconds to include in the distribution">
-                <FormLabel color="gray.300">Min Attempt Time [s]</FormLabel>
+          <SimpleGrid minChildWidth={"230px"} gap={6} mb={4} mt={2}>
+            <Field.Root>
+              <Tooltip content="Minimum attempt time in seconds to include in the distribution">
+                <Field.Label color="gray.300">Min Attempt Time [s]</Field.Label>
               </Tooltip>
-              <NumberInput
+              <NumberInput.Root
                 // value={minAttemptTimeInS}
-                defaultValue={0}
+                defaultValue={"0"}
                 // onChange={(_, v) => handleNumberChange(v, setMinAttemptTimeInS)}
-                onBlur={(e) => {
-                  const v = parseInt(e.target.value);
+                onFocusChange={(e) => {
+                  if (e.focused) return;
+                  const v = e.valueAsNumber;
                   handleNumberChange(v, setMinAttemptTimeInS);
                 }}
                 min={0}
                 inputMode="numeric"
               >
-                <NumberInputField bg="gray.700" color="gray.100" />
-              </NumberInput>
-            </FormControl>
-            <FormControl>
-              <Tooltip label="Minimum number of questions answered to include in the distribution">
-                <FormLabel color="gray.300">
+                <NumberInput.Control bg="gray.700" color="gray.100" />
+              </NumberInput.Root>
+            </Field.Root>
+            <Field.Root>
+              <Tooltip content="Minimum number of questions answered to include in the distribution">
+                <Field.Label color="gray.300">
                   Min Questions Answered [#]
-                </FormLabel>
+                </Field.Label>
               </Tooltip>
-              <NumberInput
+              <NumberInput.Root
                 // value={minQuestionsAnswered}
-                defaultValue={0}
+                defaultValue={"0"}
                 // onChange={(_, v) =>
                 //   handleNumberChange(v, setMinQuestionsAnswered)
                 // }
-                onBlur={(e) => {
-                  const v = parseInt(e.target.value);
+                onFocusChange={(e) => {
+                  if (e.focused) return;
+                  const v = e.valueAsNumber;
                   handleNumberChange(v, setMinQuestionsAnswered);
                 }}
                 min={0}
                 inputMode="numeric"
               >
-                <NumberInputField bg="gray.700" color="gray.100" />
-              </NumberInput>
-            </FormControl>
-            <FormControl>
-              <FormLabel>Sigma</FormLabel>
-              <NumberInput
+                <NumberInput.Control bg="gray.700" color="gray.100" />
+              </NumberInput.Root>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>Sigma</Field.Label>
+              <NumberInput.Root
                 // value={sigma}
-                defaultValue={50}
+                defaultValue={"50"}
                 min={1}
                 // onChange={(_, v) => handleNumberChange(v, setSigma)}
-                onBlur={(e) => {
-                  const v = parseInt(e.target.value);
+                onFocusChange={(e) => {
+                  if (e.focused) return;
+                  const v = e.valueAsNumber;
                   handleNumberChange(v, setSigma);
                 }}
                 inputMode="numeric"
               >
-                <NumberInputField bg="gray.700" color="gray.100" />
-              </NumberInput>
-              <FormHelperText>
+                <NumberInput.Control bg="gray.700" color="gray.100" />
+              </NumberInput.Root>
+              <Field.HelperText>
                 Adjust how many brackets are used in the histogram
-              </FormHelperText>
-            </FormControl>
+              </Field.HelperText>
+            </Field.Root>
           </SimpleGrid>
 
           {filteredAttemptsQuery.isFetching || !filteredAttemptsQuery.data ? (
@@ -264,7 +260,7 @@ function ViewExamMetrics({
           ) : (
             <>
               <AttemptStats attempts={filteredAttemptsQuery.data} />
-              <Divider my={2} borderColor="gray.800" />
+              <Separator my={2} borderColor="gray.800" />
               <TimeTakenDistribution
                 attempts={filteredAttemptsQuery.data}
                 exam={exam}
@@ -272,7 +268,7 @@ function ViewExamMetrics({
               />
               {/* <AverageTimePerQuestionDistribution {...{ attempts }} /> */}
 
-              <Divider my={4} borderColor="gray.600" />
+              <Separator my={4} borderColor="gray.600" />
               <Heading
                 size="md"
                 color={accent}
@@ -329,7 +325,7 @@ function AttemptStats({
           const lastSubmission = Math.max(
             ...flattened.map((f) => {
               return f.submissionTime?.getTime() ?? 0;
-            })
+            }),
           );
           const timeToComplete = (lastSubmission - startTimeInMS) / 1000;
 
@@ -341,7 +337,7 @@ function AttemptStats({
             sumTimePerQuestion: acc.sumTimePerQuestion + averageTimePerQuestion,
           };
         },
-        { sumTimeSpent: 0, sumTimePerQuestion: 0 }
+        { sumTimeSpent: 0, sumTimePerQuestion: 0 },
       );
 
       const avgTimeSpent =
@@ -369,11 +365,11 @@ function AttemptStats({
   const { sampledAttempts, avgTimeSpent, avgTimePerQuestion } = statsQuery.data;
 
   return (
-    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
-      <Tooltip label="Number of attempts included in this analysis after applying filters">
-        <Card bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
-          <CardBody>
-            <Stack spacing={2}>
+    <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} mb={4}>
+      <Tooltip content="Number of attempts included in this analysis after applying filters">
+        <Card.Root bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+          <Card.Body>
+            <Stack gap={2}>
               <Heading size="sm" color="teal.300">
                 Sampled Attempts
               </Heading>
@@ -381,14 +377,14 @@ function AttemptStats({
                 {sampledAttempts}
               </Text>
             </Stack>
-          </CardBody>
-        </Card>
+          </Card.Body>
+        </Card.Root>
       </Tooltip>
 
-      <Tooltip label="Average time from exam start to final question submission: sum(Final Submission Time - Start Time) / number of attempts">
-        <Card bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
-          <CardBody>
-            <Stack spacing={2}>
+      <Tooltip content="Average time from exam start to final question submission: sum(Final Submission Time - Start Time) / number of attempts">
+        <Card.Root bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+          <Card.Body>
+            <Stack gap={2}>
               <Heading size="sm" color="teal.300">
                 Average Time Spent
               </Heading>
@@ -396,14 +392,14 @@ function AttemptStats({
                 {secondsToHumanReadable(Math.floor(avgTimeSpent))}
               </Text>
             </Stack>
-          </CardBody>
-        </Card>
+          </Card.Body>
+        </Card.Root>
       </Tooltip>
 
-      <Tooltip label="Average time per question answered: sum(Question Submission Time) / total questions answered">
-        <Card bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
-          <CardBody>
-            <Stack spacing={1}>
+      <Tooltip content="Average time per question answered: sum(Question Submission Time) / total questions answered">
+        <Card.Root bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+          <Card.Body>
+            <Stack gap={1}>
               <Heading size="sm" color="teal.300">
                 Average Question Time
               </Heading>
@@ -411,8 +407,8 @@ function AttemptStats({
                 {avgTimePerQuestion.toFixed(2)}s
               </Text>
             </Stack>
-          </CardBody>
-        </Card>
+          </Card.Body>
+        </Card.Root>
       </Tooltip>
     </SimpleGrid>
   );
@@ -431,13 +427,13 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
         qs.questions.map((q) => ({
           ...q,
           context: qs.context,
-        }))
+        })),
       )
       .map((q, i) => {
         // Number of attempts whose generation included this question
         const seenBy = attempts.filter((attempt) => {
           const generation = generations.find(
-            (gen) => gen.id === attempt.generatedExamId
+            (gen) => gen.id === attempt.generatedExamId,
           );
           if (!generation) return false;
           return generation.questionSets
@@ -472,7 +468,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               });
 
             const questionIndex = flattenedQuestions.findIndex(
-              (fq) => fq.id === q.id
+              (fq) => fq.id === q.id,
             );
             if (questionIndex === -1) {
               return acc;
@@ -493,7 +489,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
             acc.push(timeSpentOnQuestion);
             return acc;
           },
-          [] as number[]
+          [] as number[],
         );
 
         const totalTimeSpent = timeSpents.reduce((acc, t) => {
@@ -512,7 +508,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
             if (!submittedQuestion) return false;
             const selectedCorrectAnswer = submittedQuestion.answers
               .map((aid) =>
-                q.answers.find((qa) => qa.id === aid && qa.isCorrect)
+                q.answers.find((qa) => qa.id === aid && qa.isCorrect),
               )
               .filter((a) => !!a);
             return selectedCorrectAnswer.length > 0;
@@ -523,7 +519,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
         const answers = q.answers.map((answer) => {
           const seenBy = attempts.filter((attempt) => {
             const generation = generations.find(
-              (gen) => gen.id === attempt.generatedExamId
+              (gen) => gen.id === attempt.generatedExamId,
             );
             if (!generation) return false;
             return generation.questionSets
@@ -533,7 +529,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
 
           const submittedBy = attempts.filter((attempt) => {
             const attemptAnswers = attempt.questionSets.flatMap((aqs) =>
-              aqs.questions.flatMap((aq) => aq.answers)
+              aqs.questions.flatMap((aq) => aq.answers),
             );
             return attemptAnswers.includes(answer.id);
           }).length;
@@ -597,16 +593,16 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
   const minDifficulty = difficulties.length > 0 ? Math.min(...difficulties) : 0;
   const maxDifficulty = difficulties.length > 0 ? Math.max(...difficulties) : 0;
 
-  const cardBg = useColorModeValue("gray.900", "gray.900");
+  const cardBg = "gray.900";
   return (
     <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
-      <Stack spacing={4}>
+      <Stack gap={4}>
         <Box>
           <Heading size="sm" mb={3} color={"teal.300"}>
             Questions Overview
           </Heading>
           <Flex direction="row" justifyContent={"center"}>
-            <Tooltip label="Lowest difficulty score among all questions">
+            <Tooltip content="Lowest difficulty score among all questions">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help" mr={1}>
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Min Difficulty
@@ -616,7 +612,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                 </Text>
               </Box>
             </Tooltip>
-            <Tooltip label="Highest difficulty score among all questions">
+            <Tooltip content="Highest difficulty score among all questions">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help" ml={1}>
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Max Difficulty
@@ -627,11 +623,11 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
               </Box>
             </Tooltip>
           </Flex>
-          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-            <FormControl>
-              <FormLabel color="gray.300" fontSize="sm" fontWeight="bold">
+          <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
+            <Field.Root>
+              <Field.Label color="gray.300" fontSize="sm" fontWeight="bold">
                 Sort By
-              </FormLabel>
+              </Field.Label>
               <select
                 value={sortKey}
                 onChange={(e) =>
@@ -641,7 +637,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                       | "exam"
                       | "time-spent"
                       | "correct"
-                      | "submitted-by"
+                      | "submitted-by",
                   )
                 }
                 style={{
@@ -659,11 +655,11 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                 <option value="correct">Correct %</option>
                 <option value="submitted-by">Submitted By</option>
               </select>
-            </FormControl>
-            <FormControl>
-              <FormLabel color="gray.300" fontSize="sm" fontWeight="bold">
+            </Field.Root>
+            <Field.Root>
+              <Field.Label color="gray.300" fontSize="sm" fontWeight="bold">
                 Order
-              </FormLabel>
+              </Field.Label>
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
@@ -679,11 +675,11 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                 <option value="asc">Ascending</option>
                 <option value="desc">Descending</option>
               </select>
-            </FormControl>
+            </Field.Root>
           </SimpleGrid>
         </Box>
 
-        <Stack spacing={4}>
+        <Stack gap={4}>
           {questionsWithStats
             .sort((a, b) => {
               // exam order: use examOrder numeric field
@@ -751,14 +747,14 @@ type QuestionWithStats = Omit<
 function QuestionCard({ question }: { question: QuestionWithStats }) {
   return (
     <Box position="relative" mb={4}>
-      <Card
+      <Card.Root
         bg="gray.800"
         borderRadius="xl"
         boxShadow="md"
         position="relative"
         zIndex={1}
       >
-        <CardHeader px={4} py={3}>
+        <Card.Header px={4} py={3}>
           <Box maxW="100%" overflowX="auto">
             <Heading size="md" color="teal.300" maxW="100%">
               Question {question.id}
@@ -788,10 +784,10 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               }}
             />
           </Box>
-        </CardHeader>
-        <CardBody pt={0}>
-          <SimpleGrid columns={{ base: 2, md: 5 }} spacing={3} mb={4}>
-            <Tooltip label="Number of attempts that included this question">
+        </Card.Header>
+        <Card.Body pt={0}>
+          <SimpleGrid columns={{ base: 2, md: 5 }} gap={3} mb={4}>
+            <Tooltip content="Number of attempts that included this question">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Seen By
@@ -802,7 +798,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               </Box>
             </Tooltip>
 
-            <Tooltip label="Number of attempts that submitted an answer to this question">
+            <Tooltip content="Number of attempts that submitted an answer to this question">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Submitted By
@@ -813,7 +809,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               </Box>
             </Tooltip>
 
-            <Tooltip label="Average time spent on this question from start to submission">
+            <Tooltip content="Average time spent on this question from start to submission">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Time Spent
@@ -824,7 +820,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               </Box>
             </Tooltip>
 
-            <Tooltip label="Percentage of submitted answers that selected a correct option">
+            <Tooltip content="Percentage of submitted answers that selected a correct option">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Correct
@@ -835,7 +831,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               </Box>
             </Tooltip>
 
-            <Tooltip label="Normalized Time Spent divided by Percent Correct - higher indicates more difficult questions">
+            <Tooltip content="Normalized Time Spent divided by Percent Correct - higher indicates more difficult questions">
               <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Difficulty
@@ -846,9 +842,9 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               </Box>
             </Tooltip>
           </SimpleGrid>
-        </CardBody>
-        <CardFooter>
-          <Stack spacing={3} w="full">
+        </Card.Body>
+        <Card.Footer>
+          <Stack gap={3} w="full">
             {question.answers.map((answer) => (
               <Box
                 key={answer.id}
@@ -876,8 +872,8 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               </Box>
             ))}
           </Stack>
-        </CardFooter>
-      </Card>
+        </Card.Footer>
+      </Card.Root>
     </Box>
   );
 }

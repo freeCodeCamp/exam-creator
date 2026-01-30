@@ -10,12 +10,12 @@ import {
   Input,
   Textarea,
   Checkbox,
+  Field,
   HStack,
   Stack,
   Text,
-  useColorModeValue,
   IconButton,
-  FormLabel,
+  Heading,
 } from "@chakra-ui/react";
 import { Plus, X } from "lucide-react";
 
@@ -79,7 +79,7 @@ export function MultipleChoiceForm({
           }
         }, 250);
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (audioInputRef.current) {
@@ -93,119 +93,115 @@ export function MultipleChoiceForm({
     };
   }, []);
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
-
   return (
     <Box
-      bg={cardBg}
       borderRadius="lg"
-      p={4}
+      p={2}
       borderWidth={borderWidth}
       borderColor={borderColor}
       borderStyle={borderStyle}
     >
-      <Text fontWeight="bold" color={accent} mb={2} id={question.id}>
+      <Text fontWeight="bold" mb={2} id={question.id}>
         Multiple Choice Form
       </Text>
-      <Stack spacing={3}>
-        <Checkbox
-          isChecked={question.deprecated}
-          onChange={(e) => {
+      <Stack gap={3}>
+        <Checkbox.Root
+          checked={question.deprecated}
+          onCheckedChange={(d) => {
             change_question(
               {
                 ...question,
-                deprecated: e.target.checked,
+                deprecated: !!d.checked,
               },
               questionSets,
-              setQuestionSets
+              setQuestionSets,
             );
           }}
-          color="gray.300"
           alignSelf="flex-end"
-          colorScheme="red"
+          colorPalette="red"
         >
-          Deprecated
-        </Checkbox>
-        <FormLabel color="gray.300">Context</FormLabel>
-        <Textarea
-          placeholder=""
-          value={questionSet.context ?? ""}
-          onChange={(e) =>
-            change_question_type(
-              {
-                ...questionSet,
-                context: e.target.value,
-              },
-              questionSets,
-              setQuestionSets
-            )
-          }
-          bg="gray.700"
-          color="gray.100"
-        />
-        <FormLabel color="gray.300">Question</FormLabel>
-        <Textarea
-          placeholder="Text"
-          value={question.text}
-          onChange={(e) => {
-            change_question(
-              {
-                ...question,
-                text: e.target.value,
-              },
-              questionSets,
-              setQuestionSets
-            );
-          }}
-          bg="gray.700"
-          color="gray.100"
-        />
-        <FormLabel color="gray.300">Tags</FormLabel>
-        <Input
-          type="text"
-          placeholder="tag_one,tag two,tag-three"
-          value={question.tags.join(",")}
-          onChange={(e) => {
-            const tags = e.target.value.split(",").map((t) => t.trim());
-            change_question(
-              {
-                ...question,
-                tags,
-              },
-              questionSets,
-              setQuestionSets
-            );
-          }}
-          bg="gray.700"
-          color="gray.100"
-        />
-        <FormLabel color="gray.300">Audio URL</FormLabel>
-        <Input
-          type="text"
-          placeholder="URL"
-          ref={audioInputRef}
-          value={question.audio?.url ?? ""}
-          onChange={(e) => {
-            const question_audio = question.audio ?? default_question_audio();
-            const audio = {
-              ...question_audio,
-              url: e.target.value,
-            };
-            change_question(
-              {
-                ...question,
-                audio,
-              },
-              questionSets,
-              setQuestionSets
-            );
-          }}
-          bg="gray.700"
-          color="gray.100"
-        />
+          <Checkbox.Control />
+          <Checkbox.Label>Deprecated</Checkbox.Label>
+        </Checkbox.Root>
+        <Field.Root>
+          <Field.Label>Context</Field.Label>
+          <Textarea
+            placeholder=""
+            value={questionSet.context ?? ""}
+            onChange={(e) =>
+              change_question_type(
+                {
+                  ...questionSet,
+                  context: e.target.value,
+                },
+                questionSets,
+                setQuestionSets,
+              )
+            }
+          />
+        </Field.Root>
+        <Field.Root>
+          <Field.Label>Question</Field.Label>
+          <Textarea
+            placeholder="Text"
+            value={question.text}
+            onChange={(e) => {
+              change_question(
+                {
+                  ...question,
+                  text: e.target.value,
+                },
+                questionSets,
+                setQuestionSets,
+              );
+            }}
+          />
+        </Field.Root>
+        <Field.Root>
+          <Field.Label>Tags</Field.Label>
+          <Input
+            type="text"
+            placeholder="tag_one,tag two,tag-three"
+            value={question.tags.join(",")}
+            onChange={(e) => {
+              const tags = e.target.value.split(",").map((t) => t.trim());
+              change_question(
+                {
+                  ...question,
+                  tags,
+                },
+                questionSets,
+                setQuestionSets,
+              );
+            }}
+          />
+        </Field.Root>
+        <Field.Root>
+          <Field.Label>Audio URL</Field.Label>
+          <Input
+            type="text"
+            placeholder="URL"
+            ref={audioInputRef}
+            value={question.audio?.url ?? ""}
+            onChange={(e) => {
+              const question_audio = question.audio ?? default_question_audio();
+              const audio = {
+                ...question_audio,
+                url: e.target.value,
+              };
+              change_question(
+                {
+                  ...question,
+                  audio,
+                },
+                questionSets,
+                setQuestionSets,
+              );
+            }}
+          />
+        </Field.Root>
         {question.audio?.url && isAudioVisible && (
-          <Box bg="gray.700" borderRadius="md" p={2} mt={2}>
+          <Box borderRadius="md" p={2} mt={2}>
             <audio
               controls
               src={question.audio.url}
@@ -230,15 +226,14 @@ export function MultipleChoiceForm({
                 audio,
               },
               questionSets,
-              setQuestionSets
+              setQuestionSets,
             );
           }}
-          bg="gray.700"
-          color="gray.100"
         />
         <Button
-          leftIcon={<X size={16} />}
-          colorScheme="red"
+          colorPalette="red"
+          borderColor="red.400"
+          borderWidth={1}
           variant="ghost"
           size="sm"
           alignSelf="flex-start"
@@ -247,28 +242,29 @@ export function MultipleChoiceForm({
             remove_question(question, questionSets, setQuestionSets);
           }}
         >
+          <X size={16} />
           Remove Question
         </Button>
-        <Text fontWeight="bold" color={accent} mt={4}>
+        <Heading size="lg" fontWeight="bold" mt={4}>
           Answers
-        </Text>
+        </Heading>
         {question.answers.map((answer) => {
           const answerStatus = getAnswerStatus(
             answer.id,
             stagingExams,
-            productionExams
+            productionExams,
           );
           const answerBorderStyle = getBorderStyle(
             answerStatus,
             isLoading,
-            hasGeneratedExams
+            hasGeneratedExams,
           );
 
           return (
             <Box
               key={answer.id}
               p={2}
-              bg="gray.700"
+              bg="bg.muted"
               borderRadius="md"
               position="relative"
               borderWidth={
@@ -278,7 +274,7 @@ export function MultipleChoiceForm({
               }
               borderColor={answerBorderStyle.borderColor}
               borderStyle={answerBorderStyle.borderStyle}
-              sx={
+              css={
                 answerBorderStyle.dualBorder
                   ? {
                       boxShadow: `0 0 0 2px #ECC94B, 0 0 0 4px #48BB78`,
@@ -293,7 +289,7 @@ export function MultipleChoiceForm({
                   position="absolute"
                   top="-8px"
                   right="8px"
-                  spacing={1}
+                  gap={1}
                   zIndex={1}
                 >
                   <Box
@@ -329,8 +325,8 @@ export function MultipleChoiceForm({
                     answerBorderStyle.borderColor === "green.400"
                       ? "green.500"
                       : answerBorderStyle.borderColor === "yellow.400"
-                      ? "yellow.500"
-                      : "red.500"
+                        ? "yellow.500"
+                        : "red.500"
                   }
                   color="white"
                   fontSize="xs"
@@ -344,7 +340,6 @@ export function MultipleChoiceForm({
               ) : null}
               <Box
                 className="answer-markdown"
-                color="gray.300"
                 mb={1}
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(answer.text) }}
               />
@@ -361,46 +356,44 @@ export function MultipleChoiceForm({
                     {
                       ...question,
                       answers: question.answers.map((a) =>
-                        a.id === answer.id ? updated_answer : a
+                        a.id === answer.id ? updated_answer : a,
                       ),
                     },
                     questionSets,
-                    setQuestionSets
+                    setQuestionSets,
                   );
                 }}
-                bg="gray.800"
-                color="gray.100"
                 mb={2}
               />
               <HStack justify="space-between">
-                <Checkbox
-                  colorScheme="teal"
-                  color="gray.400"
-                  isChecked={answer.isCorrect}
-                  onChange={(e) => {
+                <Checkbox.Root
+                  colorPalette="teal"
+                  checked={answer.isCorrect}
+                  onCheckedChange={(d) => {
                     const updated_answer = {
                       ...answer,
-                      isCorrect: e.target.checked,
+                      isCorrect: !!d.checked,
                     };
                     change_question(
                       {
                         ...question,
                         answers: question.answers.map((a) =>
-                          a.id === answer.id ? updated_answer : a
+                          a.id === answer.id ? updated_answer : a,
                         ),
                       },
                       questionSets,
-                      setQuestionSets
+                      setQuestionSets,
                     );
                   }}
                 >
-                  Correct
-                </Checkbox>
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label>Correct</Checkbox.Label>
+                </Checkbox.Root>
                 <IconButton
                   aria-label="Remove answer"
-                  icon={<X size={16} />}
                   size="xs"
-                  colorScheme="red"
+                  colorPalette="red"
                   variant="ghost"
                   onClick={(e) => {
                     e.preventDefault();
@@ -408,22 +401,23 @@ export function MultipleChoiceForm({
                       {
                         ...question,
                         answers: question.answers.filter(
-                          (a) => a.id !== answer.id
+                          (a) => a.id !== answer.id,
                         ),
                       },
                       questionSets,
-                      setQuestionSets
+                      setQuestionSets,
                     );
                   }}
-                />
+                >
+                  <X size={16} />
+                </IconButton>
               </HStack>
             </Box>
           );
         })}
         <HStack>
           <Button
-            leftIcon={<Plus size={16} />}
-            colorScheme="teal"
+            colorPalette="teal"
             size="sm"
             onClick={(e) => {
               e.preventDefault();
@@ -433,10 +427,11 @@ export function MultipleChoiceForm({
                   answers: [...question.answers, default_question_answer()],
                 },
                 questionSets,
-                setQuestionSets
+                setQuestionSets,
               );
             }}
           >
+            <Plus size={16} />
             Add Answer
           </Button>
         </HStack>

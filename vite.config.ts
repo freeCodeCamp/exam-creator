@@ -147,10 +147,7 @@ export default defineConfig(async () => ({
               name: "chakra-ui",
               test: /\/node_modules\/@chakra-ui/,
             },
-            {
-              name: "framer-motion",
-              test: /\/node_modules\/framer-motion\//,
-            },
+
             {
               name: "react-query",
               test: /\/node_modules\/@tanstack\/react-query\//,
@@ -162,6 +159,10 @@ export default defineConfig(async () => ({
             {
               name: "charts",
               test: /\/node_modules\/recharts\//,
+            },
+            {
+              name: "themes",
+              test: /\/node_modules\/next-themes\//,
             },
             {
               name: "d3-vendor",

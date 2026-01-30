@@ -5,10 +5,6 @@ import {
   Badge,
   Button,
   Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionIcon,
-  AccordionPanel,
 } from "@chakra-ui/react";
 import { ExamEnvironmentConfig } from "@prisma/client";
 
@@ -20,18 +16,18 @@ interface ConfigViewProps {
 export function ConfigView({ config, setConfig }: ConfigViewProps) {
   return (
     <>
-      <Accordion defaultIndex={[0]} allowMultiple={true}>
-        <AccordionItem>
+      <Accordion.Root defaultValue={["0"]} multiple={true}>
+        <Accordion.Item value="0">
           <h4>
-            <AccordionButton color="teal.300">
+            <Accordion.ItemTrigger color="teal.300">
               <Box as="span" flex="1" textAlign="left">
                 Tag Config
               </Box>
-              <AccordionIcon />
-            </AccordionButton>
+              <Accordion.ItemIndicator />
+            </Accordion.ItemTrigger>
           </h4>
 
-          <AccordionPanel p={2}>
+          <Accordion.ItemContent p={2}>
             {config.tags?.map((tagConfig, index) => (
               <Box key={index} className="tag-config-container" mb={2}>
                 <Text fontWeight="bold" color="gray.100">
@@ -40,7 +36,7 @@ export function ConfigView({ config, setConfig }: ConfigViewProps) {
                 {tagConfig.group.map((tag, inner) => (
                   <Badge
                     key={inner}
-                    colorScheme="teal"
+                    colorPalette="teal"
                     variant="subtle"
                     mr={1}
                     mb={1}
@@ -50,33 +46,34 @@ export function ConfigView({ config, setConfig }: ConfigViewProps) {
                 ))}
                 <IconButton
                   aria-label="Remove"
-                  icon={<span>✕</span>}
                   size="xs"
                   ml={2}
-                  colorScheme="red"
+                  colorPalette="red"
                   variant="ghost"
                   onClick={() => {
                     setConfig({
                       tags: config.tags.filter((_, i) => i !== index),
                     });
                   }}
-                />
+                >
+                  <span>✕</span>
+                </IconButton>
               </Box>
             ))}
-          </AccordionPanel>
-        </AccordionItem>
+          </Accordion.ItemContent>
+        </Accordion.Item>
 
-        <AccordionItem>
+        <Accordion.Item value="1">
           <h4>
-            <AccordionButton color="teal.300">
+            <Accordion.ItemTrigger color="teal.300">
               <Box as="span" flex="1" textAlign="left">
                 Question Config
               </Box>
-              <AccordionIcon />
-            </AccordionButton>
+              <Accordion.ItemIndicator />
+            </Accordion.ItemTrigger>
           </h4>
 
-          <AccordionPanel p={2}>
+          <Accordion.ItemContent p={2}>
             {config.questionSets.map((qt, index) => (
               <Box key={index} className="tag-config-container" mb={2}>
                 <Text fontWeight="bold" color="gray.100">
@@ -96,12 +93,12 @@ export function ConfigView({ config, setConfig }: ConfigViewProps) {
                 </Text>
                 <Button
                   size="xs"
-                  colorScheme="red"
+                  colorPalette="red"
                   mt={1}
                   onClick={() =>
                     setConfig({
                       questionSets: config.questionSets.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       ),
                     })
                   }
@@ -110,9 +107,9 @@ export function ConfigView({ config, setConfig }: ConfigViewProps) {
                 </Button>
               </Box>
             ))}
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
+          </Accordion.ItemContent>
+        </Accordion.Item>
+      </Accordion.Root>
     </>
   );
 }

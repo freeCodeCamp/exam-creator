@@ -1,14 +1,4 @@
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Badge,
-  Text,
-  useColorModeValue,
-  Button,
-  Flex,
-  CardFooter,
-} from "@chakra-ui/react";
+import { Card, Badge, Text, Button, Flex } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
 import type { ExamCreatorExam } from "@prisma/client";
 import { viewMetricsRoute } from "../pages/view-metrics";
@@ -20,8 +10,8 @@ interface ExamCardProps {
 
 export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
   const navigate = useNavigate();
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const cardBg = "gray.800";
+  const accent = "teal.300";
 
   const handleClick = () => {
     navigate({ to: viewMetricsRoute.to, params: { id: exam.id } });
@@ -29,7 +19,7 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
 
   return (
     <Button
-      variant="unstyled"
+      variant="plain"
       w="full"
       h="auto"
       p={0}
@@ -40,7 +30,7 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
       display="block"
       textAlign="left"
     >
-      <Card
+      <Card.Root
         bg={cardBg}
         borderRadius="xl"
         boxShadow="md"
@@ -52,14 +42,14 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
         borderColor={"transparent"}
         transition="all 0.15s"
       >
-        <CardHeader pb={2} padding={1}>
+        <Card.Header pb={2} padding={1}>
           <Flex align="center" justify="space-between">
             <Flex align="center" gap={3} flex="1 1 0%" minW={0}>
               <Text
                 fontSize="xl"
                 fontWeight="bold"
                 color={accent}
-                noOfLines={1}
+                lineClamp={1}
                 flex={1}
                 minW={0}
                 textOverflow="ellipsis"
@@ -71,7 +61,7 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
             </Flex>
             {exam.deprecated && (
               <Badge
-                colorScheme="red"
+                colorPalette="red"
                 ml={2}
                 flexShrink={0}
                 minW="90px"
@@ -81,14 +71,14 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
               </Badge>
             )}
           </Flex>
-        </CardHeader>
-        <CardBody pt={2} padding={1}>
+        </Card.Header>
+        <Card.Body pt={2} padding={1}>
           <Text color="gray.300" fontSize="md">
             Number of Attempts: {numberOfAttempts}
           </Text>
-        </CardBody>
-        <CardFooter padding="0" justifyContent={"space-evenly"}></CardFooter>
-      </Card>
+        </Card.Body>
+        <Card.Footer padding="0" justifyContent={"space-evenly"}></Card.Footer>
+      </Card.Root>
     </Button>
   );
 }

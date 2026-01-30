@@ -3,13 +3,7 @@ import {
   type ExamEnvironmentQuestionSet,
   type ExamEnvironmentGeneratedExam,
 } from "@prisma/client";
-import {
-  Box,
-  Button,
-  HStack,
-  Stack,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Box, Button, HStack, Stack } from "@chakra-ui/react";
 import { Plus } from "lucide-react";
 
 import {
@@ -44,8 +38,6 @@ export function QuestionForm({
   generatedExamsStagingQuery,
   generatedExamsProductionQuery,
 }: QuestionFormProps) {
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-
   const isLoading =
     generatedExamsStagingQuery.isFetching ||
     generatedExamsProductionQuery.isFetching ||
@@ -53,10 +45,10 @@ export function QuestionForm({
     generatedExamsProductionQuery.isPending;
 
   const stagingExams = generatedExamsStagingQuery.data?.filter(
-    (g) => !g.deprecated
+    (g) => !g.deprecated,
   );
   const productionExams = generatedExamsProductionQuery.data?.filter(
-    (g) => !g.deprecated
+    (g) => !g.deprecated,
   );
 
   const hasGeneratedExams = useMemo(() => {
@@ -67,14 +59,14 @@ export function QuestionForm({
   }, [stagingExams, productionExams]);
 
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
-      <Stack spacing={4}>
+    <Box borderRadius="lg" p={2} mb={2}>
+      <Stack gap={4}>
         {questionSets
           .filter((qt) => {
             const searchEmpty = searchIds.length === 0;
             const resultIsQuestionSet = searchIds.includes(qt.id);
             const resultInQuestionSet = qt.questions.some((q) =>
-              searchIds.includes(q.id)
+              searchIds.includes(q.id),
             );
 
             if (!resultInQuestionSet && !resultIsQuestionSet && !searchEmpty) {
@@ -96,12 +88,12 @@ export function QuestionForm({
                 const questionStatus = getQuestionStatus(
                   question.id,
                   stagingExams,
-                  productionExams
+                  productionExams,
                 );
                 const questionBorderStyle = getBorderStyle(
                   questionStatus,
                   isLoading,
-                  hasGeneratedExams
+                  hasGeneratedExams,
                 );
 
                 return (
@@ -130,12 +122,12 @@ export function QuestionForm({
                 const setStatus = getQuestionSetStatus(
                   qt.id,
                   stagingExams,
-                  productionExams
+                  productionExams,
                 );
                 const setBorderStyle = getBorderStyle(
                   setStatus,
                   isLoading,
-                  hasGeneratedExams
+                  hasGeneratedExams,
                 );
 
                 return (
@@ -160,8 +152,7 @@ export function QuestionForm({
           })}
         <HStack>
           <Button
-            leftIcon={<Plus size={16} />}
-            colorScheme="teal"
+            colorPalette="teal"
             size="sm"
             onClick={(e) => {
               e.preventDefault();
@@ -171,17 +162,18 @@ export function QuestionForm({
               ]);
             }}
           >
+            <Plus size={16} />
             Add Multiple Choice Question
           </Button>
           <Button
-            leftIcon={<Plus size={16} />}
-            colorScheme="teal"
+            colorPalette="teal"
             size="sm"
             onClick={(e) => {
               e.preventDefault();
               setQuestionSets([...questionSets, new_question_type("Dialogue")]);
             }}
           >
+            <Plus size={16} />
             Add Dialogue Question
           </Button>
         </HStack>

@@ -7,15 +7,11 @@ import {
   Spinner,
   Stack,
   Text,
-  useColorModeValue,
   Avatar,
-  Tooltip,
   SimpleGrid,
+  Portal,
   Flex,
   Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
 } from "@chakra-ui/react";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useContext, useEffect, useState, useRef, useCallback } from "react";
@@ -34,6 +30,7 @@ import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { moderationsInfiniteQuery } from "../hooks/queries";
+import { Tooltip } from "../components/tooltip";
 
 export function Attempts() {
   const { logout } = useContext(AuthContext)!;
@@ -79,18 +76,16 @@ export function Attempts() {
     });
   }, []);
 
-  const bg = useColorModeValue("black", "black");
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const accent = "teal.300";
 
   const { users: usersOnPage } = useUsersOnPath("/attempts");
 
   return (
-    <Box minH="100vh" bg={bg} py={12} px={4}>
-      <HStack position="fixed" top={3} left={8} zIndex={101} spacing={3}>
+    <Box minH="100vh" py={12} px={4}>
+      <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <DatabaseStatus />
         <Button
-          colorScheme="teal"
+          colorPalette="teal"
           variant="outline"
           size="sm"
           onClick={() => navigate({ to: landingRoute.to })}
@@ -98,7 +93,7 @@ export function Attempts() {
           Back to Dashboard
         </Button>
         <Button
-          colorScheme="red"
+          colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
@@ -107,104 +102,108 @@ export function Attempts() {
         </Button>
       </HStack>
       <Center>
-        <Stack spacing={8} w="full" maxW="7xl">
+        <Stack gap={8} w="full" maxW="7xl">
           <Flex
             justify="space-between"
             align="center"
-            bg={cardBg}
+            bg="bg.panel"
             borderRadius="xl"
             p={8}
             boxShadow="lg"
             mb={4}
           >
-            <Stack spacing={1}>
-              <Heading color={accent} fontWeight="extrabold" fontSize="3xl">
+            <Stack gap={1}>
+              <Heading fontWeight="extrabold" fontSize="3xl">
                 Exam Moderator
               </Heading>
-              <Text color="gray.300" fontSize="lg">
-                Moderate exam attempts.
-              </Text>
+              <Text fontSize="lg">Moderate exam attempts.</Text>
             </Stack>
-            <HStack spacing={-2} ml={4}>
+            <HStack gap={-2} ml={4}>
               {usersError ? (
                 <Text color="red.400" fontSize="sm">
                   {usersError.message}
                 </Text>
               ) : (
                 usersOnPage.slice(0, 5).map((user, idx) => (
-                  <Tooltip label={user.name} key={user.email}>
-                    <Avatar
-                      src={user.picture ?? undefined}
-                      name={user.name}
-                      size="md"
-                      border="2px solid"
-                      borderColor={bg}
-                      zIndex={5 - idx}
-                      ml={idx === 0 ? 0 : -3}
-                      boxShadow="md"
-                    />
-                  </Tooltip>
+                  <Avatar.Root
+                    key={user.email}
+                    size="md"
+                    border="2px solid"
+                    zIndex={5 - idx}
+                    ml={idx === 0 ? 0 : -3}
+                    boxShadow="md"
+                  >
+                    <Avatar.Image src={user.picture ?? undefined} />
+                    <Tooltip content={user.name}>
+                      <Avatar.Fallback name={user.name} />
+                    </Tooltip>
+                  </Avatar.Root>
                 ))
               )}
               {usersOnPage.length > 5 && (
-                <Avatar
-                  size="md"
-                  bg="gray.700"
-                  color="gray.200"
-                  ml={-3}
-                  zIndex={0}
-                  name={`+${usersOnPage.length - 5} more`}
-                >
-                  +{usersOnPage.length - 5}
-                </Avatar>
+                <Avatar.Root size="md" ml={-3} zIndex={0}>
+                  <Avatar.Fallback name={`+${usersOnPage.length - 5} more`}>
+                    +{usersOnPage.length - 5}
+                  </Avatar.Fallback>
+                </Avatar.Root>
               )}
             </HStack>
-            <HStack spacing={2}>
-              <Menu>
-                <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                  {moderationStatusFilter}
-                </MenuButton>
-                <MenuList backgroundColor="gray.800">
-                  {(["Pending", "Approved", "Denied"] as const).map(
-                    (status) => {
-                      return (
-                        <MenuItem
-                          key={status}
-                          as={Button}
-                          backgroundColor="gray.800"
-                          borderRadius={0}
-                          boxShadow="md"
-                          color={"white"}
-                          colorScheme="green"
-                          fontWeight="bold"
-                          isDisabled={mods.isPending || mods.isFetching}
-                          isLoading={mods.isPending || mods.isFetching}
-                          justifyContent={"flex-start"}
-                          loadingText={"Filtering..."}
-                          onClick={() => setModerationStatusFilter(status)}
-                          _hover={{ bg: "green.500" }}
-                        >
-                          {status}
-                        </MenuItem>
-                      );
-                    },
-                  )}
-                </MenuList>
-              </Menu>
+            <HStack gap={2}>
+              <Menu.Root>
+                <Menu.Trigger asChild>
+                  <Button>
+                    {moderationStatusFilter}
+                    <ChevronDownIcon />
+                  </Button>
+                </Menu.Trigger>
+                <Portal>
+                  <Menu.Positioner>
+                    <Menu.Content>
+                      {(["Pending", "Approved", "Denied"] as const).map(
+                        (status) => {
+                          return (
+                            <Menu.Item
+                              key={status}
+                              value={status}
+                              borderRadius={0}
+                              boxShadow="md"
+                              colorPalette="green"
+                              fontWeight="bold"
+                              justifyContent={"flex-start"}
+                              _hover={{ bg: "green.500" }}
+                            >
+                              <Button
+                                loadingText={"Filtering..."}
+                                onClick={() =>
+                                  setModerationStatusFilter(status)
+                                }
+                                disabled={mods.isPending || mods.isFetching}
+                                loading={mods.isPending || mods.isFetching}
+                              >
+                                {status}
+                              </Button>
+                            </Menu.Item>
+                          );
+                        },
+                      )}
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Portal>
+              </Menu.Root>
               {/* <Menu>
-              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+              <Menu.Button as={Button} rightIcon={<ChevronDownIcon />}>
               {examFilter?.config?.name ?? "All"}
-              </MenuButton>
+              </Menu.Button>
               <MenuList backgroundColor="gray.800">
-              <MenuItem
+              <Menu.Item
               as={Button}
               backgroundColor="gray.800"
               borderRadius={0}
               boxShadow="md"
               color={"white"}
-              colorScheme="green"
+              colorPalette="green"
               fontWeight="bold"
-              isDisabled={isPending || isFetching}
+              disabled={isPending || isFetching}
               isLoading={isPending || isFetching}
               justifyContent={"flex-start"}
               loadingText={"Filtering..."}
@@ -212,19 +211,19 @@ export function Attempts() {
               _hover={{ bg: "green.500" }}
               >
               All
-              </MenuItem>
+              </Menu.Item>
               {examsQuery.data?.map(({ exam }) => {
                 return (
-                  <MenuItem
+                  <Menu.Item
                   key={exam.id}
                   as={Button}
                   backgroundColor="gray.800"
                   borderRadius={0}
                   boxShadow="md"
                   color={"white"}
-                  colorScheme="green"
+                  colorPalette="green"
                   fontWeight="bold"
-                  isDisabled={isPending || isFetching}
+                  disabled={isPending || isFetching}
                   isLoading={isPending || isFetching}
                   justifyContent={"flex-start"}
                   loadingText={"Filtering..."}
@@ -232,41 +231,52 @@ export function Attempts() {
                   _hover={{ bg: "green.500" }}
                   >
                   {exam.config.name}
-                  </MenuItem>
+                  </Menu.Item>
                   );
                   })}
                   </MenuList>
                   </Menu> */}
-              <Menu>
-                <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                  {sort === 1 ? "Ascending" : "Descending"}
-                </MenuButton>
-                <MenuList backgroundColor="gray.800">
-                  {(["Ascending", "Descending"] as const).map((name) => {
-                    return (
-                      <MenuItem
-                        key={name}
-                        as={Button}
-                        backgroundColor="gray.800"
-                        borderRadius={0}
-                        boxShadow="md"
-                        color={"white"}
-                        colorScheme="green"
-                        fontWeight="bold"
-                        isDisabled={mods.isPending || mods.isFetching}
-                        isLoading={mods.isPending || mods.isFetching}
-                        justifyContent={"flex-start"}
-                        loadingText={"Filtering..."}
-                        onClick={() => setSort(name === "Ascending" ? 1 : -1)}
-                        _hover={{ bg: "green.500" }}
-                      >
-                        {name}
-                      </MenuItem>
-                    );
-                  })}
-                </MenuList>
-              </Menu>
-              {/* <FormControl>
+              <Menu.Root>
+                <Menu.Trigger asChild>
+                  <Button>
+                    {sort === 1 ? "Ascending" : "Descending"}
+                    <ChevronDownIcon />
+                  </Button>
+                </Menu.Trigger>
+                <Portal>
+                  <Menu.Positioner>
+                    <Menu.Content>
+                      {(["Ascending", "Descending"] as const).map((name) => {
+                        return (
+                          <Menu.Item
+                            asChild
+                            key={name}
+                            value={name}
+                            // borderRadius={0}
+                            boxShadow="md"
+                            // colorPalette="green"
+                            fontWeight="bold"
+                            justifyContent={"flex-start"}
+                            // _hover={{ bg: "green.500" }}
+                          >
+                            <Button
+                              loadingText={"Filtering..."}
+                              onClick={() =>
+                                setSort(name === "Ascending" ? 1 : -1)
+                              }
+                              disabled={mods.isPending || mods.isFetching}
+                              loading={mods.isPending || mods.isFetching}
+                            >
+                              {name}
+                            </Button>
+                          </Menu.Item>
+                        );
+                      })}
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Portal>
+              </Menu.Root>
+              {/* <Field.Root>
               <FormLabel>Sort Order</FormLabel>
               <select
               value={sort}
@@ -275,7 +285,7 @@ export function Attempts() {
               <option value="1">Ascending</option>
               <option value="-1">Descending</option>
               </select>
-              </FormControl> */}
+              </Field.Root> */}
             </HStack>
           </Flex>
           <Box>
@@ -290,7 +300,7 @@ export function Attempts() {
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid columns={1} spacing={8}>
+              <SimpleGrid columns={1} gap={8}>
                 {mods.isSuccess &&
                   mods.data.pages.flat().map((moderation, i, moderations) => {
                     const isLastCard = i === moderations.length - 1;

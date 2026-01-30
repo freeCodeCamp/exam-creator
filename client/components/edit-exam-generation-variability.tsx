@@ -1,21 +1,9 @@
-import {
-  Box,
-  Heading,
-  Spinner,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tooltip,
-  Tr,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Box, Heading, Spinner, Table, Text } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { getGenerations } from "../utils/fetch";
 import { calculateGenerationMetrics } from "../utils/question";
 import { useEffect } from "react";
+import { Tooltip } from "./tooltip";
 
 interface EditExamGenerationVariabilityProps {
   examId: string;
@@ -28,7 +16,6 @@ export function EditExamGenerationVariability({
   generatedExamsStagingData,
   generatedExamsProductionData,
 }: EditExamGenerationVariabilityProps) {
-  const accent = useColorModeValue("teal.400", "teal.300");
   const stagingMetricsMutation = useMutation({
     mutationKey: ["generation-metrics", examId, "Staging"],
     mutationFn: async ({
@@ -80,12 +67,10 @@ export function EditExamGenerationVariability({
   ) {
     return (
       <>
-        <Heading size="sm" color={accent} mt={6} mb={2}>
+        <Heading size="sm" mt={6} mb={2}>
           Exam Generations
         </Heading>
-        <Text color="gray.300" mb={2}>
-          This is the analysis of the exam generations:
-        </Text>
+        <Text mb={2}>This is the analysis of the exam generations:</Text>
         <Spinner size="sm" color="teal.400" />
       </>
     );
@@ -95,7 +80,7 @@ export function EditExamGenerationVariability({
     console.error(productionMetricsMutation.error);
     return (
       <>
-        <Heading size="sm" color={accent} mt={6} mb={2}>
+        <Heading size="sm" mt={6} mb={2}>
           Exam Generations
         </Heading>
         <Text color="gray.300" mb={2}>
@@ -110,102 +95,86 @@ export function EditExamGenerationVariability({
 
   return (
     <>
-      <Heading size="sm" color={accent} mt={6} mb={2}>
+      <Heading size="sm" mt={6} mb={2}>
         Exam Generations
       </Heading>
-      <Text color="gray.300" mb={2}>
-        This is the analysis of the exam generations:
-      </Text>
+      <Text mb={2}>This is the analysis of the exam generations:</Text>
       <Box overflowX="auto" borderRadius="md" bg="black" p={2}>
-        <Table variant="simple" size="sm" colorScheme="teal">
-          <Thead>
-            <Tr>
-              <Th color="teal.300">Variability</Th>
-              <Th color="gray.200">Staging</Th>
-              <Th color="gray.200">Production</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="How many generations are deprecated">
+        <Table.Root variant="outline" size="sm" colorPalette="teal">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeader color="teal.300">
+                Variability
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>Staging</Table.ColumnHeader>
+              <Table.ColumnHeader>Production</Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Tooltip content="How many generations are deprecated">
+                <Table.Cell fontWeight="bold">
                   Deprecated Generations
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.deprecatedGenerations}</Td>
-              <Td color="gray.100">
-                {productionMetrics.deprecatedGenerations}
-              </Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="How many non-deprecated generations exist">
-                  Total Generations
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.totalGenerations}</Td>
-              <Td color="gray.100">{productionMetrics.totalGenerations}</Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Overall question variability across all live generations. (sum of variabilities) / (number of comparisons)">
-                  Question Total
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.questionVariability}</Td>
-              <Td color="gray.100">{productionMetrics.questionVariability}</Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Maximum question variability found between any two live generations">
-                  Question Max
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.questionVariabilityMax}</Td>
-              <Td color="gray.100">
+                </Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.deprecatedGenerations}</Table.Cell>
+              <Table.Cell>{productionMetrics.deprecatedGenerations}</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="How many non-deprecated generations exist">
+                <Table.Cell fontWeight="bold">Total Generations</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.totalGenerations}</Table.Cell>
+              <Table.Cell>{productionMetrics.totalGenerations}</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="Overall question variability across all live generations. (sum of variabilities) / (number of comparisons)">
+                <Table.Cell fontWeight="bold">Question Total</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.questionVariability}</Table.Cell>
+              <Table.Cell>{productionMetrics.questionVariability}</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="Maximum question variability found between any two live generations">
+                <Table.Cell fontWeight="bold">Question Max</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.questionVariabilityMax}</Table.Cell>
+              <Table.Cell>
                 {productionMetrics.questionVariabilityMax}
-              </Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Minimum question variability found between any two live generations">
-                  Question Min
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.questionVariabilityMin}</Td>
-              <Td color="gray.100">
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="Minimum question variability found between any two live generations">
+                <Table.Cell fontWeight="bold">Question Min</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.questionVariabilityMin}</Table.Cell>
+              <Table.Cell>
                 {productionMetrics.questionVariabilityMin}
-              </Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Overall answer variability across all live generations. (sum of variabilities) / (number of comparisons)">
-                  Answer Total
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.answerVariability}</Td>
-              <Td color="gray.100">{productionMetrics.answerVariability}</Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Maximum answer variability found between any two live generations">
-                  Answer Max
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.answerVariabilityMax}</Td>
-              <Td color="gray.100">{productionMetrics.answerVariabilityMax}</Td>
-            </Tr>
-            <Tr>
-              <Td color="gray.100" fontWeight="bold">
-                <Tooltip label="Minimum answer variability found between any two live generations">
-                  Answer Min
-                </Tooltip>
-              </Td>
-              <Td color="gray.100">{stagingMetrics.answerVariabilityMin}</Td>
-              <Td color="gray.100">{productionMetrics.answerVariabilityMin}</Td>
-            </Tr>
-          </Tbody>
-        </Table>
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="Overall answer variability across all live generations. (sum of variabilities) / (number of comparisons)">
+                <Table.Cell fontWeight="bold">Answer Total</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.answerVariability}</Table.Cell>
+              <Table.Cell>{productionMetrics.answerVariability}</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="Maximum answer variability found between any two live generations">
+                <Table.Cell fontWeight="bold">Answer Max</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.answerVariabilityMax}</Table.Cell>
+              <Table.Cell>{productionMetrics.answerVariabilityMax}</Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Tooltip content="Minimum answer variability found between any two live generations">
+                <Table.Cell fontWeight="bold">Answer Min</Table.Cell>
+              </Tooltip>
+              <Table.Cell>{stagingMetrics.answerVariabilityMin}</Table.Cell>
+              <Table.Cell>{productionMetrics.answerVariabilityMin}</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>
       </Box>
     </>
   );

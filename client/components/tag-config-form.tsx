@@ -8,14 +8,11 @@ import {
   Button,
   HStack,
   Badge,
-  Select,
+  NativeSelect,
   NumberInput,
-  NumberInputField,
-  FormControl,
-  FormLabel,
+  Field,
   Stack,
   IconButton,
-  useColorModeValue,
 } from "@chakra-ui/react";
 import { X } from "lucide-react";
 
@@ -35,12 +32,10 @@ export function TagConfigForm({
   const [currentTagSelectValue, setCurrentTagSelectValue] = useState("0");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-
   if (!isCreatingTagConfig) {
     return (
       <Button
-        colorScheme="teal"
+        colorPalette="teal"
         variant="outline"
         size="sm"
         mt={2}
@@ -85,13 +80,20 @@ export function TagConfigForm({
   };
 
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4} mt={2}>
-      <Stack spacing={3}>
-        <HStack spacing={2} wrap="wrap">
+    <Box
+      borderColor="border.info"
+      borderWidth={1}
+      borderRadius="lg"
+      p={4}
+      mb={4}
+      mt={2}
+    >
+      <Stack gap={3}>
+        <HStack gap={2} wrap="wrap">
           {selectedTags.map((tag, index) => (
             <Badge
               key={index}
-              colorScheme="teal"
+              colorPalette="teal"
               variant="solid"
               px={2}
               py={1}
@@ -102,62 +104,63 @@ export function TagConfigForm({
               {tag}
               <IconButton
                 aria-label="Remove tag"
-                icon={<X size={14} />}
                 size="xs"
                 ml={1}
                 variant="ghost"
-                colorScheme="red"
+                colorPalette="red"
                 onClick={() => removeSelectedTag(tag)}
-              />
+              >
+                <X size={14} />
+              </IconButton>
             </Badge>
           ))}
         </HStack>
         <HStack>
-          <Select
-            value={currentTagSelectValue}
-            onChange={(e) => setCurrentTagSelectValue(e.target.value)}
-            bg="gray.700"
-            color="gray.100"
-            maxW="200px"
-            size="sm"
-          >
-            <option value="0">Select Tag</option>
-            {generateTagOptions()}
-          </Select>
+          <NativeSelect.Root maxW="200px" size="sm">
+            <NativeSelect.Field
+              value={currentTagSelectValue}
+              onChange={(e) => setCurrentTagSelectValue(e.target.value)}
+            >
+              <option value="0">Select Tag</option>
+              {generateTagOptions()}
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
           <Button
-            colorScheme="teal"
+            colorPalette="teal"
             size="sm"
             onClick={addSelectedTag}
-            isDisabled={currentTagSelectValue === "0"}
+            disabled={currentTagSelectValue === "0"}
           >
             Add Tag
           </Button>
         </HStack>
-        <FormControl>
-          <FormLabel color="gray.300" fontSize="sm" mb={1}>
+        <Field.Root>
+          <Field.Label fontSize="sm" mb={1}>
             Number of Questions
-          </FormLabel>
-          <NumberInput
+          </Field.Label>
+          <NumberInput.Root
             min={1}
-            value={selectedQuestionAmount}
-            onChange={(_, value) => setSelectedQuestionAmount(value)}
+            value={selectedQuestionAmount.toString()}
+            onValueChange={(d) => setSelectedQuestionAmount(d.valueAsNumber)}
             maxW="120px"
             size="sm"
           >
-            <NumberInputField bg="gray.700" color="gray.100" />
-          </NumberInput>
-        </FormControl>
+            <NumberInput.Control />
+            <NumberInput.Input />
+          </NumberInput.Root>
+        </Field.Root>
         <HStack>
           <Button
             onClick={resetTagConfig}
-            colorScheme="gray"
+            colorPalette="gray"
             variant="ghost"
             size="sm"
           >
             Cancel
           </Button>
           <Button
-            colorScheme="teal"
+            colorPalette="teal"
             size="sm"
             onClick={() => {
               setConfig({
@@ -171,7 +174,7 @@ export function TagConfigForm({
               });
               resetTagConfig();
             }}
-            isDisabled={selectedTags.length === 0}
+            disabled={selectedTags.length === 0}
           >
             Save
           </Button>

@@ -1,12 +1,8 @@
 import {
   Card,
-  CardBody,
-  CardHeader,
   HStack,
   Avatar,
-  Tooltip,
   Text,
-  useColorModeValue,
   Button,
   Badge,
   Flex,
@@ -25,6 +21,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getAttemptById } from "../utils/fetch";
 import { prettyDate } from "../utils/question";
+import { Tooltip } from "./tooltip";
 
 interface ModerationCardProps {
   moderation: ExamEnvironmentExamModeration;
@@ -34,8 +31,8 @@ interface ModerationCardProps {
 export function ModerationCard({ moderation, filter }: ModerationCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
-  const cardBg = useColorModeValue("gray.800", "gray.800");
-  const accent = useColorModeValue("teal.400", "teal.300");
+  const cardBg = "gray.800";
+  const accent = "teal.300";
 
   // Find users currently editing/viewing this attempt
   const editingUsers = users.filter((u) => {
@@ -52,7 +49,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
 
   return (
     <Button
-      variant="unstyled"
+      variant="plain"
       w="full"
       h="auto"
       p={0}
@@ -72,7 +69,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
       display="block"
       textAlign="left"
     >
-      <Card
+      <Card.Root
         bg={cardBg}
         borderRadius="xl"
         boxShadow="md"
@@ -84,7 +81,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
         borderColor="transparent"
         transition="all 0.15s"
       >
-        <CardHeader pb={2}>
+        <Card.Header pb={2}>
           <Flex align="center" justify="space-between">
             {attemptQuery.isPending ? (
               <Spinner color={accent} />
@@ -93,7 +90,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                 fontSize="xl"
                 fontWeight="bold"
                 color={attemptQuery.isError ? "#ff3f3f" : accent}
-                noOfLines={1}
+                lineClamp={1}
                 maxW="80%"
               >
                 {attemptQuery.isError
@@ -103,27 +100,27 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
             )}
             <Badge
               fontSize={"1em"}
-              colorScheme={
+              colorPalette={
                 moderation.status === "Pending"
                   ? "blue"
                   : moderation.status === "Approved"
-                  ? "green"
-                  : "red"
+                    ? "green"
+                    : "red"
               }
               ml={2}
             >
               {moderation.status}
             </Badge>
           </Flex>
-          <Tooltip label={`Moderation ID`} hasArrow>
+          <Tooltip content={`Moderation ID`} showArrow>
             <Text color="gray.400" fontSize="sm" width={"fit-content"}>
               {moderation.id}
             </Text>
           </Tooltip>
-        </CardHeader>
-        <CardBody pt={2}>
+        </Card.Header>
+        <Card.Body pt={2}>
           <Flex align="center" justify={"space-between"}>
-            <HStack spacing={-2}>
+            <HStack gap={-2}>
               {usersError ? (
                 <Text color="red.300">{usersError.message}</Text>
               ) : editingUsers.length === 0 ? (
@@ -132,31 +129,34 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                 </Text>
               ) : (
                 editingUsers.slice(0, 5).map((user, idx) => (
-                  <Tooltip label={user.name} key={user.name}>
-                    <Avatar
-                      src={user.picture ?? undefined}
-                      name={user.name}
-                      size="sm"
-                      border="2px solid"
-                      borderColor={cardBg}
-                      zIndex={5 - idx}
-                      ml={idx === 0 ? 0 : -2}
-                      boxShadow="md"
-                    />
-                  </Tooltip>
+                  <Avatar.Root
+                    key={user.name}
+                    size="sm"
+                    border="2px solid"
+                    borderColor={cardBg}
+                    zIndex={5 - idx}
+                    ml={idx === 0 ? 0 : -2}
+                    boxShadow="md"
+                  >
+                    <Avatar.Image src={user.picture ?? undefined} />
+                    <Tooltip content={user.name}>
+                      <Avatar.Fallback name={user.name} />
+                    </Tooltip>
+                  </Avatar.Root>
                 ))
               )}
               {editingUsers.length > 5 && (
-                <Avatar
+                <Avatar.Root
                   size="sm"
                   bg="gray.700"
                   color="gray.200"
                   ml={-2}
                   zIndex={0}
-                  name={`+${editingUsers.length - 5} more`}
                 >
-                  +{editingUsers.length - 5}
-                </Avatar>
+                  <Avatar.Fallback name={`+${editingUsers.length - 5} more`}>
+                    +{editingUsers.length - 5}
+                  </Avatar.Fallback>
+                </Avatar.Root>
               )}
             </HStack>
             <Box color="gray.400" fontSize="sm" ml={2}>
@@ -170,13 +170,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
               )}
             </Box>
           </Flex>
-          <VStack
-            align="start"
-            spacing={1}
-            mt={4}
-            fontSize="sm"
-            color="gray.300"
-          >
+          <VStack align="start" gap={1} mt={4} fontSize="sm" color="gray.300">
             {moderation.feedback && (
               <Text>
                 <Box as="span" fontWeight="bold" color="whiteAlpha.600">
@@ -208,8 +202,8 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
               {prettyDate(moderation.submissionDate)}
             </Text>
           </VStack>
-        </CardBody>
-      </Card>
+        </Card.Body>
+      </Card.Root>
     </Button>
   );
 }
