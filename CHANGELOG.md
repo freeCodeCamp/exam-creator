@@ -19,6 +19,12 @@
   - captions opened
     - vertical lines overlayed on answer graph
 
+## [6.0.0] - 2026-02-03
+
+### Changed
+
+- client: migrated to ChakraUI v3
+
 ## [5.2.0] - 2026-01-29
 
 ### Added
