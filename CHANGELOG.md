@@ -12,6 +12,7 @@
   - filter by exam id
   - view of whether or not moderation record has been handled (challengesAwarded)
   - ability to set as "pending" again
+    - probably not possible, because of async services
 - change users editing to not timeout
   - consider using actions (e.g. mouse/keyboard events) to continue sessions
 - client: add keyboard shortcuts to toggle attempt moderation stats
@@ -19,17 +20,19 @@
   - captions opened
     - vertical lines overlayed on answer graph
 
-## [6.0.1] - 2026-02-05
+## [6.0.0] - 2026-02-05
+
+### Changed
+
+- client: migrated to ChakraUI v3
 
 ### Fixed
 
 - server: sort events by timestamp
 
-## [6.0.0] - 2026-02-03
+### Chore
 
-### Changed
-
-- client: migrated to ChakraUI v3
+- update docr cleanup action
 
 ## [5.2.0] - 2026-01-29
 
