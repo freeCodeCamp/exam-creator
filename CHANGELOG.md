@@ -19,6 +19,12 @@
   - captions opened
     - vertical lines overlayed on answer graph
 
+## [6.0.1] - 2026-02-05
+
+### Fixed
+
+- server: sort events by timestamp
+
 ## [6.0.0] - 2026-02-03
 
 ### Changed

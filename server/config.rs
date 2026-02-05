@@ -272,11 +272,11 @@ pub enum EventKind {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Event {
-    id: String,
-    timestamp: String,
-    kind: EventKind,
-    meta: serde_json::Value,
-    attempt_id: ObjectId,
+    pub id: String,
+    pub timestamp: String,
+    pub kind: EventKind,
+    pub meta: serde_json::Value,
+    pub attempt_id: ObjectId,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

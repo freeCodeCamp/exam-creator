@@ -27,7 +27,7 @@ pub async fn get_events_by_attempt_id(
             )
         })?;
 
-    let events: Vec<config::Event> = events
+    let mut events: Vec<config::Event> = events
         .into_iter()
         .filter_map(|event| match serde_json::from_value(event) {
             Ok(event) => Some(event),
@@ -37,6 +37,8 @@ pub async fn get_events_by_attempt_id(
             }
         })
         .collect();
+
+    events.sort_by(|a, b| (a.timestamp).cmp(&b.timestamp));
 
     Ok(Json(events))
 }
