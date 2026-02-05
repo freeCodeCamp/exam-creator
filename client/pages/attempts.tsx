@@ -7,7 +7,6 @@ import {
   Spinner,
   Stack,
   Text,
-  Avatar,
   SimpleGrid,
   Portal,
   Flex,
@@ -21,20 +20,15 @@ import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 import { rootRoute } from "./root";
 import { ModerationCard } from "../components/moderation-card";
 import { ProtectedRoute } from "../components/protected-route";
-import {
-  UsersWebSocketActivityContext,
-  UsersWebSocketUsersContext,
-} from "../contexts/users-websocket";
-import { useUsersOnPath } from "../hooks/use-users-on-path";
+import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { moderationsInfiniteQuery } from "../hooks/queries";
-import { Tooltip } from "../components/tooltip";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 export function Attempts() {
   const { logout } = useContext(AuthContext)!;
-  const { error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
   const search = useSearch({ from: attemptsRoute.to });
@@ -76,8 +70,6 @@ export function Attempts() {
     });
   }, []);
 
-  const { users: usersOnPage } = useUsersOnPath("/attempts");
-
   return (
     <Box minH="100vh" py={12} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
@@ -116,36 +108,7 @@ export function Attempts() {
               </Heading>
               <Text fontSize="lg">Moderate exam attempts.</Text>
             </Stack>
-            <HStack gap={-2} ml={4}>
-              {usersError ? (
-                <Text color="red.400" fontSize="sm">
-                  {usersError.message}
-                </Text>
-              ) : (
-                usersOnPage.slice(0, 5).map((user, idx) => (
-                  <Avatar.Root
-                    key={user.email}
-                    size="md"
-                    border="2px solid"
-                    zIndex={5 - idx}
-                    ml={idx === 0 ? 0 : -3}
-                    boxShadow="md"
-                  >
-                    <Avatar.Image src={user.picture ?? undefined} />
-                    <Tooltip content={user.name}>
-                      <Avatar.Fallback name={user.name} />
-                    </Tooltip>
-                  </Avatar.Root>
-                ))
-              )}
-              {usersOnPage.length > 5 && (
-                <Avatar.Root size="md" ml={-3} zIndex={0}>
-                  <Avatar.Fallback name={`+${usersOnPage.length - 5} more`}>
-                    +{usersOnPage.length - 5}
-                  </Avatar.Fallback>
-                </Avatar.Root>
-              )}
-            </HStack>
+            <UsersOnPageAvatars path="/attempts" />
             <HStack gap={2}>
               <Menu.Root>
                 <Menu.Trigger asChild>

@@ -2,6 +2,19 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
 const config = defineConfig({
   theme: {
+    tokens: {
+      colors: {
+        black: {
+          value: "#000000",
+        },
+        "gray-950": {
+          value: "#0a0a0a",
+        },
+        "gray-900": {
+          value: "#121212",
+        },
+      },
+    },
     recipes: {
       input: {
         base: {

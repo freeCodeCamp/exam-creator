@@ -7,7 +7,6 @@ import {
   Spinner,
   Stack,
   Text,
-  Avatar,
   SimpleGrid,
   Flex,
   Alert,
@@ -47,9 +46,8 @@ import {
   SeedProductionModal,
   SeedStagingModal,
 } from "../components/seed-modal";
-import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { toaster } from "../components/toaster";
-import { Tooltip } from "../components/tooltip";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
@@ -248,7 +246,7 @@ export function Exams() {
                 Create exams for the Exam Environment.
               </Text>
             </Stack>
-            <ExamsUsersOnPageAvatars />
+            <UsersOnPageAvatars path="/exams" />
             <HStack gap={4} ml={8}>
               <Button
                 colorPalette={selectionMode ? "red" : "blue"}
@@ -479,51 +477,6 @@ export function Exams() {
         seedExamToProductionMutation={seedExamToProductionMutation}
       />
     </Box>
-  );
-}
-
-function ExamsUsersOnPageAvatars() {
-  const { users: usersOnPage, error: usersError } = useUsersOnPath("/exams");
-  const bg = "black";
-
-  return (
-    <HStack gap={-2} ml={4}>
-      {usersError ? (
-        <Text color="red.400" fontSize="sm">
-          {usersError.message}
-        </Text>
-      ) : (
-        usersOnPage.slice(0, 5).map((user, idx) => (
-          <Avatar.Root
-            key={user.email}
-            size="md"
-            border="2px solid"
-            borderColor={bg}
-            zIndex={5 - idx}
-            ml={idx === 0 ? 0 : -3}
-            boxShadow="md"
-          >
-            <Avatar.Image src={user.picture ?? undefined} />
-            <Tooltip content={user.name}>
-              <Avatar.Fallback name={user.name} />
-            </Tooltip>
-          </Avatar.Root>
-        ))
-      )}
-      {usersOnPage.length > 5 && (
-        <Avatar.Root
-          size="md"
-          bg="gray.700"
-          color="gray.200"
-          ml={-3}
-          zIndex={0}
-        >
-          <Avatar.Fallback name={`+${usersOnPage.length - 5} more`}>
-            +{usersOnPage.length - 5}
-          </Avatar.Fallback>
-        </Avatar.Root>
-      )}
-    </HStack>
   );
 }
 

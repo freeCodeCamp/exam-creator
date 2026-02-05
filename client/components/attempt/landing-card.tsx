@@ -1,9 +1,7 @@
 import {
   Card,
   Flex,
-  HStack,
   Text,
-  Avatar,
   Badge,
   Spinner,
   Grid,
@@ -11,17 +9,15 @@ import {
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 
-import { User } from "../../types";
 import { getModerationsCount } from "../../utils/fetch";
 import { Tooltip } from "../tooltip";
+import { UsersOnPageAvatars } from "../users-on-page-avatars";
 
 interface AttemptsLandingCardProps {
-  filteredUsers: User[];
+  path: string;
 }
 
-export function AttemptsLandingCard({
-  filteredUsers,
-}: AttemptsLandingCardProps) {
+export function AttemptsLandingCard({ path }: AttemptsLandingCardProps) {
   const moderationsCountQuery = useQuery({
     queryKey: ["moderationsCount"],
     queryFn: getModerationsCount,
@@ -56,42 +52,7 @@ export function AttemptsLandingCard({
         </Flex>
       </Card.Header>
       <Card.Body pt={2} pl={0}>
-        <HStack gap={-2}>
-          {filteredUsers.length === 0 ? (
-            <Text color="gray.400" fontSize="sm">
-              No one editing
-            </Text>
-          ) : (
-            filteredUsers.slice(0, 5).map((user, idx) => (
-              <Avatar.Root
-                key={user.name}
-                border="2px solid"
-                borderColor={"border.inverted"}
-                zIndex={5 - idx}
-                ml={idx === 0 ? 0 : -2}
-                boxShadow="md"
-                size="sm"
-              >
-                <Avatar.Image src={user.picture ?? undefined} />
-                <Tooltip content={user.name}>
-                  <Avatar.Fallback name={user.name} />
-                </Tooltip>
-              </Avatar.Root>
-            ))
-          )}
-          {filteredUsers.length > 5 && (
-            <Avatar.Root
-              bg="gray.700"
-              color="gray.200"
-              ml={-2}
-              zIndex={0}
-              size="sm"
-            >
-              <Avatar.Image>+{filteredUsers.length - 5}</Avatar.Image>
-              <Avatar.Fallback name={`+${filteredUsers.length - 5} more`} />
-            </Avatar.Root>
-          )}
-        </HStack>
+        <UsersOnPageAvatars path={path} />
       </Card.Body>
       <Card.Footer padding="0" flexDirection="column" pl={0}>
         {moderationsCountQuery.isError ? (

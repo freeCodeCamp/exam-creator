@@ -35,6 +35,7 @@ import { metricsRoute } from "./metrics";
 import { parseMarkdown, secondsToHumanReadable } from "../utils/question";
 import { TimeTakenDistribution } from "../components/time-taken-distribution";
 import { Tooltip } from "../components/tooltip";
+import { TitleStat } from "../components/title-stat";
 
 function View() {
   const { id } = useParams({ from: "/metrics/exams/$id" });
@@ -152,9 +153,6 @@ function ViewExamMetrics({
     };
   }, [exam]);
 
-  const cardBg = "gray.900";
-  const accent = "teal.300";
-
   function handleNumberChange(
     n: number,
     setter: React.Dispatch<React.SetStateAction<number>>,
@@ -169,12 +167,12 @@ function ViewExamMetrics({
   return (
     <>
       <Stack gap={8} w="full" maxW="7xl">
-        <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
-          <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
+        <Box borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
+          <Heading fontWeight="extrabold" fontSize="2xl" mb={2}>
             {exam.config.name}
           </Heading>
           <Separator my={4} borderColor="gray.focusRing" />
-          <Heading size="md" color={accent} mt={6} mb={2}>
+          <Heading size="md" mt={4} mb={2}>
             Exam Metrics
           </Heading>
           <Text color="gray.fg" mb={2}>
@@ -201,7 +199,8 @@ function ViewExamMetrics({
                 min={0}
                 inputMode="numeric"
               >
-                <NumberInput.Control bg="gray.700" color="gray.100" />
+                <NumberInput.Control />
+                <NumberInput.Input />
               </NumberInput.Root>
             </Field.Root>
             <Field.Root>
@@ -224,7 +223,8 @@ function ViewExamMetrics({
                 min={0}
                 inputMode="numeric"
               >
-                <NumberInput.Control bg="gray.700" color="gray.100" />
+                <NumberInput.Control />
+                <NumberInput.Input />
               </NumberInput.Root>
             </Field.Root>
             <Field.Root>
@@ -241,7 +241,8 @@ function ViewExamMetrics({
                 }}
                 inputMode="numeric"
               >
-                <NumberInput.Control bg="gray.700" color="gray.100" />
+                <NumberInput.Control />
+                <NumberInput.Input />
               </NumberInput.Root>
               <Field.HelperText>
                 Adjust how many brackets are used in the histogram
@@ -267,13 +268,7 @@ function ViewExamMetrics({
               {/* <AverageTimePerQuestionDistribution {...{ attempts }} /> */}
 
               <Separator my={4} borderColor="gray.600" />
-              <Heading
-                size="md"
-                color={accent}
-                mt={8}
-                mb={2}
-                id="exam-questions"
-              >
+              <Heading size="md" mt={8} mb={2} id="exam-questions">
                 Exam Questions
               </Heading>
               <Text color="gray.300" mb={2}>
@@ -349,7 +344,7 @@ function AttemptStats({
   });
 
   if (statsQuery.isPending) {
-    return <Spinner color="teal.300" />;
+    return <Spinner color="teal.focusRing" />;
   }
 
   if (statsQuery.isError) {
@@ -365,13 +360,11 @@ function AttemptStats({
   return (
     <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} mb={4}>
       <Tooltip content="Number of attempts included in this analysis after applying filters">
-        <Card.Root bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+        <Card.Root borderRadius="lg" boxShadow="md" cursor="help">
           <Card.Body>
             <Stack gap={2}>
-              <Heading size="sm" color="teal.300">
-                Sampled Attempts
-              </Heading>
-              <Text fontSize="2xl" fontWeight="bold" color="gray.100">
+              <Heading size="sm">Sampled Attempts</Heading>
+              <Text fontSize="2xl" fontWeight="bold">
                 {sampledAttempts}
               </Text>
             </Stack>
@@ -380,13 +373,11 @@ function AttemptStats({
       </Tooltip>
 
       <Tooltip content="Average time from exam start to final question submission: sum(Final Submission Time - Start Time) / number of attempts">
-        <Card.Root bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+        <Card.Root borderRadius="lg" boxShadow="md" cursor="help">
           <Card.Body>
             <Stack gap={2}>
-              <Heading size="sm" color="teal.300">
-                Average Time Spent
-              </Heading>
-              <Text fontSize="2xl" fontWeight="bold" color="gray.100">
+              <Heading size="sm">Average Time Spent</Heading>
+              <Text fontSize="2xl" fontWeight="bold">
                 {secondsToHumanReadable(Math.floor(avgTimeSpent))}
               </Text>
             </Stack>
@@ -395,13 +386,11 @@ function AttemptStats({
       </Tooltip>
 
       <Tooltip content="Average time per question answered: sum(Question Submission Time) / total questions answered">
-        <Card.Root bg="gray.800" borderRadius="lg" boxShadow="md" cursor="help">
+        <Card.Root borderRadius="lg" boxShadow="md" cursor="help">
           <Card.Body>
             <Stack gap={1}>
-              <Heading size="sm" color="teal.300">
-                Average Question Time
-              </Heading>
-              <Text fontSize="2xl" fontWeight="bold" color="gray.100">
+              <Heading size="sm">Average Question Time</Heading>
+              <Text fontSize="2xl" fontWeight="bold">
                 {avgTimePerQuestion.toFixed(2)}s
               </Text>
             </Stack>
@@ -592,37 +581,29 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
   const maxDifficulty = difficulties.length > 0 ? Math.max(...difficulties) : 0;
 
   return (
-    <Box bg={"gray.subtle"} borderRadius="lg" mb={4}>
+    <Box borderRadius="lg" mb={4}>
       <Stack gap={4}>
         <Box>
-          <Heading size="sm" mb={3} color={"teal.300"}>
+          <Heading size="sm" mb={3}>
             Questions Overview
           </Heading>
           <Flex direction="row" justifyContent={"center"}>
             <Tooltip content="Lowest difficulty score among all questions">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help" mr={1}>
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Min Difficulty
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {minDifficulty.toFixed(2)}
-                </Text>
-              </Box>
+              <TitleStat
+                title="Min Difficulty"
+                stat={minDifficulty.toFixed(2)}
+              />
             </Tooltip>
             <Tooltip content="Highest difficulty score among all questions">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help" ml={1}>
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Max Difficulty
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {maxDifficulty.toFixed(2)}
-                </Text>
-              </Box>
+              <TitleStat
+                title="Max Difficulty"
+                stat={maxDifficulty.toFixed(2)}
+              />
             </Tooltip>
           </Flex>
           <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
             <Field.Root>
-              <Field.Label color="gray.300" fontSize="sm" fontWeight="bold">
+              <Field.Label fontSize="sm" fontWeight="bold">
                 Sort By
               </Field.Label>
               <select
@@ -641,7 +622,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                   width: "100%",
                   padding: "8px",
                   borderRadius: "6px",
-                  backgroundColor: "#2D3748",
+                  backgroundColor: "#121529",
                   color: "#E2E8F0",
                   border: "1px solid #4A5568",
                 }}
@@ -664,7 +645,7 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
                   width: "100%",
                   padding: "8px",
                   borderRadius: "6px",
-                  backgroundColor: "#2D3748",
+                  backgroundColor: "#121529",
                   color: "#E2E8F0",
                   border: "1px solid #4A5568",
                 }}
@@ -743,9 +724,8 @@ type QuestionWithStats = Omit<
 
 function QuestionCard({ question }: { question: QuestionWithStats }) {
   return (
-    <Box position="relative" mb={4}>
+    <Box bg="bg.subtle" position="relative" mb={4}>
       <Card.Root
-        bg="gray.muted"
         borderRadius="xl"
         boxShadow="md"
         position="relative"
@@ -753,16 +733,15 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
       >
         <Card.Header px={4} py={3}>
           <Box maxW="100%" overflowX="auto">
-            <Heading size="md" color="teal.300" maxW="100%">
+            <Heading size="md" maxW="100%">
               Question {question.id}
             </Heading>
             {!!question.context && (
               <>
-                <Heading size="sm" color="gray.400" maxW="100%">
+                <Heading size="sm" maxW="100%">
                   Context
                 </Heading>
                 <Box
-                  color="gray.300"
                   fontSize="sm"
                   dangerouslySetInnerHTML={{
                     __html: parseMarkdown(question.context),
@@ -770,11 +749,10 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
                 />
               </>
             )}
-            <Heading size="sm" color="gray.400" maxW="100%">
+            <Heading size="sm" maxW="100%">
               Text
             </Heading>
             <Box
-              color="gray.300"
               fontSize="sm"
               dangerouslySetInnerHTML={{
                 __html: parseMarkdown(question.text),
@@ -785,58 +763,35 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
         <Card.Body pt={0}>
           <SimpleGrid columns={{ base: 2, md: 5 }} gap={3} mb={4}>
             <Tooltip content="Number of attempts that included this question">
-              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Seen By
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.seenBy}
-                </Text>
-              </Box>
+              <TitleStat title={"Seen By"} stat={question.stats.seenBy} />
             </Tooltip>
 
             <Tooltip content="Number of attempts that submitted an answer to this question">
-              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Submitted By
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.submittedBy}
-                </Text>
-              </Box>
+              <TitleStat
+                title="Submitted By"
+                stat={question.stats.submittedBy}
+              />
             </Tooltip>
 
             <Tooltip content="Average time spent on this question from start to submission">
-              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Time Spent
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.timeSpent.toFixed(2)}s
-                </Text>
-              </Box>
+              <TitleStat
+                title="Time Spent"
+                stat={question.stats.timeSpent.toFixed(2) + "s"}
+              />
             </Tooltip>
 
             <Tooltip content="Percentage of submitted answers that selected a correct option">
-              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Correct
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.percentageCorrect.toFixed(2)}%
-                </Text>
-              </Box>
+              <TitleStat
+                title="Correct"
+                stat={question.stats.percentageCorrect.toFixed(2) + "%"}
+              />
             </Tooltip>
 
             <Tooltip content="Normalized Time Spent divided by Percent Correct - higher indicates more difficult questions">
-              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
-                <Text color="gray.400" fontSize="xs" fontWeight="bold">
-                  Difficulty
-                </Text>
-                <Text color="teal.300" fontSize="lg" fontWeight="bold">
-                  {question.stats.difficulty.toFixed(2)}
-                </Text>
-              </Box>
+              <TitleStat
+                title="Difficulty"
+                stat={question.stats.difficulty.toFixed(2)}
+              />
             </Tooltip>
           </SimpleGrid>
         </Card.Body>
@@ -846,23 +801,25 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               <Box
                 key={answer.id}
                 p={3}
-                bg="gray.subtle"
+                bg="bg"
                 borderRadius="md"
-                borderColor={answer.isCorrect ? "green.400" : undefined}
-                borderWidth={answer.isCorrect ? 2 : 0}
+                borderColor={
+                  answer.isCorrect ? "green.border" : "border.emphasized"
+                }
+                borderWidth={answer.isCorrect ? 2 : 1}
               >
                 <Box
-                  color="gray.300"
+                  color="gray.fg"
                   fontSize="sm"
                   dangerouslySetInnerHTML={{
                     __html: parseMarkdown(answer.text),
                   }}
                 />
                 <Box textAlign="right" minW="120px">
-                  <Text color="gray.400" fontSize="sm">
+                  <Text color="gray.focusRing" fontSize="sm">
                     Seen by: {answer.stats.seenBy} attempts
                   </Text>
-                  <Text color="gray.400" fontSize="sm">
+                  <Text color="gray.focusRing" fontSize="sm">
                     Selected by: {answer.stats.submittedBy} attempts
                   </Text>
                 </Box>

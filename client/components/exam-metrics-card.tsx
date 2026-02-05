@@ -10,8 +10,6 @@ interface ExamCardProps {
 
 export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
   const navigate = useNavigate();
-  const cardBg = "gray.800";
-  const accent = "teal.300";
 
   const handleClick = () => {
     navigate({ to: viewMetricsRoute.to, params: { id: exam.id } });
@@ -29,15 +27,15 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
       transition="all 0.15s"
       display="block"
       textAlign="left"
+      bg="bg.subtle"
     >
       <Card.Root
-        bg={cardBg}
         borderRadius="xl"
         boxShadow="md"
         p={3}
         h="100%"
         minH="120px"
-        _hover={{ borderColor: accent, boxShadow: "lg" }}
+        _hover={{ borderColor: "teal.focusRing", boxShadow: "lg" }}
         borderWidth={2}
         borderColor={"transparent"}
         transition="all 0.15s"
@@ -48,13 +46,13 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
               <Text
                 fontSize="xl"
                 fontWeight="bold"
-                color={accent}
                 lineClamp={1}
                 flex={1}
                 minW={0}
                 textOverflow="ellipsis"
                 overflow="hidden"
                 whiteSpace="nowrap"
+                color="fg.info"
               >
                 {exam.config.name}
               </Text>
@@ -73,9 +71,7 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
           </Flex>
         </Card.Header>
         <Card.Body pt={2} padding={1}>
-          <Text color="gray.300" fontSize="md">
-            Number of Attempts: {numberOfAttempts}
-          </Text>
+          <Text fontSize="md">Number of Attempts: {numberOfAttempts}</Text>
         </Card.Body>
         <Card.Footer padding="0" justifyContent={"space-evenly"}></Card.Footer>
       </Card.Root>

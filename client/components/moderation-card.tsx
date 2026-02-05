@@ -1,7 +1,5 @@
 import {
   Card,
-  HStack,
-  Avatar,
   Text,
   Button,
   Badge,
@@ -11,8 +9,6 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { useNavigate } from "@tanstack/react-router";
-import { useContext } from "react";
-import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 import { editAttemptRoute } from "../pages/edit-attempt";
 import {
   ExamEnvironmentExamModeration,
@@ -22,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAttemptById } from "../utils/fetch";
 import { prettyDate } from "../utils/question";
 import { Tooltip } from "./tooltip";
+import { UsersOnPageAvatars } from "./users-on-page-avatars";
 
 interface ModerationCardProps {
   moderation: ExamEnvironmentExamModeration;
@@ -29,14 +26,7 @@ interface ModerationCardProps {
 }
 
 export function ModerationCard({ moderation, filter }: ModerationCardProps) {
-  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
-
-  // Find users currently editing/viewing this attempt
-  const editingUsers = users.filter((u) => {
-    const usersPath = u.activity.page.pathname;
-    return usersPath === `/attempts/${moderation.examAttemptId}`;
-  });
 
   const attemptQuery = useQuery({
     queryKey: ["attempt", moderation.examAttemptId],
@@ -118,45 +108,9 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
         </Card.Header>
         <Card.Body pt={2}>
           <Flex align="center" justify={"space-between"}>
-            <HStack gap={-2}>
-              {usersError ? (
-                <Text color="red.300">{usersError.message}</Text>
-              ) : editingUsers.length === 0 ? (
-                <Text color="gray.400" fontSize="sm">
-                  No one editing
-                </Text>
-              ) : (
-                editingUsers.slice(0, 5).map((user, idx) => (
-                  <Avatar.Root
-                    key={user.name}
-                    size="sm"
-                    border="2px solid"
-                    borderColor={"bg.subtle"}
-                    zIndex={5 - idx}
-                    ml={idx === 0 ? 0 : -2}
-                    boxShadow="md"
-                  >
-                    <Avatar.Image src={user.picture ?? undefined} />
-                    <Tooltip content={user.name}>
-                      <Avatar.Fallback name={user.name} />
-                    </Tooltip>
-                  </Avatar.Root>
-                ))
-              )}
-              {editingUsers.length > 5 && (
-                <Avatar.Root
-                  size="sm"
-                  bg="gray.700"
-                  color="gray.200"
-                  ml={-2}
-                  zIndex={0}
-                >
-                  <Avatar.Fallback name={`+${editingUsers.length - 5} more`}>
-                    +{editingUsers.length - 5}
-                  </Avatar.Fallback>
-                </Avatar.Root>
-              )}
-            </HStack>
+            <UsersOnPageAvatars
+              path={`/attempts/${moderation.examAttemptId}`}
+            />
             <Box color="gray.400" fontSize="sm" ml={2}>
               Passing Percent:{" "}
               {attemptQuery.isPending ? (

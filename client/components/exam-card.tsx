@@ -1,7 +1,5 @@
 import {
   Card,
-  HStack,
-  Avatar,
   Badge,
   Text,
   Button,
@@ -12,9 +10,8 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
 import type { ExamCreatorExam } from "@prisma/client";
-import { useContext } from "react";
-import { UsersWebSocketUsersContext } from "../contexts/users-websocket";
 import { Tooltip } from "./tooltip";
+import { UsersOnPageAvatars } from "./users-on-page-avatars";
 
 interface ExamCardProps {
   exam: Omit<ExamCreatorExam, "questionSets">;
@@ -31,14 +28,7 @@ export function ExamCard({
   selectionMode = false,
   databaseEnvironments,
 }: ExamCardProps) {
-  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
-
-  // Find users currently editing/viewing this exam
-  const editingUsers = users.filter((u) => {
-    const usersPath = u.activity.page.pathname;
-    return usersPath === `/exams/${exam.id}`;
-  });
 
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
@@ -118,45 +108,7 @@ export function ExamCard({
           </Flex>
         </Card.Header>
         <Card.Body pt={2} padding={1}>
-          <HStack gap={-2}>
-            {usersError ? (
-              <Text>{usersError.message}</Text>
-            ) : editingUsers.length === 0 ? (
-              <Text color="gray.400" fontSize="sm">
-                No one editing
-              </Text>
-            ) : (
-              editingUsers.slice(0, 5).map((user, idx) => (
-                <Avatar.Root
-                  key={user.name}
-                  size="sm"
-                  border="2px solid"
-                  borderColor={"border.emphasized"}
-                  zIndex={5 - idx}
-                  ml={idx === 0 ? 0 : -2}
-                  boxShadow="md"
-                >
-                  <Avatar.Image src={user.picture ?? undefined} />
-                  <Tooltip content={user.name}>
-                    <Avatar.Fallback name={user.name} />
-                  </Tooltip>
-                </Avatar.Root>
-              ))
-            )}
-            {editingUsers.length > 5 && (
-              <Avatar.Root
-                size="sm"
-                bg="gray.700"
-                color="gray.200"
-                ml={-2}
-                zIndex={0}
-              >
-                <Avatar.Fallback name={`+${editingUsers.length - 5} more`}>
-                  +{editingUsers.length - 5}
-                </Avatar.Fallback>
-              </Avatar.Root>
-            )}
-          </HStack>
+          <UsersOnPageAvatars path={`/exams/${exam.id}`} />
         </Card.Body>
         <Card.Footer padding="0" justifyContent={"space-evenly"}>
           {databaseEnvironments.map((env) => (

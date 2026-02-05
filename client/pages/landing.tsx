@@ -3,10 +3,8 @@ import {
   Button,
   Center,
   Heading,
-  HStack,
   Stack,
   Text,
-  Avatar,
   SimpleGrid,
   Flex,
 } from "@chakra-ui/react";
@@ -15,22 +13,17 @@ import { useContext, useEffect } from "react";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
-import {
-  UsersWebSocketActivityContext,
-  UsersWebSocketUsersContext,
-} from "../contexts/users-websocket";
+import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
-import { useUsersOnPath } from "../hooks/use-users-on-path";
 import { examsRoute } from "./exams";
 import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
 import { metricsRoute } from "./metrics";
 import { AttemptsLandingCard } from "../components/attempt/landing-card";
-import { Tooltip } from "../components/tooltip";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
-  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
 
@@ -40,10 +33,6 @@ export function Landing() {
       lastActive: Date.now(),
     });
   }, []);
-
-  const { users: usersOnAttempts } = useUsersOnPath("/attempts");
-  const { users: usersOnExams } = useUsersOnPath("/exams");
-  const { users: usersOnMetrics } = useUsersOnPath("/metrics");
 
   return (
     <Box minH="100vh" bg={"bg"} py={12} px={4}>
@@ -83,43 +72,7 @@ export function Landing() {
                 Create and moderate exams and attempts.
               </Text>
             </Stack>
-            <HStack gap={-2} ml={4}>
-              {usersError ? (
-                <Text color="fg.error" fontSize="sm">
-                  {usersError.message}
-                </Text>
-              ) : (
-                users.slice(0, 5).map((user, idx) => (
-                  <Avatar.Root
-                    key={user.email}
-                    size="md"
-                    border="2px solid"
-                    borderColor={"bg.inverted"}
-                    zIndex={5 - idx}
-                    ml={idx === 0 ? 0 : -3}
-                    boxShadow="md"
-                  >
-                    <Avatar.Image src={user.picture ?? undefined} />
-                    <Tooltip content={user.name}>
-                      <Avatar.Fallback name={user.name} />
-                    </Tooltip>
-                  </Avatar.Root>
-                ))
-              )}
-              {users.length > 5 && (
-                <Avatar.Root
-                  size="md"
-                  bg="gray.700"
-                  color="gray.200"
-                  ml={-3}
-                  zIndex={0}
-                >
-                  <Avatar.Fallback name={`+${users.length - 5} more`}>
-                    +{users.length - 5}
-                  </Avatar.Fallback>
-                </Avatar.Root>
-              )}
-            </HStack>
+            <UsersOnPageAvatars path="/" />
           </Flex>
           <Box>
             <SimpleGrid minChildWidth={"380px"} gap={8}>
@@ -136,7 +89,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard filteredUsers={usersOnExams}>Exams</LandingCard>
+                <LandingCard path={"/exams"}>Exams</LandingCard>
               </Button>
               <Button
                 onClick={() => navigate({ to: attemptsRoute.to })}
@@ -151,7 +104,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <AttemptsLandingCard filteredUsers={usersOnAttempts} />
+                <AttemptsLandingCard path={"/attempts"} />
               </Button>
               <Button
                 onClick={() => navigate({ to: metricsRoute.to })}
@@ -166,9 +119,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard filteredUsers={usersOnMetrics}>
-                  Exam Metrics
-                </LandingCard>
+                <LandingCard path={"/metrics"}>Exam Metrics</LandingCard>
               </Button>
             </SimpleGrid>
           </Box>

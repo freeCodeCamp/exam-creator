@@ -11,7 +11,6 @@ import {
   Button,
   Center,
   Text,
-  Avatar,
   HStack,
   Spinner,
   SimpleGrid,
@@ -27,10 +26,7 @@ import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
-import {
-  UsersWebSocketActivityContext,
-  UsersWebSocketUsersContext,
-} from "../contexts/users-websocket";
+import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import {
   getAttemptById,
@@ -65,7 +61,7 @@ import {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
-import { Tooltip } from "../components/tooltip";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -129,7 +125,6 @@ function Edit() {
 }
 
 function UsersEditing() {
-  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
 
   useEffect(() => {
@@ -138,11 +133,6 @@ function UsersEditing() {
       lastActive: Date.now(),
     });
   }, []);
-
-  const filteredUsers = users.filter((u) => {
-    const usersPath = u.activity.page.pathname;
-    return usersPath === window.location.pathname;
-  });
 
   return (
     <Box
@@ -158,29 +148,7 @@ function UsersEditing() {
       alignItems="center"
       gap={4}
     >
-      <HStack gap={-2}>
-        {usersError ? (
-          <Text color="red.400" fontSize="sm">
-            {usersError.message}
-          </Text>
-        ) : (
-          filteredUsers.map((user, idx) => (
-            <Avatar.Root
-              key={user.email}
-              size="sm"
-              border="2px solid"
-              zIndex={5 - idx}
-              ml={idx === 0 ? 0 : -2}
-              boxShadow="md"
-            >
-              <Avatar.Image src={user.picture ?? undefined} />
-              <Tooltip content={user.name}>
-                <Avatar.Fallback name={user.name} />
-              </Tooltip>
-            </Avatar.Root>
-          ))
-        )}
-      </HStack>
+      <UsersOnPageAvatars path={window.location.pathname} />
     </Box>
   );
 }

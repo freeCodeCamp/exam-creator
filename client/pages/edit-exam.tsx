@@ -8,7 +8,6 @@ import {
   Heading,
   Stack,
   Text,
-  Avatar,
   HStack,
   Separator,
   Spinner,
@@ -33,16 +32,13 @@ import { ProtectedRoute } from "../components/protected-route";
 import { QuestionSearch } from "../components/question-search";
 import { EditExamActions } from "../components/edit-exam-actions";
 import { QuestionTypeConfigForm } from "../components/question-type-config-form";
-import {
-  UsersWebSocketActivityContext,
-  UsersWebSocketUsersContext,
-} from "../contexts/users-websocket";
+import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
 import { examsRoute } from "./exams";
 import { EditExamGenerationVariability } from "../components/edit-exam-generation-variability";
 import { EditExamConfig } from "../components/edit-exam-config";
 import { ConfigView } from "../components/config-view";
-import { Tooltip } from "../components/tooltip";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 function Edit() {
   const { id } = useParams({ from: "/exams/$id" });
@@ -101,14 +97,6 @@ function Edit() {
 }
 
 function UsersEditing() {
-  const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
-
-  const filteredUsers = users.filter((u) => {
-    const usersPath = u.activity.page.pathname;
-    return usersPath === window.location.pathname;
-  });
-
-  const avatarTextColor = "gray.200";
   return (
     <Box
       position="fixed"
@@ -123,29 +111,7 @@ function UsersEditing() {
       alignItems="center"
       gap={4}
     >
-      <HStack gap={-2}>
-        {usersError ? (
-          <Text color="red.400" fontSize="sm">
-            {usersError.message}
-          </Text>
-        ) : (
-          filteredUsers.map((user, idx) => (
-            <Avatar.Root
-              key={user.email}
-              size="sm"
-              border="2px solid"
-              zIndex={5 - idx}
-              ml={idx === 0 ? 0 : -2}
-              boxShadow="md"
-            >
-              <Avatar.Image src={user.picture ?? undefined} />
-              <Tooltip content={user.name}>
-                <Avatar.Fallback color={avatarTextColor} name={user.name} />
-              </Tooltip>
-            </Avatar.Root>
-          ))
-        )}
-      </HStack>
+      <UsersOnPageAvatars path={window.location.pathname} />
     </Box>
   );
 }
