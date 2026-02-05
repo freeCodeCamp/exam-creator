@@ -50,10 +50,8 @@ function View() {
     refetchOnWindowFocus: false,
   });
 
-  const bg = "black";
-  const spinnerColor = "teal.300";
   return (
-    <Box minH="100vh" bg={bg} py={8} px={2} position="relative">
+    <Box minH="100vh" py={8} px={2} position="relative">
       {/* Back to Dashboard and Logout buttons */}
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button
@@ -75,7 +73,7 @@ function View() {
       </HStack>
       <Center>
         {examMetricsQuery.isFetching || examMetricsQuery.isPending ? (
-          <Spinner color={spinnerColor} size="xl" />
+          <Spinner color={"teal.focusRing"} size="xl" />
         ) : examMetricsQuery.isError ? (
           <Text color="red.400" fontSize="lg">
             Error loading exam: {examMetricsQuery.error.message}
@@ -175,11 +173,11 @@ function ViewExamMetrics({
           <Heading color={accent} fontWeight="extrabold" fontSize="2xl" mb={2}>
             {exam.config.name}
           </Heading>
-          <Separator my={4} borderColor="gray.600" />
+          <Separator my={4} borderColor="gray.focusRing" />
           <Heading size="md" color={accent} mt={6} mb={2}>
             Exam Metrics
           </Heading>
-          <Text color="gray.300" mb={2}>
+          <Text color="gray.fg" mb={2}>
             This is the analysis of the exam attempts:
           </Text>
 
@@ -189,7 +187,7 @@ function ViewExamMetrics({
           <SimpleGrid minChildWidth={"230px"} gap={6} mb={4} mt={2}>
             <Field.Root>
               <Tooltip content="Minimum attempt time in seconds to include in the distribution">
-                <Field.Label color="gray.300">Min Attempt Time [s]</Field.Label>
+                <Field.Label color="gray.fg">Min Attempt Time [s]</Field.Label>
               </Tooltip>
               <NumberInput.Root
                 // value={minAttemptTimeInS}
@@ -283,7 +281,7 @@ function ViewExamMetrics({
                 answer were seen and submitted.
               </Text>
               {/* Sort questions by difficulty - ascending or descending */}
-              <Box bg="gray.700" borderRadius="lg" p={4} mt={2}>
+              <Box borderRadius="lg" p={2} mt={2}>
                 <QuestionsView
                   {...{
                     exam,
@@ -593,9 +591,8 @@ function QuestionsView({ exam, attempts, generations }: ViewExamMetricsProps) {
   const minDifficulty = difficulties.length > 0 ? Math.min(...difficulties) : 0;
   const maxDifficulty = difficulties.length > 0 ? Math.max(...difficulties) : 0;
 
-  const cardBg = "gray.900";
   return (
-    <Box bg={cardBg} borderRadius="lg" p={4} mb={4}>
+    <Box bg={"gray.subtle"} borderRadius="lg" mb={4}>
       <Stack gap={4}>
         <Box>
           <Heading size="sm" mb={3} color={"teal.300"}>
@@ -748,7 +745,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
   return (
     <Box position="relative" mb={4}>
       <Card.Root
-        bg="gray.800"
+        bg="gray.muted"
         borderRadius="xl"
         boxShadow="md"
         position="relative"
@@ -788,7 +785,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
         <Card.Body pt={0}>
           <SimpleGrid columns={{ base: 2, md: 5 }} gap={3} mb={4}>
             <Tooltip content="Number of attempts that included this question">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Seen By
                 </Text>
@@ -799,7 +796,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
             </Tooltip>
 
             <Tooltip content="Number of attempts that submitted an answer to this question">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Submitted By
                 </Text>
@@ -810,7 +807,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
             </Tooltip>
 
             <Tooltip content="Average time spent on this question from start to submission">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Time Spent
                 </Text>
@@ -821,7 +818,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
             </Tooltip>
 
             <Tooltip content="Percentage of submitted answers that selected a correct option">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Correct
                 </Text>
@@ -832,7 +829,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
             </Tooltip>
 
             <Tooltip content="Normalized Time Spent divided by Percent Correct - higher indicates more difficult questions">
-              <Box bg="gray.700" p={3} borderRadius="md" cursor="help">
+              <Box bg="gray.subtle" p={3} borderRadius="md" cursor="help">
                 <Text color="gray.400" fontSize="xs" fontWeight="bold">
                   Difficulty
                 </Text>
@@ -849,7 +846,7 @@ function QuestionCard({ question }: { question: QuestionWithStats }) {
               <Box
                 key={answer.id}
                 p={3}
-                bg="gray.700"
+                bg="gray.subtle"
                 borderRadius="md"
                 borderColor={answer.isCorrect ? "green.400" : undefined}
                 borderWidth={answer.isCorrect ? 2 : 0}

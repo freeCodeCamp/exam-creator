@@ -90,11 +90,8 @@ function Edit() {
     refetchOnWindowFocus: false,
   });
 
-  const bg = "black";
-  const spinnerColor = "teal.300";
-
   return (
-    <Box minH="100vh" bg={bg} py={14} px={2} position="relative">
+    <Box minH="100vh" py={14} px={2} position="relative">
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button
           colorPalette="teal"
@@ -117,7 +114,7 @@ function Edit() {
       <UsersEditing />
       <Center>
         {attemptQuery.isPending || eventsQuery.isPending ? (
-          <Spinner color={spinnerColor} size="xl" />
+          <Spinner size="xl" />
         ) : attemptQuery.isError || eventsQuery.isError ? (
           <Text color="red.400" fontSize="lg">
             Error loading exam:{" "}
@@ -147,15 +144,12 @@ function UsersEditing() {
     return usersPath === window.location.pathname;
   });
 
-  const cardBg = "gray.800";
-  const avatarTextColor = "gray.200";
   return (
     <Box
       position="fixed"
       top={4}
       right="18rem"
       zIndex={100}
-      bg={cardBg}
       borderRadius="xl"
       boxShadow="lg"
       px={2}
@@ -175,14 +169,13 @@ function UsersEditing() {
               key={user.email}
               size="sm"
               border="2px solid"
-              borderColor={cardBg}
               zIndex={5 - idx}
               ml={idx === 0 ? 0 : -2}
               boxShadow="md"
             >
               <Avatar.Image src={user.picture ?? undefined} />
               <Tooltip content={user.name}>
-                <Avatar.Fallback color={avatarTextColor} name={user.name} />
+                <Avatar.Fallback name={user.name} />
               </Tooltip>
             </Avatar.Root>
           ))
@@ -302,9 +295,6 @@ function EditAttempt({
       alert(`Error submitting moderation: ${error.message}`);
     },
   });
-
-  const cardBg = "gray.800";
-  const accent = "teal.300";
 
   const attemptStatsQuery = useQuery({
     queryKey: [
@@ -445,11 +435,11 @@ function EditAttempt({
     <>
       <Box
         ref={buttonBoxRef}
+        bg={"gray.contrast"}
         position="fixed"
         top={3}
         right="1rem"
         zIndex={100}
-        bg={cardBg}
         borderRadius="xl"
         boxShadow="lg"
         px={2}
@@ -489,47 +479,48 @@ function EditAttempt({
         </Button>
       </Box>
       <Stack gap={8} w="full" maxW="7xl">
-        <Box bg={cardBg} borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
+        <Box borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
           <Flex
             direction={"row"}
             justifyContent={"space-between"}
             alignItems={"center"}
           >
-            <Heading
-              color={accent}
-              fontWeight="extrabold"
-              fontSize="2xl"
-              mb={2}
-            >
+            <Heading fontWeight="extrabold" fontSize="2xl" mb={2}>
               {attempt.config.name}
             </Heading>
-            <Text color={accent}>{prettyDate(attempt.startTime)}</Text>
+            <Text color="cyan.solid">{prettyDate(attempt.startTime)}</Text>
           </Flex>
           <Flex direction={"column"} mb={4}>
-            <SimpleGrid minChildWidth={"230px"} gap={4}>
+            <SimpleGrid minChildWidth={"230px"} gap={2}>
               <Field.Root alignItems={"center"} display={"flex"}>
-                <Field.Label htmlFor="submission-diff" color="gray.400">
-                  Enable Submission Diff
+                <Field.Label htmlFor="submission-diff" color="fg.muted">
+                  Submission Diff
                 </Field.Label>
                 <Switch.Root
                   id="submission-diff"
                   checked={isSubmissionDiffToggled}
                   onCheckedChange={(e) => setIsSubmissionDiffToggled(e.checked)}
-                />
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control />
+                </Switch.Root>
               </Field.Root>
               <Field.Root alignItems={"center"} display={"flex"}>
-                <Field.Label htmlFor="submission-time-sort" color="gray.400">
+                <Field.Label htmlFor="submission-time-sort" color="fg.muted">
                   Sort by Submission Time
                 </Field.Label>
                 <Switch.Root
                   id="submission-time-sort"
                   checked={isSubmissionTimeToggled}
                   onCheckedChange={(e) => setIsSubmissionTimeToggled(e.checked)}
-                />
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control />
+                </Switch.Root>
               </Field.Root>
               <Field.Root alignItems={"center"} display={"flex"}>
-                <Field.Label htmlFor="submission-timeline" color="gray.400">
-                  Enable Submission Frequency
+                <Field.Label htmlFor="submission-timeline" color="fg.muted">
+                  Submission Frequency
                 </Field.Label>
                 <Switch.Root
                   id="submission-timeline"
@@ -537,17 +528,23 @@ function EditAttempt({
                   onCheckedChange={(e) =>
                     setIsSubmissionTimelineToggled(e.checked)
                   }
-                />
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control />
+                </Switch.Root>
               </Field.Root>
               <Field.Root alignItems={"center"} display={"flex"}>
-                <Field.Label htmlFor="event-switch" color="gray.400">
-                  Enable Events
+                <Field.Label htmlFor="event-switch" color="fg.muted">
+                  Events
                 </Field.Label>
                 <Switch.Root
                   id="event-switch"
                   checked={isEventsToggled}
                   onCheckedChange={(e) => setIsEventsToggled(e.checked)}
-                />
+                >
+                  <Switch.HiddenInput />
+                  <Switch.Control />
+                </Switch.Root>
               </Field.Root>
             </SimpleGrid>
             <Box resize={"vertical"} overflow={"auto"} minHeight={300}>
@@ -709,49 +706,47 @@ function EditAttempt({
             </Box>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderColor={accent}
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Total Questions
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {totalQuestions}
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderColor={accent}
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Answered
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {answered}
-                  <Text as="span" fontSize="sm" color="gray.400" ml={2}>
+                  <Text as="span" fontSize="sm" color="gray.fg" ml={2}>
                     {((answered / totalQuestions) * 100).toFixed(1)}%
                   </Text>
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
                 borderColor="green.400"
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Correct Answers
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {correct}
-                  <Text as="span" fontSize="sm" color="gray.400" ml={2}>
+                  <Text as="span" fontSize="sm" color="gray.fg" ml={2}>
                     (
                     {totalQuestions > 0
                       ? ((correct / totalQuestions) * 100).toFixed(1)
@@ -761,30 +756,30 @@ function EditAttempt({
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
                 borderColor="purple.400"
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Accuracy
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {answered > 0 ? ((correct / answered) * 100).toFixed(1) : 0}%
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
                 borderColor="blue.400"
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Total Time
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {secondsToHumanReadable(timeToComplete)}
                 </Text>
                 <Text fontSize="xs" color="gray.500">
@@ -792,44 +787,44 @@ function EditAttempt({
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
                 borderColor="blue.400"
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Avg Time / Question
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {averageTimePerQuestion}s
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
                 borderColor="blue.400"
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Events
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {events.length}
                 </Text>
               </Box>
               <Box
-                bg="gray.700"
+                bg="gray.muted"
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
                 borderColor="blue.400"
               >
-                <Text fontSize="sm" color="gray.400" mb={1}>
+                <Text fontSize="sm" color="fg" mb={1}>
                   Total Unfocussed Time
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="white">
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {focusGaps
                     .reduce(
                       (acc, curr) => acc + (curr.focusTime - curr.blurTime),
@@ -841,7 +836,7 @@ function EditAttempt({
               </Box>
             </SimpleGrid>
             {moderationQuery.data?.feedback && (
-              <Text color="white" py={3}>
+              <Text color="fg" py={3}>
                 <b>Feedback</b>: {moderationQuery.data?.feedback}
               </Text>
             )}
@@ -874,7 +869,7 @@ function TooltipContent({
   return (
     <Flex
       flexDirection={"column"}
-      color="white"
+      color="fg.muted"
       background={"rgba(113, 148, 172, 0.27)"}
       border="1px solid rgba(0,40,255,0.3)"
       padding={2}
@@ -958,7 +953,7 @@ function AllUserAttempts({
 
   return (
     <Box mt={8} w="full">
-      <Heading size={"md"} mb={4} color="teal.400">
+      <Heading size={"md"} mb={4}>
         All User Attempts for This Exam
       </Heading>
       <Box overflowX="auto">

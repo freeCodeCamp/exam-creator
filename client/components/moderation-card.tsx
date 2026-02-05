@@ -31,8 +31,6 @@ interface ModerationCardProps {
 export function ModerationCard({ moderation, filter }: ModerationCardProps) {
   const { users, error: usersError } = useContext(UsersWebSocketUsersContext)!;
   const navigate = useNavigate();
-  const cardBg = "gray.800";
-  const accent = "teal.300";
 
   // Find users currently editing/viewing this attempt
   const editingUsers = users.filter((u) => {
@@ -70,13 +68,13 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
       textAlign="left"
     >
       <Card.Root
-        bg={cardBg}
+        bg={"bg.subtle"}
         borderRadius="xl"
         boxShadow="md"
         p={4}
         h="100%"
         minH="120px"
-        _hover={{ borderColor: accent, boxShadow: "lg" }}
+        _hover={{ borderColor: "teal.focusRing", boxShadow: "lg" }}
         borderWidth={2}
         borderColor="transparent"
         transition="all 0.15s"
@@ -84,12 +82,12 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
         <Card.Header pb={2}>
           <Flex align="center" justify="space-between">
             {attemptQuery.isPending ? (
-              <Spinner color={accent} />
+              <Spinner color={"teal.focusRing"} />
             ) : (
               <Text
                 fontSize="xl"
                 fontWeight="bold"
-                color={attemptQuery.isError ? "#ff3f3f" : accent}
+                color={attemptQuery.isError ? "#ff3f3f" : "teal.focusRing"}
                 lineClamp={1}
                 maxW="80%"
               >
@@ -133,7 +131,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                     key={user.name}
                     size="sm"
                     border="2px solid"
-                    borderColor={cardBg}
+                    borderColor={"bg.subtle"}
                     zIndex={5 - idx}
                     ml={idx === 0 ? 0 : -2}
                     boxShadow="md"
@@ -162,7 +160,7 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
             <Box color="gray.400" fontSize="sm" ml={2}>
               Passing Percent:{" "}
               {attemptQuery.isPending ? (
-                <Spinner color={accent} />
+                <Spinner color={"teal.focusRing"} />
               ) : attemptQuery.isError ? (
                 "--"
               ) : (

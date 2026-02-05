@@ -76,8 +76,6 @@ export function Attempts() {
     });
   }, []);
 
-  const accent = "teal.300";
-
   const { users: usersOnPage } = useUsersOnPath("/attempts");
 
   return (
@@ -291,7 +289,7 @@ export function Attempts() {
           <Box>
             {mods.isPending ? (
               <Center py={12}>
-                <Spinner color={accent} size="xl" />
+                <Spinner color={"teal.focusRing"} size="xl" />
               </Center>
             ) : mods.isError ? (
               <Center>
@@ -328,7 +326,7 @@ export function Attempts() {
             )}
             {mods.isFetchingNextPage && (
               <Center py={6}>
-                <Spinner color={accent} size="lg" />
+                <Spinner color={"teal.focusRing"} size="lg" />
               </Center>
             )}
             {!mods.isFetchingNextPage &&
