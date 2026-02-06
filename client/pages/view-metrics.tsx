@@ -35,7 +35,7 @@ import { metricsRoute } from "./metrics";
 import { parseMarkdown, secondsToHumanReadable } from "../utils/question";
 import { TimeTakenDistribution } from "../components/time-taken-distribution";
 import { Tooltip } from "../components/tooltip";
-import { TitleStat } from "../components/title-stat";
+import { TitleStat } from "../components/ui/title-stat";
 
 function View() {
   const { id } = useParams({ from: "/metrics/exams/$id" });

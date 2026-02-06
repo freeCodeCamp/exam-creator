@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Center,
-  Heading,
   HStack,
   Spinner,
   Stack,
@@ -47,7 +46,7 @@ import {
   SeedStagingModal,
 } from "../components/seed-modal";
 import { toaster } from "../components/toaster";
-import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
+import { Header } from "../components/ui/header";
 
 export function Exams() {
   const { user, logout } = useContext(AuthContext)!;
@@ -205,8 +204,6 @@ export function Exams() {
     });
   }, []);
 
-  // Intentionally avoid subscribing to users here to prevent full-page re-renders on presence updates.
-
   return (
     <Box minH="100vh" bg={"bg"} py={12} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
@@ -229,24 +226,10 @@ export function Exams() {
       </HStack>
       <Center>
         <Stack gap={8} w="full" maxW="7xl">
-          <Flex
-            justify="space-between"
-            align="center"
-            bg={"bg"}
-            borderRadius="xl"
-            p={8}
-            boxShadow="lg"
-            mb={2}
+          <Header
+            title="Exam Creator"
+            description="Create exams for the Exam Environment"
           >
-            <Stack gap={1}>
-              <Heading color={"fg.info"} fontWeight="extrabold" fontSize="3xl">
-                Exam Creator
-              </Heading>
-              <Text color="fg.muted" fontSize="lg">
-                Create exams for the Exam Environment.
-              </Text>
-            </Stack>
-            <UsersOnPageAvatars path="/exams" />
             <HStack gap={4} ml={8}>
               <Button
                 colorPalette={selectionMode ? "red" : "blue"}
@@ -291,7 +274,7 @@ export function Exams() {
                 </Alert.Description>
               </Alert.Root>
             )}
-          </Flex>
+          </Header>
 
           {selectionMode && (
             <Flex

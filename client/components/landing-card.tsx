@@ -1,4 +1,4 @@
-import { Card, Flex, HStack, Text, Avatar } from "@chakra-ui/react";
+import { Card, Flex, Text } from "@chakra-ui/react";
 import { ReactNode } from "react";
 import { UsersOnPageAvatars } from "./users-on-page-avatars";
 
