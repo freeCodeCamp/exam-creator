@@ -5,7 +5,7 @@ import { UsersOnPageAvatars } from "../users-on-page-avatars";
 interface HeaderProps {
   title: string;
   description?: string;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export function Header({ title, description, children }: HeaderProps) {

@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  Center,
-  Heading,
-  Stack,
-  Text,
-  SimpleGrid,
-  Flex,
-} from "@chakra-ui/react";
+import { Box, Button, Center, Stack, SimpleGrid } from "@chakra-ui/react";
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { useContext, useEffect } from "react";
 
@@ -20,7 +11,7 @@ import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
 import { metricsRoute } from "./metrics";
 import { AttemptsLandingCard } from "../components/attempt/landing-card";
-import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
+import { Header } from "../components/ui/header";
 
 export function Landing() {
   const { logout } = useContext(AuthContext)!;
@@ -51,7 +42,7 @@ export function Landing() {
       </Button>
       <Center>
         <Stack gap={8} w="full" maxW="7xl">
-          <Flex
+          {/* <Flex
             justify="space-between"
             align="center"
             bg={"bg"}
@@ -73,7 +64,11 @@ export function Landing() {
               </Text>
             </Stack>
             <UsersOnPageAvatars path="/" />
-          </Flex>
+          </Flex> */}
+          <Header
+            title="Exam Creator"
+            description="Create and moderate exams and attempts"
+          />
           <Box>
             <SimpleGrid minChildWidth={"380px"} gap={8}>
               <Button

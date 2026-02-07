@@ -26,6 +26,7 @@ import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { moderationsInfiniteQuery } from "../hooks/queries";
 import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
+import { Header } from "../components/ui/header";
 
 export function Attempts() {
   const { logout } = useContext(AuthContext)!;
@@ -93,7 +94,7 @@ export function Attempts() {
       </HStack>
       <Center>
         <Stack gap={8} w="full" maxW="7xl">
-          <Flex
+          {/* <Flex
             justify="space-between"
             align="center"
             bg="bg.panel"
@@ -108,7 +109,8 @@ export function Attempts() {
               </Heading>
               <Text fontSize="lg">Moderate exam attempts.</Text>
             </Stack>
-            <UsersOnPageAvatars path="/attempts" />
+            <UsersOnPageAvatars path="/attempts" /> */}
+          <Header title="Exam Moderator" description="Moderate exam attempts">
             <HStack gap={2}>
               <Menu.Root>
                 <Menu.Trigger asChild>
@@ -248,7 +250,7 @@ export function Attempts() {
               </select>
               </Field.Root> */}
             </HStack>
-          </Flex>
+          </Header>
           <Box>
             {mods.isPending ? (
               <Center py={12}>

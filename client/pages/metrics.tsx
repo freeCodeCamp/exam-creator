@@ -2,13 +2,11 @@ import {
   Box,
   Button,
   Center,
-  Heading,
   HStack,
   Spinner,
   Stack,
   Text,
   SimpleGrid,
-  Flex,
 } from "@chakra-ui/react";
 import { useContext, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +20,7 @@ import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { ExamMetricsCard } from "../components/exam-metrics-card";
 import { DatabaseStatus } from "../components/database-status";
-import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
+import { Header } from "../components/ui/header";
 
 export function Metrics() {
   const { user, logout } = useContext(AuthContext)!;
@@ -67,25 +65,7 @@ export function Metrics() {
       </HStack>
       <Center>
         <Stack gap={8} w="full" maxW="7xl">
-          <Flex
-            bg="bg.subtle"
-            justify="space-between"
-            align="center"
-            borderRadius="xl"
-            p={8}
-            boxShadow="lg"
-            mb={4}
-          >
-            <Stack gap={1}>
-              <Heading fontWeight="extrabold" fontSize="3xl">
-                Exam Metrics
-              </Heading>
-              <Text color="gray.300" fontSize="lg">
-                View metrics for exams.
-              </Text>
-            </Stack>
-            <UsersOnPageAvatars path="/metrics" />
-          </Flex>
+          <Header title="Exam Metrics" description="View metrics for exams" />
           <Box>
             {metricsQuery.isPending ? (
               <Center py={12}>
