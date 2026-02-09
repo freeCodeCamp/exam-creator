@@ -4,6 +4,7 @@ use axum::{
     Json,
     extract::{Path, State},
 };
+use bson::DateTime;
 use futures_util::TryStreamExt;
 use http::StatusCode;
 use mongodb::bson::doc;
@@ -126,11 +127,12 @@ pub async fn patch_moderation_status_by_attempt_id(
 
     let database = database_environment(&server_state, &exam_creator_user);
 
+    let now = DateTime::now();
     let update_result = database
         .exam_environment_exam_moderation
         .update_one(
             doc! { "examAttemptId": body.attempt_id },
-            doc! { "$set": { "status": bson::serialize_to_bson(&body.status)? } },
+            doc! { "$set": { "status": bson::serialize_to_bson(&body.status)?, "moderationDate": now } },
         )
         .await?;
 
