@@ -2,14 +2,12 @@ import {
   Box,
   Button,
   Center,
-  Heading,
   HStack,
   Spinner,
   Stack,
   Text,
   SimpleGrid,
   Portal,
-  Flex,
   Menu,
 } from "@chakra-ui/react";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
@@ -25,7 +23,6 @@ import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { moderationsInfiniteQuery } from "../hooks/queries";
-import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 import { Header } from "../components/ui/header";
 
 export function Attempts() {
