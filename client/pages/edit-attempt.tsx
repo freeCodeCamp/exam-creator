@@ -451,7 +451,7 @@ function EditAttempt({
         </Button>
       </Box>
       <Stack gap={8} w="full" maxW="7xl">
-        <Box borderRadius="xl" boxShadow="lg" p={8} mb={4} w="full">
+        <Box borderRadius="xl" boxShadow="lg" p={4} mb={4} w="full">
           <Flex
             direction={"row"}
             justifyContent={"space-between"}
@@ -519,8 +519,8 @@ function EditAttempt({
                 </Switch.Root>
               </Field.Root>
             </SimpleGrid>
-            <Box resize={"vertical"} overflow={"auto"} minHeight={300}>
-              <ResponsiveContainer width="100%" minHeight={300}>
+            <Box resize={"vertical"} overflow={"auto"}>
+              <ResponsiveContainer width="100%" minHeight={450}>
                 <ComposedChart
                   margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
                 >
@@ -732,7 +732,7 @@ function EditAttempt({
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderColor="purple.400"
+                borderColor="green.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
                   Accuracy
@@ -746,7 +746,7 @@ function EditAttempt({
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderColor="blue.400"
+                borderColor="teal.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
                   Total Time
@@ -763,7 +763,7 @@ function EditAttempt({
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderColor="blue.400"
+                borderColor="teal.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
                   Avg Time / Question
@@ -777,7 +777,7 @@ function EditAttempt({
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderColor="blue.400"
+                borderColor="purple.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
                   Events
@@ -802,6 +802,31 @@ function EditAttempt({
                       (acc, curr) => acc + (curr.focusTime - curr.blurTime),
                       0,
                     )
+                    .toFixed(2)}
+                  s
+                </Text>
+              </Box>
+              <Box
+                bg="gray.muted"
+                p={2}
+                borderRadius="md"
+                borderLeft="4px solid"
+                borderColor="blue.400"
+              >
+                <Text fontSize="sm" color="fg" mb={1}>
+                  Unfocussed Time Before Final Submission
+                </Text>
+                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
+                  {focusGaps
+                    .reduce((acc, curr) => {
+                      if (
+                        curr.blurTime > timeToComplete ||
+                        curr.focusTime > timeToComplete
+                      ) {
+                        return acc;
+                      }
+                      return acc + (curr.focusTime - curr.blurTime);
+                    }, 0)
                     .toFixed(2)}
                   s
                 </Text>
@@ -939,7 +964,7 @@ function AllUserAttempts({
   }
 
   return (
-    <Box mt={8} w="full">
+    <Box w="full">
       <Heading size={"md"} mb={4}>
         All User Attempts for This Exam
       </Heading>
@@ -975,9 +1000,7 @@ function AllUserAttempts({
                   key={attempt.id}
                   style={{
                     borderBottom: "1px solid #ccc",
-                    background: isCurrent
-                      ? "rgba(0,128,128,0.15)"
-                      : undefined,
+                    background: isCurrent ? "rgba(0,128,128,0.15)" : undefined,
                   }}
                 >
                   <td style={{ padding: "8px" }}>
