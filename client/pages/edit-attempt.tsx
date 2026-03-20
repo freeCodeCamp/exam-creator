@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import {
   Box,
+  Badge,
   Button,
   Center,
   Text,
@@ -22,7 +23,10 @@ import {
   Popover,
   Portal,
 } from "@chakra-ui/react";
-import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
+import {
+  ExamEnvironmentExamModeration,
+  ExamEnvironmentExamModerationStatus,
+} from "@prisma/client";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
@@ -871,7 +875,13 @@ function AllUserAttemptsContainer({
 }) {
   const attemptsMutation = useMutation({
     mutationKey: ["user-attempts", attempt.userId],
-    mutationFn: (userId: string) => getAttemptsByUserId(userId),
+    mutationFn: async (userId: string) => {
+      const attempts = await getAttemptsByUserId(userId);
+      const moderations = await Promise.all(
+        attempts.map((a) => getModerationByAttemptId(a.id).catch(() => null)),
+      );
+      return { attempts, moderations };
+    },
     retry: false,
   });
   const numberOfAttemptsQuery = useQuery({
@@ -902,7 +912,12 @@ function AllUserAttemptsContainer({
           )
         </Button>
       ) : (
-        <AllUserAttempts attempts={attemptsMutation.data} options={options} />
+        <AllUserAttempts
+          attempts={attemptsMutation.data.attempts}
+          moderations={attemptsMutation.data.moderations}
+          currentAttemptId={attempt.id}
+          options={options}
+        />
       )}
     </Center>
   );
@@ -910,9 +925,13 @@ function AllUserAttemptsContainer({
 
 function AllUserAttempts({
   attempts,
+  moderations,
+  currentAttemptId,
   options,
 }: {
   attempts: Attempt[];
+  moderations: (ExamEnvironmentExamModeration | null | undefined)[];
+  currentAttemptId: string;
   options: AttemptOptions;
 }) {
   if (attempts.length === 0) {
@@ -936,10 +955,12 @@ function AllUserAttempts({
               </th>
               <th style={{ textAlign: "left", padding: "8px" }}>Total Time</th>
               <th style={{ textAlign: "left", padding: "8px" }}>Score</th>
+              <th style={{ textAlign: "left", padding: "8px" }}>Status</th>
+              <th style={{ textAlign: "left", padding: "8px" }}>Feedback</th>
             </tr>
           </thead>
           <tbody>
-            {attempts.map((attempt) => {
+            {attempts.map((attempt, index) => {
               const {
                 correct,
                 totalQuestions,
@@ -947,8 +968,18 @@ function AllUserAttempts({
                 timeToComplete,
                 answered,
               } = getAttemptStats(attempt, options);
+              const moderation = moderations[index];
+              const isCurrent = attempt.id === currentAttemptId;
               return (
-                <tr key={attempt.id} style={{ borderBottom: "1px solid #ccc" }}>
+                <tr
+                  key={attempt.id}
+                  style={{
+                    borderBottom: "1px solid #ccc",
+                    background: isCurrent
+                      ? "rgba(0,128,128,0.15)"
+                      : undefined,
+                  }}
+                >
                   <td style={{ padding: "8px" }}>
                     {prettyDate(attempt.startTime)}
                   </td>
@@ -965,6 +996,30 @@ function AllUserAttempts({
                       ? ((correct / totalQuestions) * 100).toFixed(1)
                       : 0}
                     %
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    {moderation ? (
+                      <Badge
+                        colorPalette={
+                          moderation.status === "Pending"
+                            ? "blue"
+                            : moderation.status === "Approved"
+                              ? "green"
+                              : "red"
+                        }
+                      >
+                        {moderation.status}
+                      </Badge>
+                    ) : (
+                      <Text color="gray.400">—</Text>
+                    )}
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    {moderation?.feedback ? (
+                      <Text>{moderation.feedback}</Text>
+                    ) : (
+                      <Text color="gray.400">—</Text>
+                    )}
                   </td>
                 </tr>
               );

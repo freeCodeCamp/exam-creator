@@ -19,6 +19,9 @@
 - events
   - captions opened
     - vertical lines overlayed on answer graph
+- client: show all events on graph
+- client: "view all attempts" show moderation decision
+- client: show time blurred before final answer submission
 
 ## [6.0.1] - 2026-02-09
 
