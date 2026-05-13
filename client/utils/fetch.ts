@@ -771,6 +771,21 @@ export async function getExamMetricsById(examId: string) {
   return deserialized;
 }
 
+export async function getExamAttemptStarts() {
+  const res = await authorizedFetch(`/api/metrics/attempts`, {
+    method: "GET",
+  });
+
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<
+    {
+      examId: string;
+      startTime: Date;
+    }[]
+  >(json);
+  return deserialized;
+}
+
 export async function getEventsByAttemptId(
   attemptId: string,
 ): Promise<Event[]> {

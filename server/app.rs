@@ -30,6 +30,7 @@ use tracing::info;
 use tracing::warn;
 
 use crate::errors::Error;
+use crate::state::Cache;
 use crate::{
     database, extractor, routes,
     state::{self, ClientSync, ServerState},
@@ -98,6 +99,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     }));
 
     let exam_metrics_by_id_cache = Arc::new(Mutex::new(vec![]));
+    let attempt_metrics_cache = Arc::new(Mutex::new(Cache::new()));
 
     let supabase_url = &env_vars.supabase_url;
     let supabase_key = &env_vars.supabase_key;
@@ -111,6 +113,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         key: Key::from(env_vars.cookie_key.as_bytes()),
         env_vars: env_vars.clone(),
         exam_metrics_by_id_cache,
+        attempt_metrics_cache,
     };
 
     tokio::spawn(state::cleanup_online_users(
@@ -189,6 +192,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/metrics/exams",
             get(routes::metrics::get_exams_metrics),
+        )
+        .route(
+            "/api/metrics/attempts",
+            get(routes::metrics::get_attempts_metrics),
         )
         .route(
             "/api/metrics/exams/{exam_id}",

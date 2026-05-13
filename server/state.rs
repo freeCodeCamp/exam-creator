@@ -9,7 +9,7 @@ use tracing::error;
 use crate::{
     config::EnvVars,
     database::{Database, prisma},
-    routes::metrics::GetExamMetricsById,
+    routes::metrics::{GetAttemptsMetrics, GetExamMetricsById},
 };
 
 #[derive(Clone)]
@@ -21,6 +21,7 @@ pub struct ServerState {
     pub key: Key,
     pub env_vars: EnvVars,
     pub exam_metrics_by_id_cache: Arc<Mutex<Vec<GetExamMetricsById>>>,
+    pub attempt_metrics_cache: Arc<Mutex<Cache<Vec<GetAttemptsMetrics>>>>,
 }
 
 impl FromRef<ServerState> for Key {
@@ -65,6 +66,21 @@ pub struct Activity {
     pub page: String,
     /// The last time the user was active in milliseconds since epoch
     pub last_active: usize,
+}
+
+pub struct Cache<T: Default> {
+    pub data: T,
+    pub expire_at: std::time::SystemTime,
+}
+
+impl<T: Default> Cache<T> {
+    pub fn new() -> Self {
+        let data: T = Default::default();
+        Self {
+            data,
+            expire_at: std::time::SystemTime::now() + std::time::Duration::from_hours(24), // 1 day
+        }
+    }
 }
 
 pub async fn cleanup_online_users(

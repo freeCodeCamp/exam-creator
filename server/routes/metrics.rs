@@ -6,7 +6,7 @@ use futures_util::TryStreamExt;
 use http::StatusCode;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 use crate::{
@@ -153,4 +153,53 @@ pub async fn get_exam_metrics_by_exam_id(
     }
 
     Ok(Json(response))
+}
+
+#[serde_with::serde_as]
+#[derive(Serialize, Deserialize, Clone)]
+pub struct GetAttemptsMetrics {
+    #[serde(rename = "examId")]
+    exam_id: ObjectId,
+    #[serde(rename = "startTime")]
+    #[serde_as(as = "bson::serde_helpers::datetime::AsRfc3339String")]
+    start_time: mongodb::bson::DateTime,
+}
+
+/// Get all attempts, and return `examId` and `startTime`.
+#[instrument(skip_all, err(Debug))]
+pub async fn get_attempts_metrics(
+    user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+) -> Result<Json<Vec<GetAttemptsMetrics>>, Error> {
+    {
+        let mut cache = state.attempt_metrics_cache.lock().unwrap();
+        if cache.expire_at < std::time::SystemTime::now() {
+            // Remove expired cached response
+            cache.data.clear();
+        } else {
+            return Ok(Json(cache.data.clone()));
+        }
+    }
+
+    let database = database_environment(&state, &user);
+
+    let mut attempts = database
+        .exam_attempt
+        .clone_with_type::<GetAttemptsMetrics>()
+        .find(doc! {})
+        .projection(doc! {"startTime": true, "examId": true})
+        .await?;
+
+    let mut attempts_metrics: Vec<GetAttemptsMetrics> = vec![];
+
+    while let Some(attempt) = attempts.try_next().await? {
+        attempts_metrics.push(attempt);
+    }
+
+    {
+        let mut cache = state.attempt_metrics_cache.lock().unwrap();
+        cache.data = attempts_metrics.clone();
+    }
+
+    Ok(Json(attempts_metrics))
 }

@@ -21,6 +21,7 @@ import { landingRoute } from "./landing";
 import { ExamMetricsCard } from "../components/exam-metrics-card";
 import { DatabaseStatus } from "../components/database-status";
 import { Header } from "../components/ui/header";
+import { AttemptStats } from "../components/attempt-stats";
 
 export function Metrics() {
   const { user, logout } = useContext(AuthContext)!;
@@ -88,6 +89,7 @@ export function Metrics() {
                 ))}
               </SimpleGrid>
             )}
+            <AttemptStats />
           </Box>
         </Stack>
       </Center>
