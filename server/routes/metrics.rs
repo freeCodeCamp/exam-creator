@@ -165,6 +165,18 @@ pub struct GetAttemptsMetrics {
     start_time: mongodb::bson::DateTime,
 }
 
+impl TryFrom<bson::Document> for GetAttemptsMetrics {
+    type Error = crate::errors::Error;
+    fn try_from(value: bson::Document) -> Result<Self, Self::Error> {
+        let exam_id = value.get_object_id("examId")?;
+        let start_time = value.get_datetime("startTime")?;
+        Ok(GetAttemptsMetrics {
+            exam_id,
+            start_time: start_time.clone(),
+        })
+    }
+}
+
 /// Get all attempts, and return `examId` and `startTime`.
 #[instrument(skip_all, err(Debug))]
 pub async fn get_attempts_metrics(
@@ -177,7 +189,10 @@ pub async fn get_attempts_metrics(
             // Remove expired cached response
             cache.data.clear();
         } else {
-            return Ok(Json(cache.data.clone()));
+            if !cache.data.is_empty() {
+                tracing::debug!(len = cache.data.len(), "using cache");
+                return Ok(Json(cache.data.clone()));
+            }
         }
     }
 
@@ -185,7 +200,7 @@ pub async fn get_attempts_metrics(
 
     let mut attempts = database
         .exam_attempt
-        .clone_with_type::<GetAttemptsMetrics>()
+        .clone_with_type::<mongodb::bson::Document>()
         .find(doc! {})
         .projection(doc! {"startTime": true, "examId": true})
         .await?;
@@ -193,6 +208,7 @@ pub async fn get_attempts_metrics(
     let mut attempts_metrics: Vec<GetAttemptsMetrics> = vec![];
 
     while let Some(attempt) = attempts.try_next().await? {
+        let attempt = attempt.try_into()?;
         attempts_metrics.push(attempt);
     }
 

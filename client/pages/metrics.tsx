@@ -21,7 +21,7 @@ import { landingRoute } from "./landing";
 import { ExamMetricsCard } from "../components/exam-metrics-card";
 import { DatabaseStatus } from "../components/database-status";
 import { Header } from "../components/ui/header";
-import { AttemptStats } from "../components/attempt-stats";
+import { AttemptCumulativeLine } from "../components/attempt-cumulative-line";
 
 export function Metrics() {
   const { user, logout } = useContext(AuthContext)!;
@@ -89,7 +89,12 @@ export function Metrics() {
                 ))}
               </SimpleGrid>
             )}
-            <AttemptStats />
+            <Box mt={10}>
+              <Text fontSize="xl" fontWeight="semibold" mb={2}>
+                Cumulative Attempts Over Time
+              </Text>
+              <AttemptCumulativeLine />
+            </Box>
           </Box>
         </Stack>
       </Center>

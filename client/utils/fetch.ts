@@ -771,7 +771,7 @@ export async function getExamMetricsById(examId: string) {
   return deserialized;
 }
 
-export async function getExamAttemptStarts() {
+export async function getExamAttemptStats() {
   const res = await authorizedFetch(`/api/metrics/attempts`, {
     method: "GET",
   });
