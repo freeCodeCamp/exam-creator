@@ -10,6 +10,7 @@ import {
   Tooltip as RechartTooltip,
   XAxis,
   YAxis,
+  type LegendPayload,
 } from "recharts";
 import { getExamAttemptStats, getExamsMetrics } from "../utils/fetch";
 
@@ -83,14 +84,15 @@ export function AttemptCumulativeLine() {
     .sort(([a], [b]) => a - b)
     .map(([t, counts]) => ({ t, ...counts }));
 
-  function handleLegendClick(e: { dataKey?: string }) {
-    if (!e.dataKey) return;
+  function handleLegendClick(dataKey: LegendPayload["dataKey"]) {
+    const key = String(dataKey ?? "");
+    if (!key) return;
     setHidden((prev) => {
       const next = new Set(prev);
-      if (next.has(e.dataKey!)) {
-        next.delete(e.dataKey!);
+      if (next.has(key)) {
+        next.delete(key);
       } else {
-        next.add(e.dataKey!);
+        next.add(key);
       }
       return next;
     });
@@ -120,20 +122,26 @@ export function AttemptCumulativeLine() {
             }}
           />
           <RechartTooltip
-            labelFormatter={(v: number) => formatDate(v)}
-            formatter={(value: number, name: string) => {
-              const e = exams.find((x) => x.exam.id === name);
-              return [value, e?.exam.config.name ?? name];
+            labelFormatter={(v) => formatDate(Number(v))}
+            formatter={(value, name) => {
+              const key = String(name ?? "");
+              const e = exams.find((x) => x.exam.id === key);
+              return [value ?? 0, e?.exam.config.name ?? key];
             }}
             contentStyle={{ color: "black" }}
           />
           <Legend
-            onClick={handleLegendClick}
+            onClick={(e) => handleLegendClick(e.dataKey)}
             formatter={(value) => {
               const e = exams.find((x) => x.exam.id === value);
               const name = e?.exam.config.name ?? value;
               return (
-                <span style={{ opacity: hidden.has(value) ? 0.35 : 1, cursor: "pointer" }}>
+                <span
+                  style={{
+                    opacity: hidden.has(value) ? 0.35 : 1,
+                    cursor: "pointer",
+                  }}
+                >
                   {name}
                 </span>
               );
