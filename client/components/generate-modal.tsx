@@ -178,6 +178,8 @@ export function GenerateModal({ open, onClose, examId }: GenerateModalProps) {
         onClose();
       }}
     >
+      <Dialog.Backdrop />
+      <Dialog.Positioner>
       <Dialog.Content backgroundColor={"gray.700"} color={"white"}>
         <Dialog.Header>Generate Exams to {databaseEnvironment}</Dialog.Header>
         <Dialog.CloseTrigger />
@@ -326,6 +328,7 @@ export function GenerateModal({ open, onClose, examId }: GenerateModalProps) {
           </Button>
         </Dialog.Footer>
       </Dialog.Content>
+      </Dialog.Positioner>
     </Dialog.Root>
   );
 }
