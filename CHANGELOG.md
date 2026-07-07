@@ -20,8 +20,27 @@
   - captions opened
     - vertical lines overlayed on answer graph
 - client: show all events on graph
-- client: "view all attempts" show moderation decision
-- client: show time blurred before final answer submission
+
+## [6.2.1] - 2026-07-07
+
+### Fixed
+
+- client: reconnect websockets on backoff
+- client: wrap dialog content in positioner provider
+
+## [6.2.0] - 2026-05-13
+
+### Added
+
+- cumulative line graph
+- attempt metrics scaffold
+
+## [6.1.0] - 2026-03-20
+
+### Added
+
+- unfocussed time before last submission
+- moderation status + feedback to attempts view
 
 ## [6.0.1] - 2026-02-09
 
