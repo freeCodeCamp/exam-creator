@@ -1,15 +1,13 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 import prism from "vite-plugin-prismjs";
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   plugins: [
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
-    }),
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
     prism({
       languages: [
         "markup",
@@ -126,18 +124,13 @@ export default defineConfig(async () => ({
     // Exclude problematic modules that use top-level await
     exclude: ["bson"],
   },
-  esbuild: {
-    supported: {
-      "top-level-await": true,
-    },
-  },
   build: {
     rolldownOptions: {
       output: {
         // This is needed to avoid the following error:
         // dist/assets/index-BS2y5DZK.js   1,747.08 kB │ gzip: 576.15 kB
         // (!) Some chunks are larger than 500 kB after minification.
-        advancedChunks: {
+        codeSplitting: {
           groups: [
             {
               name: "react-vendor",
