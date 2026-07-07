@@ -156,10 +156,13 @@ export function TimeTakenDistribution({
             }}
           />
           <RechartTooltip
-            formatter={(value: number | undefined, name?: string) => {
+            formatter={(value, name) => {
               if (value === undefined) return;
               if (name === "Normal Distribution") {
-                return [`${value.toFixed(2)}`, "Normal Distribution"];
+                return [
+                  Number(value).toFixed(2).toString(),
+                  "Normal Distribution",
+                ];
               }
               return [`${value} attempts`, "Count"];
             }}

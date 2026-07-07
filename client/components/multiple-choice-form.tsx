@@ -70,7 +70,6 @@ export function MultipleChoiceForm({
         if (audioDebounceRef.current) {
           clearTimeout(audioDebounceRef.current);
         }
-        // @ts-expect-error Nodejs type used for some reason
         audioDebounceRef.current = setTimeout(() => {
           if (entry.isIntersecting) {
             setIsAudioVisible(true);
