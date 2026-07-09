@@ -21,7 +21,7 @@ import { landingRoute } from "./landing";
 import { ExamMetricsCard } from "../components/exam-metrics-card";
 import { DatabaseStatus } from "../components/database-status";
 import { Header } from "../components/ui/header";
-import { AttemptCumulativeLine } from "../components/attempt-cumulative-line";
+import { AttemptAnalytics } from "../components/attempt-analytics";
 
 export function Metrics() {
   const { user, logout } = useContext(AuthContext)!;
@@ -91,9 +91,9 @@ export function Metrics() {
             )}
             <Box mt={10}>
               <Text fontSize="xl" fontWeight="semibold" mb={2}>
-                Cumulative Attempts Over Time
+                Attempt Analytics
               </Text>
-              <AttemptCumulativeLine />
+              <AttemptAnalytics />
             </Box>
           </Box>
         </Stack>

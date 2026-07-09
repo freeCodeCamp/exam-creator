@@ -21,6 +21,18 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.5.0] - 2026-07-09
+
+### Added
+
+- client: many more attempt analytics graphs
+
+## [6.4.0] - 2026-07-09
+
+### Added
+
+- client: zoom brush to attempt analytics graph
+
 ## [6.3.0] - 2026-07-09
 
 ### Added
