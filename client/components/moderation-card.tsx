@@ -78,8 +78,12 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                 fontSize="xl"
                 fontWeight="bold"
                 color={attemptQuery.isError ? "#ff3f3f" : "teal.focusRing"}
-                lineClamp={1}
                 maxW="80%"
+                minW={0}
+                lineHeight="1.4"
+                whiteSpace="nowrap"
+                overflow="hidden"
+                textOverflow="ellipsis"
               >
                 {attemptQuery.isError
                   ? attemptQuery.error.message

@@ -44,8 +44,12 @@ export function AttemptsLandingCard({ path }: AttemptsLandingCardProps) {
             fontSize="xl"
             fontWeight="bold"
             color={"fg.info"}
-            lineClamp={1}
             maxW="80%"
+            minW={0}
+            lineHeight="1.4"
+            whiteSpace="nowrap"
+            overflow="hidden"
+            textOverflow="ellipsis"
           >
             Attempts
           </Text>

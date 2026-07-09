@@ -84,12 +84,12 @@ export function ExamCard({
                 fontSize="xl"
                 fontWeight="bold"
                 color={"fg.info"}
-                lineClamp={1}
                 flex={1}
                 minW={0}
-                textOverflow="ellipsis"
-                overflow="hidden"
+                lineHeight="1.4"
                 whiteSpace="nowrap"
+                overflow="hidden"
+                textOverflow="ellipsis"
               >
                 {exam.config.name}
               </Text>

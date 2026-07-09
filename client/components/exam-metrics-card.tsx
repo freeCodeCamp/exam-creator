@@ -46,12 +46,12 @@ export function ExamMetricsCard({ exam, numberOfAttempts }: ExamCardProps) {
               <Text
                 fontSize="xl"
                 fontWeight="bold"
-                lineClamp={1}
                 flex={1}
                 minW={0}
-                textOverflow="ellipsis"
-                overflow="hidden"
+                lineHeight="1.4"
                 whiteSpace="nowrap"
+                overflow="hidden"
+                textOverflow="ellipsis"
                 color="fg.info"
               >
                 {exam.config.name}
