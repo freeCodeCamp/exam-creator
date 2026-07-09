@@ -203,7 +203,8 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         )
         .route(
             "/api/attempts/{attempt_id}",
-            get(routes::attempts::get_attempt_by_id),
+            get(routes::attempts::get_attempt_by_id)
+                .delete(routes::attempts::delete_attempt_by_id),
         )
         .route(
             "/api/attempts/{attempt_id}/moderation",

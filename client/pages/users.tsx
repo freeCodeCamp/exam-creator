@@ -14,9 +14,9 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { createRoute, useNavigate } from "@tanstack/react-router";
-import { useContext, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useContext, useEffect, useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, SearchIcon } from "lucide-react";
 
 import { rootRoute } from "./root";
@@ -26,7 +26,15 @@ import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { Header } from "../components/ui/header";
-import { getUserSearch, type UserSearchBy } from "../utils/fetch";
+import { DeleteAttemptModal } from "../components/delete-attempt-modal";
+import { toaster } from "../components/toaster";
+import {
+  deleteAttemptById,
+  getUserSearch,
+  type UserSearchBy,
+} from "../utils/fetch";
+
+const DELETE_DELAY_SECONDS = 10;
 
 const SEARCH_FIELDS = [
   { key: "email", label: "Email" },
@@ -37,6 +45,11 @@ const SEARCH_FIELDS = [
 ] as const;
 
 type SearchFieldKey = (typeof SEARCH_FIELDS)[number]["key"];
+
+interface UsersSearch {
+  field?: SearchFieldKey;
+  value?: string;
+}
 
 function searchFieldLabel(key: SearchFieldKey): string {
   return SEARCH_FIELDS.find((f) => f.key === key)!.label;
@@ -53,11 +66,37 @@ export function Users() {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
 
-  const [searchField, setSearchField] = useState<SearchFieldKey>("email");
-  const [searchValue, setSearchValue] = useState("");
-  const [submittedSearch, setSubmittedSearch] = useState<UserSearchBy | null>(
-    null,
+  const urlSearch = useSearch({ from: usersRoute.to });
+
+  const [searchField, setSearchField] = useState<SearchFieldKey>(
+    urlSearch.field ?? "email",
   );
+  const [searchValue, setSearchValue] = useState(urlSearch.value ?? "");
+  const [submittedSearch, setSubmittedSearch] = useState<UserSearchBy | null>(
+    urlSearch.field && urlSearch.value
+      ? ({ [urlSearch.field]: urlSearch.value } as UserSearchBy)
+      : null,
+  );
+
+  // Sync search from URL params (e.g. arriving from the attempt page).
+  useEffect(() => {
+    if (urlSearch.field && urlSearch.value) {
+      setSearchField(urlSearch.field);
+      setSearchValue(urlSearch.value);
+      setSubmittedSearch({
+        [urlSearch.field]: urlSearch.value,
+      } as UserSearchBy);
+    }
+  }, [urlSearch.field, urlSearch.value]);
+
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  // Attempts scheduled for deletion, hidden optimistically during the undo window.
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const deleteTimers = useRef<
+    Map<string, { timeout: number; interval: number; toastId: string }>
+  >(new Map());
 
   const search = useQuery({
     queryKey: ["user-search", submittedSearch],
@@ -66,6 +105,90 @@ export function Users() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  const deleteAttemptMutation = useMutation({
+    mutationFn: (attemptId: string) => deleteAttemptById(attemptId),
+    onSuccess: async (_res, attemptId) => {
+      await search.refetch();
+      clearPending(attemptId);
+    },
+    onError: (e: Error, attemptId) => {
+      clearPending(attemptId);
+      toaster.create({
+        type: "error",
+        title: "Delete failed",
+        description: e.message,
+      });
+    },
+  });
+
+  function clearTimers(attemptId: string) {
+    const timers = deleteTimers.current.get(attemptId);
+    if (timers) {
+      window.clearTimeout(timers.timeout);
+      window.clearInterval(timers.interval);
+      toaster.dismiss(timers.toastId);
+      deleteTimers.current.delete(attemptId);
+    }
+  }
+
+  // Cancel a scheduled delete and restore the attempt (undo, or after completion).
+  function clearPending(attemptId: string) {
+    clearTimers(attemptId);
+    setPendingDeletes((prev) => {
+      const next = new Set(prev);
+      next.delete(attemptId);
+      return next;
+    });
+  }
+
+  function scheduleDelete(attemptId: string) {
+    setPendingDeletes((prev) => new Set(prev).add(attemptId));
+
+    let remaining = DELETE_DELAY_SECONDS;
+    const toastId = toaster.create({
+      type: "info",
+      title: "Deleting attempt + moderation",
+      description: `Undo within ${remaining}s`,
+      duration: Number.POSITIVE_INFINITY,
+      action: {
+        label: "Undo",
+        onClick: () => clearPending(attemptId),
+      },
+    });
+
+    const interval = window.setInterval(() => {
+      remaining -= 1;
+      if (remaining > 0) {
+        toaster.update(toastId, { description: `Undo within ${remaining}s` });
+      }
+    }, 1000);
+
+    const timeout = window.setTimeout(() => {
+      window.clearInterval(interval);
+      deleteAttemptMutation.mutate(attemptId);
+    }, DELETE_DELAY_SECONDS * 1000);
+
+    deleteTimers.current.set(attemptId, { timeout, interval, toastId });
+  }
+
+  // Cancel any in-flight undo timers on unmount (aborts the pending delete).
+  useEffect(() => {
+    const timers = deleteTimers.current;
+    return () => {
+      timers.forEach((t) => {
+        window.clearTimeout(t.timeout);
+        window.clearInterval(t.interval);
+      });
+    };
+  }, []);
+
+  const visibleAttempts = (search.data?.attempts ?? []).filter(
+    (a) => !pendingDeletes.has(a.id),
+  );
+  const visibleModerations = (search.data?.moderations ?? []).filter(
+    (m) => !pendingDeletes.has(m.examAttemptId),
+  );
 
   useEffect(() => {
     updateActivity({
@@ -204,13 +327,13 @@ export function Users() {
               </Box>
               <Box bg="bg.subtle" borderRadius="xl" p={6} boxShadow="md">
                 <Heading size="md" mb={4}>
-                  Attempts ({search.data.attempts.length})
+                  Attempts ({visibleAttempts.length})
                 </Heading>
-                {search.data.attempts.length === 0 ? (
+                {visibleAttempts.length === 0 ? (
                   <Text color="fg.muted">No attempts found.</Text>
                 ) : (
                   <Stack gap={3}>
-                    {search.data.attempts.map((attempt) => (
+                    {visibleAttempts.map((attempt) => (
                       <Flex
                         key={attempt.id}
                         justify="space-between"
@@ -230,19 +353,29 @@ export function Users() {
                             Started: {attempt.startTime.toLocaleString()}
                           </Text>
                         </Stack>
-                        <Button
-                          colorPalette="teal"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            navigate({
-                              to: "/attempts/$id",
-                              params: { id: attempt.id },
-                            })
-                          }
-                        >
-                          View Attempt
-                        </Button>
+                        <HStack gap={2}>
+                          <Button
+                            colorPalette="teal"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              navigate({
+                                to: "/attempts/$id",
+                                params: { id: attempt.id },
+                              })
+                            }
+                          >
+                            View Attempt
+                          </Button>
+                          <Button
+                            colorPalette="red"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeleteTarget(attempt.id)}
+                          >
+                            Delete + Moderation
+                          </Button>
+                        </HStack>
                       </Flex>
                     ))}
                   </Stack>
@@ -250,13 +383,13 @@ export function Users() {
               </Box>
               <Box bg="bg.subtle" borderRadius="xl" p={6} boxShadow="md">
                 <Heading size="md" mb={4}>
-                  Moderations ({search.data.moderations.length})
+                  Moderations ({visibleModerations.length})
                 </Heading>
-                {search.data.moderations.length === 0 ? (
+                {visibleModerations.length === 0 ? (
                   <Text color="fg.muted">No moderations found.</Text>
                 ) : (
                   <Stack gap={3}>
-                    {search.data.moderations.map((moderation) => (
+                    {visibleModerations.map((moderation) => (
                       <Flex
                         key={moderation.id}
                         justify="space-between"
@@ -328,6 +461,17 @@ export function Users() {
           )}
         </Stack>
       </Center>
+      <DeleteAttemptModal
+        open={deleteTarget !== null}
+        attemptId={deleteTarget ?? ""}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            scheduleDelete(deleteTarget);
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </Box>
   );
 }
@@ -335,6 +479,10 @@ export function Users() {
 export const usersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/users",
+  validateSearch: (search: Record<string, unknown>): UsersSearch => ({
+    field: SEARCH_FIELDS.find((f) => f.key === search.field)?.key,
+    value: typeof search.value === "string" ? search.value : undefined,
+  }),
   component: () => (
     <ProtectedRoute>
       <Users />

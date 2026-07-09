@@ -609,6 +609,12 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
   return deserialized;
 }
 
+export async function deleteAttemptById(attemptId: string): Promise<Response> {
+  return await authorizedFetch(`/api/attempts/${attemptId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getAttemptsByUserId(userId: string): Promise<Attempt[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);

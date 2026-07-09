@@ -42,6 +42,7 @@ import {
   patchModerationStatusByAttemptId,
 } from "../utils/fetch";
 import { attemptsRoute } from "./attempts";
+import { usersRoute } from "./users";
 import { Attempt, Event } from "../types";
 import { prettyDate, secondsToHumanReadable } from "../utils/question";
 import { moderationKeys } from "../hooks/queries";
@@ -100,6 +101,19 @@ function Edit() {
           onClick={() => navigate({ to: attemptsRoute.to })}
         >
           Back to Attempts
+        </Button>
+        <Button
+          colorPalette="teal"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            navigate({
+              to: usersRoute.to,
+              search: { field: "attempt_id", value: id },
+            })
+          }
+        >
+          Manage User
         </Button>
         <Button
           colorPalette="red"

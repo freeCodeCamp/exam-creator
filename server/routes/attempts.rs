@@ -147,6 +147,35 @@ pub async fn patch_moderation_status_by_attempt_id(
 }
 
 #[instrument(skip_all, err(Debug), level = "debug")]
+pub async fn delete_attempt_by_id(
+    exam_creator_user: prisma::ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(attempt_id): Path<ObjectId>,
+) -> Result<(), Error> {
+    let database = database_environment(&server_state, &exam_creator_user);
+
+    // Delete moderation first (0-1 records). Not-found is fine.
+    database
+        .exam_environment_exam_moderation
+        .delete_one(doc! { "examAttemptId": attempt_id })
+        .await?;
+
+    let delete_result = database
+        .exam_attempt
+        .delete_one(doc! { "_id": attempt_id })
+        .await?;
+
+    if delete_result.deleted_count == 0 {
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("attempt non-existent: {attempt_id}"),
+        ));
+    }
+
+    Ok(())
+}
+
+#[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn get_attempts_by_user_id(
     exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,
