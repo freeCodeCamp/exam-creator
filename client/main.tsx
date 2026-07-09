@@ -11,6 +11,7 @@ import "./index.css";
 import { queryClient, router } from "./contexts";
 import { system } from "./theme";
 import { ColorModeProvider } from "./color-mode";
+import { Toaster } from "./components/toaster";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               <main>
                 <RouterProvider router={router}></RouterProvider>
               </main>
+              <Toaster />
             </UsersWebSocketProvider>
           </AuthProvider>
         </QueryClientProvider>
