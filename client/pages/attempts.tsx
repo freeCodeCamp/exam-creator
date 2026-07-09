@@ -11,7 +11,7 @@ import {
   Menu,
 } from "@chakra-ui/react";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useContext, useEffect, useState, useRef, useCallback } from "react";
+import { useContext, useEffect, useRef, useCallback } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -29,12 +29,25 @@ export function Attempts() {
   const { logout } = useContext(AuthContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
-  const search = useSearch({ from: attemptsRoute.to });
+  const { filter: moderationStatusFilter, sort } = useSearch({
+    from: attemptsRoute.to,
+  });
 
-  const [moderationStatusFilter, setModerationStatusFilter] =
-    useState<ExamEnvironmentExamModerationStatus>(search.filter || "Pending");
+  const setModerationStatusFilter = (
+    filter: ExamEnvironmentExamModerationStatus,
+  ) => {
+    navigate({
+      to: attemptsRoute.to,
+      search: (prev: AttemptsSearch) => ({ ...prev, filter }),
+    });
+  };
+  const setSort = (sort: number) => {
+    navigate({
+      to: attemptsRoute.to,
+      search: (prev: AttemptsSearch) => ({ ...prev, sort }),
+    });
+  };
   // const [examFilter, setExamFilter] = useState<GetExam["exam"] | null>(null);
-  const [sort, setSort] = useState<number>(search.sort ?? 1);
 
   // TODO: Could turn this into a mutation, and only fetch if filter is used
   // const examsQuery = useQuery({
@@ -307,9 +320,29 @@ export function Attempts() {
   );
 }
 
+interface AttemptsSearch {
+  filter: ExamEnvironmentExamModerationStatus;
+  sort: number;
+}
+
 export const attemptsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/attempts",
+  validateSearch: (search: Record<string, unknown>): AttemptsSearch => {
+    const filters: ExamEnvironmentExamModerationStatus[] = [
+      "Pending",
+      "Approved",
+      "Denied",
+    ];
+    return {
+      filter: filters.includes(
+        search.filter as ExamEnvironmentExamModerationStatus,
+      )
+        ? (search.filter as ExamEnvironmentExamModerationStatus)
+        : "Pending",
+      sort: Number(search.sort) === -1 ? -1 : 1,
+    };
+  },
   component: () => (
     <ProtectedRoute>
       <Attempts />
