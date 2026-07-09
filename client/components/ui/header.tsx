@@ -27,7 +27,7 @@ export function Header({ title, description, children }: HeaderProps) {
         </Heading>
         {description && (
           <Text color="fg.muted" fontSize="lg">
-            Create exams for the Exam Environment.
+            {description}
           </Text>
         )}
       </Stack>
