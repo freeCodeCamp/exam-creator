@@ -10,6 +10,7 @@ import { landingRoute } from "../pages/landing";
 import { loginRoute } from "../pages/login";
 import { rootRoute } from "../pages/root";
 import { metricsRoute } from "../pages/metrics";
+import { usersRoute } from "../pages/users";
 import { viewMetricsRoute } from "../pages/view-metrics";
 
 export const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ export const routeTree = rootRoute.addChildren([
   examsRoute,
   landingRoute,
   loginRoute,
+  usersRoute,
   viewMetricsRoute,
 ]);
 

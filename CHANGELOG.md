@@ -21,6 +21,14 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.3.0] - 2026-07-09
+
+### Added
+
+- remove attempt and moderation record
+- search by user (email, id, or username)
+- user management page (`/users`): get all attempts and moderations for a user by user id, attempt id, moderation id, username, or email
+
 ## [6.2.1] - 2026-07-07
 
 ### Fixed

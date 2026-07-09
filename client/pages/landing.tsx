@@ -10,6 +10,7 @@ import { examsRoute } from "./exams";
 import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
 import { metricsRoute } from "./metrics";
+import { usersRoute } from "./users";
 import { AttemptsLandingCard } from "../components/attempt/landing-card";
 import { Header } from "../components/ui/header";
 
@@ -115,6 +116,21 @@ export function Landing() {
                 bg={"bg.subtle"}
               >
                 <LandingCard path={"/metrics"}>Exam Metrics</LandingCard>
+              </Button>
+              <Button
+                onClick={() => navigate({ to: usersRoute.to })}
+                _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
+                borderRadius="xl"
+                transition="all 0.15s"
+                display="block"
+                textAlign="left"
+                variant="plain"
+                w="full"
+                h="auto"
+                p={0}
+                bg={"bg.subtle"}
+              >
+                <LandingCard path={"/users"}>User Management</LandingCard>
               </Button>
             </SimpleGrid>
           </Box>

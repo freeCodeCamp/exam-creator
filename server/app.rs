@@ -229,6 +229,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
                 .put(routes::exam_challenge::put_exam_challenges), // .delete(routes::exam_challenge::delete_exam_challenge),
         )
         .route("/api/users", get(routes::users::get_users))
+        .route("/api/users/search", get(routes::users::get_user_search))
         .route(
             "/api/prisma/users/{user_id}",
             get(routes::users::get_user_by_id),
@@ -262,6 +263,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route_service("/exams", ServeFile::new("dist/index.html"))
         .route_service("/exams/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/metrics", ServeFile::new("dist/index.html"))
+        .route_service("/users", ServeFile::new("dist/index.html"))
         .route_service("/metrics/exams/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/login", ServeFile::new("dist/index.html"))
         .fallback_service(ServeDir::new("dist"))

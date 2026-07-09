@@ -153,16 +153,29 @@ pub async fn get_attempts_by_user_id(
     Path(user_id): Path<ObjectId>,
 ) -> Result<Json<Vec<config::Attempt>>, Error> {
     let database = database_environment(&server_state, &exam_creator_user);
-    let mut exam_attempts = database
+    let exam_attempts: Vec<prisma::ExamEnvironmentExamAttempt> = database
         .exam_attempt
         .find(doc! { "userId": user_id })
+        .await?
+        .try_collect()
         .await?;
 
+    let attempts = construct_attempts(database, &exam_attempts).await?;
+
+    Ok(Json(attempts))
+}
+
+/// Constructs full `Attempt`s from raw exam attempts, caching exams and generations
+/// to avoid repeated lookups.
+pub async fn construct_attempts(
+    database: &crate::database::Database,
+    exam_attempts: &[prisma::ExamEnvironmentExamAttempt],
+) -> Result<Vec<config::Attempt>, Error> {
     let mut attempts = vec![];
     let mut exams = HashMap::<ObjectId, prisma::ExamEnvironmentExam>::new();
     let mut generations = HashMap::<ObjectId, prisma::ExamEnvironmentGeneratedExam>::new();
 
-    while let Some(exam_attempt) = exam_attempts.try_next().await? {
+    for exam_attempt in exam_attempts {
         let exam = if let Some(exam) = exams.get(&exam_attempt.exam_id) {
             exam.clone()
         } else {
@@ -194,11 +207,11 @@ pub async fn get_attempts_by_user_id(
             generation
         };
 
-        let attempt = config::construct_attempt(&exam, &generation, &exam_attempt);
+        let attempt = config::construct_attempt(&exam, &generation, exam_attempt);
         attempts.push(attempt);
     }
 
-    Ok(Json(attempts))
+    Ok(attempts)
 }
 
 #[instrument(skip_all, err(Debug), level = "debug")]

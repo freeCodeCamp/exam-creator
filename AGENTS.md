@@ -166,6 +166,7 @@ sample.env       Environment variable template
 **Users:**
 
 - `GET /api/users` - List users (auth required)
+- `GET /api/users/search` - Get user with all their attempts and moderations by one of `user_id`, `attempt_id`, `moderation_id`, `username`, or `email` query params
 - `GET /api/users/session` - Current session user
 - `PUT /api/users/session/settings` - Update user settings
 

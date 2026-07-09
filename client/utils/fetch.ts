@@ -625,6 +625,60 @@ export async function getAttemptsByUserId(userId: string): Promise<Attempt[]> {
   return deserialized;
 }
 
+export type UserSearchBy =
+  | { user_id: string }
+  | { attempt_id: string }
+  | { moderation_id: string }
+  | { username: string }
+  | { email: string };
+
+export interface UserSearchResult {
+  user: {
+    id: string;
+    username?: string;
+    email?: string;
+    name?: string;
+    picture?: string;
+  };
+  attempts: Attempt[];
+  moderations: ExamEnvironmentExamModeration[];
+}
+
+export async function getUserSearch(
+  params: UserSearchBy,
+): Promise<UserSearchResult> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const attemptsRes = await fetch(`/mocks/attempts.json`);
+    const attempts: Attempt[] = deserializeToPrisma(await attemptsRes.json());
+    const moderationsRes = await fetch("/mocks/moderations.json");
+    const moderations: ExamEnvironmentExamModeration[] = deserializeToPrisma(
+      await moderationsRes.json(),
+    );
+
+    return {
+      user: {
+        id: attempts[0]?.userId ?? "5f9f1b9b9c9d440000a1b0f1",
+        username: "camperbot",
+        email: "camperbot@freecodecamp.org",
+        name: "Camper Bot",
+      },
+      attempts,
+      moderations,
+    };
+  }
+
+  const url = new URL("/api/users/search", window.location.href);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
+  const res = await authorizedFetch(url);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<UserSearchResult>(json);
+  return deserialized;
+}
+
 export async function getNumberOfAttemptsByUserId(
   userId: string,
 ): Promise<number> {
