@@ -26,8 +26,27 @@
 ### Added
 
 - remove attempt and moderation record
+  - client: delete attempt + moderation from user page with 10s undo window
+  - server: `DELETE /api/attempts/{attempt_id}` (removes attempt and its moderation)
 - search by user (email, id, or username)
 - user management page (`/users`): get all attempts and moderations for a user by user id, attempt id, moderation id, username, or email
+- client: "Manage User" button on edit attempt page (navigates to `/users` by attempt id)
+- client: toaster provider
+
+### Changed
+
+- client: persist attempts filter and sort in URL search params
+- client: sync users page search from URL params
+- client: `Header` uses provided `description` prop
+
+### Fixed
+
+- client: card title truncation with ellipsis
+- server: correct error message for non-existent generated exam
+
+### Removed
+
+- server: `GET /api/prisma/users/{user_id}`
 
 ## [6.2.1] - 2026-07-07
 
