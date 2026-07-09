@@ -201,7 +201,10 @@ pub async fn construct_attempts(
                 .await?
                 .ok_or(Error::Server(
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("exam non-existent: {}", exam_attempt.exam_id),
+                    format!(
+                        "generated exam non-existent: {}",
+                        exam_attempt.generated_exam_id
+                    ),
                 ))?;
             generations.insert(exam_attempt.generated_exam_id, generation.to_owned());
             generation
