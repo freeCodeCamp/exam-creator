@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Query, State},
 };
 use axum_extra::extract::PrivateCookieJar;
 use bson::{Document, oid::ObjectId};
@@ -134,7 +134,7 @@ pub struct GetUserSearchResponse {
 
 /// Look up a user by one of `user_id`, `attempt_id`, `moderation_id`, `username`, or `email`,
 /// and return the user with all their attempts and moderations.
-#[instrument(skip_all, err(Debug), level = "debug")]
+#[instrument(skip_all, err(Debug), level = "info")]
 pub async fn get_user_search(
     exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,
@@ -238,23 +238,4 @@ pub async fn get_user_search(
         attempts,
         moderations,
     }))
-}
-
-#[instrument(skip_all, err(Debug), level = "debug")]
-pub async fn get_user_by_id(
-    _: prisma::ExamCreatorUser,
-    State(state): State<ServerState>,
-    Path(user_id): Path<ObjectId>,
-) -> Result<Json<Document>, Error> {
-    let user = state
-        .staging_database
-        .user
-        .find_one(doc! {"_id": user_id})
-        .await?
-        .ok_or(Error::Server(
-            StatusCode::BAD_REQUEST,
-            format!("user non-existent for id: {user_id}"),
-        ))?;
-
-    Ok(Json(user))
 }

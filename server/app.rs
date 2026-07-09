@@ -230,10 +230,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         )
         .route("/api/users", get(routes::users::get_users))
         .route("/api/users/search", get(routes::users::get_user_search))
-        .route(
-            "/api/prisma/users/{user_id}",
-            get(routes::users::get_user_by_id),
-        )
         .route("/api/users/session", get(routes::users::get_session_user))
         .route(
             "/api/users/session/settings",
