@@ -2,6 +2,7 @@ import { Box, Spinner } from "@chakra-ui/react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Brush,
   CartesianGrid,
   Legend,
   Line,
@@ -13,6 +14,7 @@ import {
   type LegendPayload,
 } from "recharts";
 import { getExamAttemptStats, getExamsMetrics } from "../utils/fetch";
+import { prettyDate } from "../utils/question";
 
 const CHART_COLORS = [
   "#8884d8",
@@ -29,10 +31,7 @@ const CHART_COLORS = [
 
 function formatDate(ms: number): string {
   const d = new Date(ms);
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return prettyDate(d);
 }
 
 export function AttemptCumulativeLine() {
@@ -99,8 +98,8 @@ export function AttemptCumulativeLine() {
   }
 
   return (
-    <Box height="400px" mt={6} mb={4}>
-      <ResponsiveContainer width="100%" height={400}>
+    <Box height="440px" mt={6} mb={4}>
+      <ResponsiveContainer width="100%" height={440}>
         <LineChart
           data={data}
           margin={{ bottom: 20, left: 20, right: 30, top: 5 }}
@@ -161,6 +160,13 @@ export function AttemptCumulativeLine() {
               hide={hidden.has(exam.id)}
             />
           ))}
+          <Brush
+            dataKey="t"
+            height={24}
+            stroke="#319795"
+            travellerWidth={8}
+            tickFormatter={(v) => formatDate(Number(v))}
+          />
         </LineChart>
       </ResponsiveContainer>
     </Box>
