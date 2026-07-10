@@ -121,8 +121,6 @@ pub async fn ws_handler_users(
     State(state): State<ServerState>,
     Query(QueryAuth { token }): Query<QueryAuth>,
 ) -> Result<impl IntoResponse, Error> {
-    info!("WebSocket connection request for users");
-
     let cookie = session
         .remove::<String>(&token)
         .await?
