@@ -1,9 +1,12 @@
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
+use bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use supabase_rs::SupabaseClient;
+use tokio::sync::oneshot;
 use tracing::error;
 
 use crate::{
@@ -22,7 +25,14 @@ pub struct ServerState {
     pub env_vars: EnvVars,
     pub exam_metrics_by_id_cache: Arc<Mutex<Vec<GetExamMetricsById>>>,
     pub attempt_metrics_cache: Arc<Mutex<Cache<Vec<GetAttemptsMetrics>>>>,
+    /// Attempts scheduled for deletion after a grace period. Sending on (or dropping)
+    /// the sender cancels the pending delete before it runs.
+    pub pending_deletes: PendingDeletes,
 }
+
+/// Maps an attempt id to the cancellation channel for its pending deletion task, tagged with a
+/// generation so a completing task only clears its own entry (not a newer reschedule that replaced it).
+pub type PendingDeletes = Arc<Mutex<HashMap<ObjectId, (u64, oneshot::Sender<()>)>>>;
 
 impl FromRef<ServerState> for Key {
     fn from_ref(state: &ServerState) -> Self {

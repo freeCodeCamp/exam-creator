@@ -29,8 +29,9 @@ import { Header } from "../components/ui/header";
 import { DeleteAttemptModal } from "../components/delete-attempt-modal";
 import { toaster } from "../components/toaster";
 import {
-  deleteAttemptById,
+  cancelAttemptDeletion,
   getUserSearch,
+  scheduleAttemptDeletion,
   type UserSearchBy,
 } from "../utils/fetch";
 
@@ -106,17 +107,26 @@ export function Users() {
     refetchOnWindowFocus: false,
   });
 
-  const deleteAttemptMutation = useMutation({
-    mutationFn: (attemptId: string) => deleteAttemptById(attemptId),
-    onSuccess: async (_res, attemptId) => {
-      await search.refetch();
-      clearPending(attemptId);
-    },
+  // Ask the server to schedule the delete; it owns the grace-period timer.
+  const scheduleDeleteMutation = useMutation({
+    mutationFn: (attemptId: string) => scheduleAttemptDeletion(attemptId),
     onError: (e: Error, attemptId) => {
       clearPending(attemptId);
       toaster.create({
         type: "error",
         title: "Delete failed",
+        description: e.message,
+      });
+    },
+  });
+
+  // Undo: cancel the server-side pending delete.
+  const cancelDeleteMutation = useMutation({
+    mutationFn: (attemptId: string) => cancelAttemptDeletion(attemptId),
+    onError: (e: Error) => {
+      toaster.create({
+        type: "error",
+        title: "Undo failed",
         description: e.message,
       });
     },
@@ -132,7 +142,7 @@ export function Users() {
     }
   }
 
-  // Cancel a scheduled delete and restore the attempt (undo, or after completion).
+  // Restore an attempt in the UI and tear down its countdown toast/timers.
   function clearPending(attemptId: string) {
     clearTimers(attemptId);
     setPendingDeletes((prev) => {
@@ -142,8 +152,16 @@ export function Users() {
     });
   }
 
+  // Undo: cancel the server-side pending delete and restore the attempt.
+  function undoDelete(attemptId: string) {
+    cancelDeleteMutation.mutate(attemptId);
+    clearPending(attemptId);
+  }
+
   function scheduleDelete(attemptId: string) {
     setPendingDeletes((prev) => new Set(prev).add(attemptId));
+    // Server owns the grace-period timer; the client countdown is only the undo affordance.
+    scheduleDeleteMutation.mutate(attemptId);
 
     let remaining = DELETE_DELAY_SECONDS;
     const toastId = toaster.create({
@@ -153,7 +171,7 @@ export function Users() {
       duration: Number.POSITIVE_INFINITY,
       action: {
         label: "Undo",
-        onClick: () => clearPending(attemptId),
+        onClick: () => undoDelete(attemptId),
       },
     });
 
@@ -164,15 +182,17 @@ export function Users() {
       }
     }, 1000);
 
+    // Grace elapsed: the server has now deleted the attempt. Dismiss the toast and
+    // keep it hidden. No undo past this point.
     const timeout = window.setTimeout(() => {
-      window.clearInterval(interval);
-      deleteAttemptMutation.mutate(attemptId);
+      clearTimers(attemptId);
     }, DELETE_DELAY_SECONDS * 1000);
 
     deleteTimers.current.set(attemptId, { timeout, interval, toastId });
   }
 
-  // Cancel any in-flight undo timers on unmount (aborts the pending delete).
+  // Tear down client-only countdown timers on unmount. The server-side delete is
+  // unaffected: navigating away no longer cancels a pending deletion.
   useEffect(() => {
     const timers = deleteTimers.current;
     return () => {

@@ -609,8 +609,21 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
   return deserialized;
 }
 
-export async function deleteAttemptById(attemptId: string): Promise<Response> {
-  return await authorizedFetch(`/api/attempts/${attemptId}`, {
+/// Schedule server-side deletion of an attempt (and its moderation) after a grace
+/// period. The server owns the timer, so it runs even if the client navigates away.
+export async function scheduleAttemptDeletion(
+  attemptId: string,
+): Promise<Response> {
+  return await authorizedFetch(`/api/attempts/${attemptId}/pending-deletion`, {
+    method: "PUT",
+  });
+}
+
+/// Cancel a pending server-side attempt deletion (undo).
+export async function cancelAttemptDeletion(
+  attemptId: string,
+): Promise<Response> {
+  return await authorizedFetch(`/api/attempts/${attemptId}/pending-deletion`, {
     method: "DELETE",
   });
 }

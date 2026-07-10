@@ -146,14 +146,87 @@ pub async fn patch_moderation_status_by_attempt_id(
     Ok(())
 }
 
+/// Grace period before a scheduled attempt deletion is executed, allowing an undo.
+const DELETE_GRACE_SECONDS: u64 = 10;
+
+/// Monotonic tag distinguishing successive schedules for the same attempt id.
+static DELETE_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Schedule deletion of an attempt (and its moderation) after a grace period.
+///
+/// Spawns a non-blocking task that waits `DELETE_GRACE_SECONDS` before deleting.
+/// The task is cancellable via [`delete_pending_deletion`]; unlike the previous
+/// client-side timer, it survives the client navigating away.
 #[instrument(skip_all, err(Debug), level = "debug")]
-pub async fn delete_attempt_by_id(
+pub async fn put_pending_deletion(
     exam_creator_user: prisma::ExamCreatorUser,
     State(server_state): State<ServerState>,
     Path(attempt_id): Path<ObjectId>,
 ) -> Result<(), Error> {
-    let database = database_environment(&server_state, &exam_creator_user);
+    let database = database_environment(&server_state, &exam_creator_user).clone();
 
+    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+    let generation = DELETE_GENERATION.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+    // Replace any existing schedule for this attempt (dropping the old sender cancels it).
+    server_state
+        .pending_deletes
+        .lock()
+        .unwrap()
+        .insert(attempt_id, (generation, tx));
+
+    let pending_deletes = server_state.pending_deletes.clone();
+    tokio::spawn(async move {
+        tokio::select! {
+            _ = tokio::time::sleep(std::time::Duration::from_secs(DELETE_GRACE_SECONDS)) => {
+                if let Err(e) = perform_delete_attempt(&database, attempt_id).await {
+                    tracing::error!("scheduled delete failed for attempt {attempt_id}: {e}");
+                }
+                // Only drop our own entry, not a newer reschedule that replaced it.
+                let mut pending = pending_deletes.lock().unwrap();
+                if pending.get(&attempt_id).is_some_and(|(g, _)| *g == generation) {
+                    pending.remove(&attempt_id);
+                }
+            }
+            _ = rx => {
+                // Cancelled: the sender was dropped/removed by delete_pending_deletion.
+                tracing::info!(%attempt_id, "scheduled delete cancelled");
+            }
+        }
+    });
+
+    Ok(())
+}
+
+/// Cancel a pending attempt deletion, restoring the attempt.
+#[instrument(skip_all, err(Debug), level = "debug")]
+pub async fn delete_pending_deletion(
+    _exam_creator_user: prisma::ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(attempt_id): Path<ObjectId>,
+) -> Result<(), Error> {
+    // Removing the sender drops it, waking the task's `rx` branch and aborting the delete.
+    let removed = server_state
+        .pending_deletes
+        .lock()
+        .unwrap()
+        .remove(&attempt_id);
+
+    if removed.is_none() {
+        return Err(Error::Server(
+            StatusCode::NOT_FOUND,
+            format!("no pending deletion for attempt: {attempt_id}"),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Delete an attempt and its moderation (0-1 records). Errors if the attempt does not exist.
+async fn perform_delete_attempt(
+    database: &crate::database::Database,
+    attempt_id: ObjectId,
+) -> Result<(), Error> {
     // Delete moderation first (0-1 records). Not-found is fine.
     database
         .exam_environment_exam_moderation
