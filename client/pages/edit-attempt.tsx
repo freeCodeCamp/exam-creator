@@ -20,8 +20,6 @@ import {
   Flex,
   Field,
   Switch,
-  Popover,
-  Portal,
 } from "@chakra-ui/react";
 import {
   ExamEnvironmentExamModeration,
@@ -540,31 +538,33 @@ function EditAttempt({
                 >
                   <CartesianGrid opacity={0.2} />
                   {isEventsToggled &&
-                    focusGaps.map((f) => {
-                      const stroke = "red";
-                      const opacity = 0.3;
+                    focusGaps.map((f, i) => {
                       const y1 = f.blurTime;
                       const y2 = f.focusTime;
                       const time = (y2 - y1).toFixed(2);
                       return (
-                        <Popover.Root
-                          key={f.idx}
-                          positioning={{ placement: "top" }}
-                          lazyMount
-                        >
-                          <Popover.Trigger>
-                            <ReferenceArea
-                              {...{ y1, y2, stroke, opacity }}
-                              yAxisId={"left"}
-                            />
-                          </Popover.Trigger>
-                          <Portal>
-                            <Popover.Content width={time.length * 20 + "px"}>
-                              <Popover.Arrow />
-                              <Popover.Body>{time}s</Popover.Body>
-                            </Popover.Content>
-                          </Portal>
-                        </Popover.Root>
+                        <ReferenceArea
+                          key={`focus-gap-${i}`}
+                          y1={y1}
+                          y2={y2}
+                          yAxisId={"left"}
+                          stroke="red"
+                          opacity={0.3}
+                          shape={(props) => (
+                            <rect
+                              x={props.x}
+                              y={props.y}
+                              width={props.width}
+                              height={props.height}
+                              fill="red"
+                              fillOpacity={0.3}
+                              stroke="red"
+                              style={{ cursor: "help" }}
+                            >
+                              <title>{time}s unfocused</title>
+                            </rect>
+                          )}
+                        />
                       );
                     })}
 
