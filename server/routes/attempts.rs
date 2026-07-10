@@ -199,6 +199,9 @@ pub async fn put_pending_deletion(
 }
 
 /// Cancel a pending attempt deletion, restoring the attempt.
+///
+/// Idempotent: cancelling when nothing is pending (e.g. the grace period
+/// already elapsed) is a no-op, not an error.
 #[instrument(skip_all, err(Debug), level = "debug")]
 pub async fn delete_pending_deletion(
     _exam_creator_user: prisma::ExamCreatorUser,
@@ -213,16 +216,14 @@ pub async fn delete_pending_deletion(
         .remove(&attempt_id);
 
     if removed.is_none() {
-        return Err(Error::Server(
-            StatusCode::NOT_FOUND,
-            format!("no pending deletion for attempt: {attempt_id}"),
-        ));
+        tracing::info!(%attempt_id, "no pending deletion to cancel");
     }
 
     Ok(())
 }
 
-/// Delete an attempt and its moderation (0-1 records). Errors if the attempt does not exist.
+/// Delete an attempt and its moderation (0-1 records). Already-deleted records
+/// are not an error: the desired end state is reached either way.
 async fn perform_delete_attempt(
     database: &crate::database::Database,
     attempt_id: ObjectId,
@@ -239,10 +240,7 @@ async fn perform_delete_attempt(
         .await?;
 
     if delete_result.deleted_count == 0 {
-        return Err(Error::Server(
-            StatusCode::BAD_REQUEST,
-            format!("attempt non-existent: {attempt_id}"),
-        ));
+        tracing::warn!(%attempt_id, "attempt already deleted");
     }
 
     Ok(())

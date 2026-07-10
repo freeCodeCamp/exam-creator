@@ -15,8 +15,13 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useContext, useEffect, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, SearchIcon } from "lucide-react";
 
 import { rootRoute } from "./root";
@@ -27,15 +32,12 @@ import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { Header } from "../components/ui/header";
 import { DeleteAttemptModal } from "../components/delete-attempt-modal";
-import { toaster } from "../components/toaster";
+import { getUserSearch, type UserSearchBy } from "../utils/fetch";
 import {
-  cancelAttemptDeletion,
-  getUserSearch,
-  scheduleAttemptDeletion,
-  type UserSearchBy,
-} from "../utils/fetch";
-
-const DELETE_DELAY_SECONDS = 10;
+  getPendingDeletes,
+  scheduleDelete,
+  subscribePendingDeletes,
+} from "../utils/pending-deletes";
 
 const SEARCH_FIELDS = [
   { key: "email", label: "Email" },
@@ -91,13 +93,12 @@ export function Users() {
   }, [urlSearch.field, urlSearch.value]);
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  // Attempts scheduled for deletion, hidden optimistically during the undo window.
-  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(
-    () => new Set(),
+  // Attempts scheduled for deletion, hidden optimistically. Module-scoped so
+  // the undo window survives navigating away and back.
+  const pending = useSyncExternalStore(
+    subscribePendingDeletes,
+    getPendingDeletes,
   );
-  const deleteTimers = useRef<
-    Map<string, { timeout: number; interval: number; toastId: string }>
-  >(new Map());
 
   const search = useQuery({
     queryKey: ["user-search", submittedSearch],
@@ -107,107 +108,11 @@ export function Users() {
     refetchOnWindowFocus: false,
   });
 
-  // Ask the server to schedule the delete; it owns the grace-period timer.
-  const scheduleDeleteMutation = useMutation({
-    mutationFn: (attemptId: string) => scheduleAttemptDeletion(attemptId),
-    onError: (e: Error, attemptId) => {
-      clearPending(attemptId);
-      toaster.create({
-        type: "error",
-        title: "Delete failed",
-        description: e.message,
-      });
-    },
-  });
-
-  // Undo: cancel the server-side pending delete.
-  const cancelDeleteMutation = useMutation({
-    mutationFn: (attemptId: string) => cancelAttemptDeletion(attemptId),
-    onError: (e: Error) => {
-      toaster.create({
-        type: "error",
-        title: "Undo failed",
-        description: e.message,
-      });
-    },
-  });
-
-  function clearTimers(attemptId: string) {
-    const timers = deleteTimers.current.get(attemptId);
-    if (timers) {
-      window.clearTimeout(timers.timeout);
-      window.clearInterval(timers.interval);
-      toaster.dismiss(timers.toastId);
-      deleteTimers.current.delete(attemptId);
-    }
-  }
-
-  // Restore an attempt in the UI and tear down its countdown toast/timers.
-  function clearPending(attemptId: string) {
-    clearTimers(attemptId);
-    setPendingDeletes((prev) => {
-      const next = new Set(prev);
-      next.delete(attemptId);
-      return next;
-    });
-  }
-
-  // Undo: cancel the server-side pending delete and restore the attempt.
-  function undoDelete(attemptId: string) {
-    cancelDeleteMutation.mutate(attemptId);
-    clearPending(attemptId);
-  }
-
-  function scheduleDelete(attemptId: string) {
-    setPendingDeletes((prev) => new Set(prev).add(attemptId));
-    // Server owns the grace-period timer; the client countdown is only the undo affordance.
-    scheduleDeleteMutation.mutate(attemptId);
-
-    let remaining = DELETE_DELAY_SECONDS;
-    const toastId = toaster.create({
-      type: "info",
-      title: "Deleting attempt + moderation",
-      description: `Undo within ${remaining}s`,
-      duration: Number.POSITIVE_INFINITY,
-      action: {
-        label: "Undo",
-        onClick: () => undoDelete(attemptId),
-      },
-    });
-
-    const interval = window.setInterval(() => {
-      remaining -= 1;
-      if (remaining > 0) {
-        toaster.update(toastId, { description: `Undo within ${remaining}s` });
-      }
-    }, 1000);
-
-    // Grace elapsed: the server has now deleted the attempt. Dismiss the toast and
-    // keep it hidden. No undo past this point.
-    const timeout = window.setTimeout(() => {
-      clearTimers(attemptId);
-    }, DELETE_DELAY_SECONDS * 1000);
-
-    deleteTimers.current.set(attemptId, { timeout, interval, toastId });
-  }
-
-  // Tear down client-only countdown timers on unmount. The server-side delete is
-  // unaffected: navigating away no longer cancels a pending deletion.
-  useEffect(() => {
-    const timers = deleteTimers.current;
-    return () => {
-      timers.forEach((t) => {
-        window.clearTimeout(t.timeout);
-        window.clearInterval(t.interval);
-      });
-    };
-  }, []);
-
   const visibleAttempts = (search.data?.attempts ?? []).filter(
-    (a) => !pendingDeletes.has(a.id),
+    (a) => !pending.has(a.id),
   );
   const visibleModerations = (search.data?.moderations ?? []).filter(
-    (m) => !pendingDeletes.has(m.examAttemptId),
+    (m) => !pending.has(m.examAttemptId),
   );
 
   useEffect(() => {

@@ -11,7 +11,13 @@ import {
   Menu,
 } from "@chakra-ui/react";
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useContext, useEffect, useRef, useCallback } from "react";
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { ExamEnvironmentExamModerationStatus } from "@prisma/client";
 
@@ -24,6 +30,10 @@ import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { moderationsInfiniteQuery } from "../hooks/queries";
 import { Header } from "../components/ui/header";
+import {
+  getPendingDeletes,
+  subscribePendingDeletes,
+} from "../utils/pending-deletes";
 
 export function Attempts() {
   const { logout } = useContext(AuthContext)!;
@@ -58,6 +68,16 @@ export function Attempts() {
   // });
 
   const mods = moderationsInfiniteQuery({ moderationStatusFilter, sort });
+
+  // Hide moderations whose attempt is pending (or past) deletion: cached pages
+  // may still contain them, and rendering one would 404 fetching its attempt.
+  const pendingDeletes = useSyncExternalStore(
+    subscribePendingDeletes,
+    getPendingDeletes,
+  );
+  const visibleModerations = (mods.data?.pages.flat() ?? []).filter(
+    (m) => !pendingDeletes.has(m.examAttemptId),
+  );
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastCardRef = useCallback(
@@ -275,7 +295,7 @@ export function Attempts() {
             ) : (
               <SimpleGrid columns={1} gap={8}>
                 {mods.isSuccess &&
-                  mods.data.pages.flat().map((moderation, i, moderations) => {
+                  visibleModerations.map((moderation, i, moderations) => {
                     const isLastCard = i === moderations.length - 1;
                     return (
                       <Box
