@@ -21,6 +21,19 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.5.2] - 2026-07-10
+
+### Changed
+
+- remove websocket request info log
+- add roadmap + changelog auto
+
+### Fixed
+
+- keep delete-undo toast alive across navigation and drop post-delete 404s
+  - Pending-delete state moves to module scope so the countdown toast survives leaving the page. After the grace period, caches referencing the deleted attempt/moderation are purged and stale lists filtered, and the server treats cancel/already-deleted as no-ops instead of 404/errors.
+- remove question tooltip
+
 ## [6.5.0] - 2026-07-09
 
 ### Added
