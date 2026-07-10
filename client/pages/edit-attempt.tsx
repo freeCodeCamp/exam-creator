@@ -45,7 +45,6 @@ import { Attempt, Event } from "../types";
 import { prettyDate, secondsToHumanReadable } from "../utils/question";
 import { moderationKeys } from "../hooks/queries";
 import {
-  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   ComposedChart,
   CartesianGrid,
@@ -57,13 +56,8 @@ import {
   Scatter,
   DefaultLegendContent,
   DefaultLegendContentProps,
-  TooltipContentProps,
 } from "recharts";
 import { BracketLayer } from "../components/diff-brackets";
-import {
-  NameType,
-  ValueType,
-} from "recharts/types/component/DefaultTooltipContent";
 import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 function Edit() {
@@ -548,15 +542,13 @@ function EditAttempt({
                           y1={y1}
                           y2={y2}
                           yAxisId={"left"}
-                          stroke="red"
-                          opacity={0.3}
                           shape={(props) => (
                             <rect
                               x={props.x}
                               y={props.y}
                               width={props.width}
                               height={props.height}
-                              fill="red"
+                              fill="gray"
                               fillOpacity={0.3}
                               stroke="red"
                               style={{ cursor: "help" }}
@@ -682,11 +674,6 @@ function EditAttempt({
                         />
                       );
                     })}
-                  <RechartsTooltip
-                    cursor={{ strokeDasharray: "3 3" }}
-                    content={TooltipContent}
-                    shared={false}
-                  />
                 </ComposedChart>
               </ResponsiveContainer>
             </Box>
@@ -859,36 +846,6 @@ function EditAttempt({
         </Box>
       </Stack>
     </>
-  );
-}
-
-function TooltipContent({
-  active,
-  payload,
-}: TooltipContentProps<ValueType, NameType>) {
-  const showTooltip = active && payload && payload.length;
-  if (!showTooltip) {
-    return null;
-  }
-  const data = payload[0].payload;
-  const label =
-    typeof data.isCorrect === "boolean"
-      ? data.isCorrect
-        ? "Correct"
-        : "Incorrect"
-      : data.kind;
-  return (
-    <Flex
-      flexDirection={"column"}
-      color="fg.muted"
-      background={"rgba(113, 148, 172, 0.27)"}
-      border="1px solid rgba(0,40,255,0.3)"
-      padding={2}
-    >
-      <Text>Label: {label}</Text>
-      <Text>Question: {data.idx}</Text>
-      <Text>Time [s]: {data.timeSinceStartInS}</Text>
-    </Flex>
   );
 }
 
