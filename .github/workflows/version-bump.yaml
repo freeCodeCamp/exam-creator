@@ -63,6 +63,76 @@ jobs:
         run: |
           npm version ${{ inputs.release_type }} --no-git-tag-version
 
+      - name: generate changelog entry
+        id: changelog
+        uses: actions/github-script@v7
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+        with:
+          script: |
+            const fs = require('fs')
+            const { execSync } = require('child_process')
+
+            const git = (args) => execSync(`git ${args}`, { encoding: 'utf8' }).trim()
+
+            let lastRelease
+            try {
+              lastRelease = git(`log --grep='^release(' -1 --format=%H`)
+            } catch {
+              lastRelease = ''
+            }
+            const range = lastRelease ? `${lastRelease}..HEAD` : 'HEAD'
+
+            const SEP = '---COMMIT---'
+            const raw = git(`log ${range} --format='${SEP}%n%s%n%b'`)
+            const commits = raw
+              .split(SEP)
+              .map((c) => c.trim())
+              .filter(Boolean)
+
+            const sections = { Added: [], Changed: [], Fixed: [], Removed: [] }
+            const sectionForType = (type) => {
+              if (type === 'feat') return 'Added'
+              if (type === 'fix') return 'Fixed'
+              if (type === 'revert') return 'Removed'
+              return 'Changed'
+            }
+
+            for (const commit of commits) {
+              const [subjectLine, ...bodyLines] = commit.split('\n')
+              const match = subjectLine.match(/^(\w+)(?:\(([^)]+)\))?!?:\s*(.+)$/)
+              if (!match) continue
+              const [, type, scope, subject] = match
+              if (type === 'release') continue
+
+              let entry = scope ? `- ${scope}: ${subject}` : `- ${subject}`
+              const body = bodyLines.join('\n').trim()
+              if (body) {
+                for (const paragraph of body.split(/\n{2,}/)) {
+                  entry += `\n  - ${paragraph.replace(/\n/g, ' ').trim()}`
+                }
+              }
+              sections[sectionForType(type)].push(entry)
+            }
+
+            const date = new Date().toISOString().slice(0, 10)
+            let section = `## [${process.env.NEW_VERSION}] - ${date}\n`
+            for (const [heading, entries] of Object.entries(sections)) {
+              if (!entries.length) continue
+              section += `\n### ${heading}\n\n${entries.join('\n')}\n`
+            }
+
+            const changelog = fs.readFileSync('./CHANGELOG.md', 'utf8')
+            const insertAt = changelog.search(/^## \[\d+\.\d+\.\d+\]/m)
+            if (insertAt === -1) {
+              throw new Error('No existing version heading found in CHANGELOG.md')
+            }
+            const updated = changelog.slice(0, insertAt) + section + '\n' + changelog.slice(insertAt)
+            fs.writeFileSync('./CHANGELOG.md', updated)
+
+            core.setOutput('section', section)
+            console.log(section)
+
       - name: create pull request
         uses: peter-evans/create-pull-request@v7
         with:
@@ -75,6 +145,10 @@ jobs:
             ## Version Bump: ${{ inputs.release_type }}
 
             This PR bumps the version from `${{ steps.version.outputs.current_version }}` to `${{ steps.version.outputs.new_version }}`.
+
+            ## Changelog
+
+            ${{ steps.changelog.outputs.section }}
 
             ### Next Steps
 
