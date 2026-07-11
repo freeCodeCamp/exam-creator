@@ -1,4 +1,12 @@
-import { useContext, useEffect, useRef, useState, useMemo } from "react";
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  type MouseEvent as ReactMouseEvent,
+  type MutableRefObject,
+} from "react";
 import { InfiniteData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   createRoute,
@@ -56,6 +64,8 @@ import {
   Scatter,
   DefaultLegendContent,
   DefaultLegendContentProps,
+  useYAxisInverseScale,
+  usePlotArea,
 } from "recharts";
 import { BracketLayer } from "../components/diff-brackets";
 import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
@@ -176,6 +186,13 @@ function EditAttempt({
   const [isSubmissionTimelineToggled, setIsSubmissionTimelineToggled] =
     useState(false);
   const [isEventsToggled, setIsEventsToggled] = useState(true);
+  const [yZoomDomain, setYZoomDomain] = useState<[number, number] | null>(null);
+  const [yDrag, setYDrag] = useState<{ start: number; current: number } | null>(
+    null,
+  );
+  const yInverseScaleRef = useRef<((pixel: number) => number | null) | null>(
+    null,
+  );
   const buttonBoxRef = useRef<HTMLDivElement | null>(null);
   const approveButtonRef = useRef<HTMLButtonElement | null>(null);
   const denyButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -525,11 +542,59 @@ function EditAttempt({
                 </Switch.Root>
               </Field.Root>
             </SimpleGrid>
-            <Box resize={"vertical"} overflow={"auto"}>
+            <HStack justifyContent={"flex-end"} minH={8}>
+              {yZoomDomain ? (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorPalette="teal"
+                  onClick={() => setYZoomDomain(null)}
+                >
+                  Reset Zoom ({yZoomDomain[0].toFixed(0)}s -{" "}
+                  {yZoomDomain[1].toFixed(0)}s)
+                </Button>
+              ) : (
+                <Text fontSize="xs" color="fg.muted">
+                  Drag vertically on chart to zoom y-axis
+                </Text>
+              )}
+            </HStack>
+            <Box resize={"vertical"} overflowY={"auto"}>
               <ResponsiveContainer width="100%" minHeight={450}>
                 <ComposedChart
                   margin={{ top: 15, right: 20, bottom: 5, left: 0 }}
+                  style={{ userSelect: "none", cursor: "ns-resize" }}
+                  onMouseDown={(_state, event) => {
+                    const y = getChartPixelY(event);
+                    if (y !== null) setYDrag({ start: y, current: y });
+                  }}
+                  onMouseMove={(_state, event) => {
+                    if (!yDrag) return;
+                    const y = getChartPixelY(event);
+                    if (y !== null)
+                      setYDrag({ start: yDrag.start, current: y });
+                  }}
+                  onMouseUp={() => {
+                    if (!yDrag) return;
+                    const inverse = yInverseScaleRef.current;
+                    if (inverse && Math.abs(yDrag.current - yDrag.start) > 5) {
+                      const v1 = inverse(yDrag.start);
+                      const v2 = inverse(yDrag.current);
+                      if (v1 !== null && v2 !== null) {
+                        setYZoomDomain([
+                          Math.floor(Math.min(v1, v2)),
+                          Math.ceil(Math.max(v1, v2)),
+                        ]);
+                      }
+                    }
+                    setYDrag(null);
+                  }}
+                  onMouseLeave={() => setYDrag(null)}
                 >
+                  <YAxisZoomHelper
+                    dragPixels={yDrag}
+                    inverseScaleRef={yInverseScaleRef}
+                  />
                   <CartesianGrid opacity={0.2} />
                   {isEventsToggled &&
                     focusGaps.map((f, i) => {
@@ -542,6 +607,7 @@ function EditAttempt({
                           y1={y1}
                           y2={y2}
                           yAxisId={"left"}
+                          ifOverflow="hidden"
                           shape={(props) => (
                             <rect
                               x={props.x}
@@ -590,6 +656,11 @@ function EditAttempt({
                     tickCount={30}
                     yAxisId={"left"}
                     type="number"
+                    domain={yZoomDomain ?? [0, "auto"]}
+                    allowDataOverflow={!!yZoomDomain}
+                    tickFormatter={(v: number) =>
+                      String(Math.round(v * 10) / 10)
+                    }
                     label={{
                       value: "seconds since start",
                       position: "insideBottomLeft",
@@ -846,6 +917,58 @@ function EditAttempt({
         </Box>
       </Stack>
     </>
+  );
+}
+
+function getChartPixelY(
+  event: ReactMouseEvent<SVGGraphicsElement>,
+): number | null {
+  const target = event.currentTarget;
+  if (!target?.getBoundingClientRect) return null;
+  return event.clientY - target.getBoundingClientRect().top;
+}
+
+// Rendered inside chart so recharts hooks resolve. Exposes pixel->value
+// conversion for the left y-axis, and draws the drag-selection band.
+function YAxisZoomHelper({
+  dragPixels,
+  inverseScaleRef,
+}: {
+  dragPixels: { start: number; current: number } | null;
+  inverseScaleRef: MutableRefObject<((pixel: number) => number | null) | null>;
+}) {
+  const inverse = useYAxisInverseScale("left");
+  const plotArea = usePlotArea();
+
+  useEffect(() => {
+    inverseScaleRef.current = inverse
+      ? (pixel: number) => {
+          const value = inverse(pixel);
+          return typeof value === "number" && Number.isFinite(value)
+            ? value
+            : null;
+        }
+      : null;
+  }, [inverse, inverseScaleRef]);
+
+  if (!dragPixels || !plotArea) return null;
+  const y = Math.min(dragPixels.start, dragPixels.current);
+  const height = Math.abs(dragPixels.start - dragPixels.current);
+  if (height < 2) return null;
+
+  return (
+    <rect
+      x={plotArea.x}
+      y={y}
+      width={plotArea.width}
+      height={height}
+      fill="teal"
+      fillOpacity={0.15}
+      stroke="teal"
+      strokeOpacity={0.5}
+      strokeDasharray="4 2"
+      pointerEvents="none"
+    />
   );
 }
 
