@@ -1,0 +1,18 @@
+{
+  "_id": {
+    "$oid": "66e9a8fecac3bbedc76f00aa"
+  },
+  "config": {
+    "name": "",
+    "note": "",
+    "tags": [],
+    "totalTimeInS": 7200,
+    "questionSets": [],
+    "retakeTimeInS": 86400,
+    "passingPercent": 80
+  },
+  "questionSets": [],
+  "prerequisites": [],
+  "deprecated": false,
+  "version": 1
+}

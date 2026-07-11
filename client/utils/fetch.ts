@@ -47,15 +47,8 @@ export async function discardExamStateById(
 ): Promise<ExamCreatorExam> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
-    const res = await fetch("/mocks/exams.json");
-    if (!res.ok) {
-      throw new Error(
-        `Failed to load mock exams: ${res.status} - ${res.statusText}`,
-      );
-    }
-    const exams: ExamCreatorExam[] = await res.json();
-
-    return exams[0];
+    const exam = await getExamById(examId);
+    return exam;
   }
 
   const res = await authorizedFetch(`/state/exams/${examId}`, {
@@ -100,8 +93,8 @@ export async function getExams(): Promise<GetExam[]> {
         `Failed to load mock exams: ${res.status} - ${res.statusText}`,
       );
     }
-    const exams: ExamCreatorExam[] = await res.json();
-    return exams.map((exam) => deserializeToPrisma(exam));
+    const exams: GetExam[] = deserializeToPrisma(await res.json());
+    return exams;
   }
 
   const res = await authorizedFetch("/api/exams");
@@ -115,6 +108,11 @@ export async function getExamById(examId: string): Promise<ExamCreatorExam> {
     await delayForTesting(300);
 
     const res = await fetch(`/mocks/api/exams/${examId}.json`);
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load mock exam: ${res.status} - ${res.statusText}`,
+      );
+    }
     const exam: ExamCreatorExam = deserializeToPrisma(await res.json());
     return exam;
   }
@@ -191,13 +189,12 @@ export async function getGenerations({
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const res = await fetch(
-      `/mocks/api/exams/${examId}/generations/staging.json`,
+      `/mocks/api/exams/${examId}/generations/${databaseEnvironment.toLowerCase()}.json`,
     );
 
     if (!res.ok) {
-      throw new Error(
-        `Failed to load mock generations: ${res.status} - ${res.statusText}`,
-      );
+      // Exams without a generations mock file have no generations
+      return [];
     }
 
     const generations: ExamEnvironmentGeneratedExam[] = await res.json();
@@ -304,6 +301,18 @@ export async function getUsers(): Promise<User[]> {
         },
         settings: {
           databaseEnvironment: "Staging",
+        },
+      },
+      {
+        name: "Quincy Larson",
+        email: "quincy@freecodecamp.org",
+        picture: "https://avatars.githubusercontent.com/u/985197?v=4",
+        activity: {
+          page: new URL("/exams", window.location.origin),
+          lastActive: Date.now() - 30_000,
+        },
+        settings: {
+          databaseEnvironment: "Production",
         },
       },
     ];
@@ -445,8 +454,27 @@ export async function getModerations({
         `Failed to load mock moderations: ${res.status} - ${res.statusText}`,
       );
     }
-    const moderations = await res.json();
-    return deserializeToPrisma(moderations);
+    const moderations =
+      deserializeToPrisma<ExamEnvironmentExamModeration[]>(await res.json());
+
+    let filtered = moderations;
+    if (status) {
+      filtered = filtered.filter((m) => m.status === status);
+    }
+    if (exam !== undefined) {
+      const attempts = await getMockAttempts();
+      const attemptIds = attempts
+        .filter((a) => a.examId === exam)
+        .map((a) => a.id);
+      filtered = filtered.filter((m) => attemptIds.includes(m.examAttemptId));
+    }
+    if (sort !== undefined) {
+      filtered = filtered.toSorted(
+        (a, b) =>
+          sort * (a.submissionDate.getTime() - b.submissionDate.getTime()),
+      );
+    }
+    return filtered.slice(skip ?? 0, (skip ?? 0) + (limit ?? filtered.length));
   }
 
   const url = new URL("/api/attempts", window.location.href);
@@ -513,11 +541,12 @@ export async function getModerationsCount() {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
+    // Staging counts match `mocks/moderations.json`
     const moderationCounts: GetModerationsCountResponse = {
       staging: {
         pending: 1,
-        approved: 2,
-        denied: 3,
+        approved: 1,
+        denied: 1,
       },
       production: {
         pending: 4,
@@ -578,27 +607,23 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const res = await fetch(`/mocks/attempts.json`);
-    const attempts: Attempt[] = deserializeToPrisma(await res.json());
-    const attempt = attempts[0];
+    const attempts = await getMockAttempts();
+    const attempt = attempts.find((a) => a.id === attemptId) ?? attempts[0];
 
+    // Re-base times so the attempt always appears recent
+    const originalStart = attempt.startTime.getTime();
     const startTime = new Date();
     attempt.startTime = startTime;
-    attempt.questionSets[0].questions[0].submissionTime = new Date(
-      startTime.getTime() + 25_000,
-    );
-    attempt.questionSets[1].questions[0].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 2,
-    );
-    attempt.questionSets[2].questions[0].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 4,
-    );
-    attempt.questionSets[2].questions[1].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 4.5,
-    );
-    attempt.questionSets[2].questions[2].submissionTime = new Date(
-      startTime.getTime() + 25_000 * 7,
-    );
+    for (const questionSet of attempt.questionSets) {
+      for (const question of questionSet.questions) {
+        if (question.submissionTime) {
+          question.submissionTime = new Date(
+            startTime.getTime() +
+              (question.submissionTime.getTime() - originalStart),
+          );
+        }
+      }
+    }
 
     return attempt;
   }
@@ -614,6 +639,12 @@ export async function getAttemptById(attemptId: string): Promise<Attempt> {
 export async function scheduleAttemptDeletion(
   attemptId: string,
 ): Promise<Response> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return new Response();
+  }
+
   return await authorizedFetch(`/api/attempts/${attemptId}/pending-deletion`, {
     method: "PUT",
   });
@@ -623,6 +654,12 @@ export async function scheduleAttemptDeletion(
 export async function cancelAttemptDeletion(
   attemptId: string,
 ): Promise<Response> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return new Response();
+  }
+
   return await authorizedFetch(`/api/attempts/${attemptId}/pending-deletion`, {
     method: "DELETE",
   });
@@ -632,10 +669,9 @@ export async function getAttemptsByUserId(userId: string): Promise<Attempt[]> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const res = await fetch(`/mocks/attempts.json`);
-    const attempts: Attempt[] = deserializeToPrisma(await res.json());
+    const attempts = await getMockAttempts();
 
-    return attempts;
+    return attempts.filter((a) => a.userId === userId);
   }
 
   const res = await authorizedFetch(`/api/attempts/user/${userId}`);
@@ -669,8 +705,7 @@ export async function getUserSearch(
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const attemptsRes = await fetch(`/mocks/attempts.json`);
-    const attempts: Attempt[] = deserializeToPrisma(await attemptsRes.json());
+    const attempts = await getMockAttempts();
     const moderationsRes = await fetch("/mocks/moderations.json");
     const moderations: ExamEnvironmentExamModeration[] = deserializeToPrisma(
       await moderationsRes.json(),
@@ -682,6 +717,7 @@ export async function getUserSearch(
         username: "camperbot",
         email: "camperbot@freecodecamp.org",
         name: "Camper Bot",
+        picture: "https://avatars.githubusercontent.com/u/13561988?v=4",
       },
       attempts,
       moderations,
@@ -704,10 +740,9 @@ export async function getNumberOfAttemptsByUserId(
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
-    const res = await fetch(`/mocks/attempts.json`);
-    const attempts: number = deserializeToPrisma((await res.json()).length);
+    const attempts = await getMockAttempts();
 
-    return attempts;
+    return attempts.filter((a) => a.userId === userId).length;
   }
 
   const res = await authorizedFetch(`/api/attempts/user/${userId}/count`);
@@ -730,14 +765,18 @@ export async function getExamChallengeByExamId(
       );
     }
 
-    const examData = await exams.json();
-    const exam = examData.at(0)!;
+    const examData: GetExam[] = deserializeToPrisma(await exams.json());
+    const exam = examData.find((e) => e.exam.id === examId)?.exam;
+
+    if (!exam) {
+      return [];
+    }
 
     return [
       {
-        id: exam._id.$oid,
-        examId: exam._id.$oid,
-        challengeId: exam._id.$oid,
+        id: exam.id,
+        examId: exam.id,
+        challengeId: exam.id,
         version: 1,
       },
     ];
@@ -800,6 +839,12 @@ export async function putExamEnvironmentChallenges(
 // }
 
 export async function putExamByIdToStaging(examId: string) {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return new Response();
+  }
+
   return await authorizedFetch(`/api/exams/${examId}/seed/staging`, {
     method: "PUT",
   });
@@ -808,12 +853,47 @@ export async function putExamByIdToStaging(examId: string) {
 export async function putExamByIdToProduction(
   examId: string,
 ): Promise<Response> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    return new Response();
+  }
+
   return await authorizedFetch(`/api/exams/${examId}/seed/production`, {
     method: "PUT",
   });
 }
 
+// How many attempts each attempt in `mocks/attempts.json` is expanded into for
+// the metrics endpoints, to make distributions/histograms worth looking at.
+const MOCK_ATTEMPT_MULTIPLIER = 12;
+
+async function getMockAttempts(): Promise<Attempt[]> {
+  const res = await fetch(`/mocks/attempts.json`);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to load mock attempts: ${res.status} - ${res.statusText}`,
+    );
+  }
+  return deserializeToPrisma<Attempt[]>(await res.json());
+}
+
 export async function getExamsMetrics() {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const [exams, attempts] = await Promise.all([
+      getExams(),
+      getMockAttempts(),
+    ]);
+    return exams.map(({ exam }) => ({
+      exam: exam as ExamCreatorExam,
+      numberOfAttempts:
+        attempts.filter((a) => a.examId === exam.id).length *
+        MOCK_ATTEMPT_MULTIPLIER,
+    }));
+  }
+
   const res = await authorizedFetch(`/api/metrics/exams`, {
     method: "GET",
   });
@@ -835,6 +915,56 @@ interface GetExamMetricsById {
 }
 
 export async function getExamMetricsById(examId: string) {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const [exam, generations, mockAttempts] = await Promise.all([
+      getExamById(examId),
+      getGenerations({ examId, databaseEnvironment: "Staging" }),
+      getMockAttempts(),
+    ]);
+
+    // Expand each base attempt into several attempts with varied start times
+    // and pacing so the histogram/distribution views have data.
+    const attempts: ExamEnvironmentExamAttempt[] = mockAttempts
+      .filter((a) => a.examId === examId)
+      .flatMap((attempt, attemptIndex) =>
+        Array.from({ length: MOCK_ATTEMPT_MULTIPLIER }, (_, i) => {
+          const idx = attemptIndex * MOCK_ATTEMPT_MULTIPLIER + i;
+          const startTime = new Date(
+            Date.now() - (idx + 1) * 12 * 60 * 60 * 1000,
+          );
+          const pacing = 0.5 + (idx % 7) * 0.35;
+          return {
+            id: attempt.id.slice(0, 20) + idx.toString(16).padStart(4, "0"),
+            userId: attempt.userId,
+            examId: attempt.examId,
+            generatedExamId: attempt.generatedExamId,
+            startTime,
+            version: 3,
+            questionSets: attempt.questionSets.map((qs) => ({
+              id: qs.id,
+              questions: qs.questions
+                .filter((q) => q.submissionTime)
+                .map((q) => ({
+                  id: q.id,
+                  answers: q.selected,
+                  submissionTime: new Date(
+                    startTime.getTime() +
+                      (q.submissionTime!.getTime() -
+                        attempt.startTime.getTime()) *
+                        pacing,
+                  ),
+                })),
+            })),
+          };
+        }),
+      );
+
+    const examMetrics: GetExamMetricsById = { exam, attempts, generations };
+    return examMetrics;
+  }
+
   const res = await authorizedFetch(`/api/metrics/exams/${examId}`, {
     method: "GET",
   });
@@ -845,6 +975,26 @@ export async function getExamMetricsById(examId: string) {
 }
 
 export async function getExamAttemptStats() {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const attempts = await getMockAttempts();
+    const now = Date.now();
+    return attempts.flatMap((attempt, attemptIndex) =>
+      Array.from({ length: MOCK_ATTEMPT_MULTIPLIER }, (_, i) => ({
+        examId: attempt.examId,
+        startTime: new Date(
+          now -
+            (attemptIndex * MOCK_ATTEMPT_MULTIPLIER + i + 1) *
+              12 *
+              60 *
+              60 *
+              1000,
+        ),
+      })),
+    );
+  }
+
   const res = await authorizedFetch(`/api/metrics/attempts`, {
     method: "GET",
   });
@@ -865,7 +1015,7 @@ export async function getEventsByAttemptId(
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
     const attempt = await getAttemptById(attemptId);
-    const res = await fetch(`/mocks/api/events/attempts/${attemptId}.json`);
+    const res = await fetch(`/mocks/api/events/attempts/${attempt.id}.json`);
 
     if (!res.ok) {
       throw new Error(
@@ -876,23 +1026,16 @@ export async function getEventsByAttemptId(
     const json = await res.json();
     const events = deserializeToPrisma<Event[]>(json);
 
-    const attemptQuestions = attempt.questionSets.flatMap((qs) => qs.questions);
+    // Mock event timestamps are relative to the attempt's original start time,
+    // but `getAttemptById` re-bases the attempt to now. Shift events to match.
+    const firstEventTime = Math.min(
+      ...events.map((e) => e.timestamp.getTime()),
+    );
     const startTime = attempt.startTime.getTime();
-    return events.map((e) => {
-      const meta = {
-        question:
-          attemptQuestions[Math.floor(Math.random() * attemptQuestions.length)]
-            .id,
-      };
-      const timestamp = new Date(
-        startTime + Math.floor(Math.random() * events.length) * 1000,
-      );
-      return {
-        ...e,
-        meta,
-        timestamp,
-      };
-    });
+    return events.map((e) => ({
+      ...e,
+      timestamp: new Date(startTime + (e.timestamp.getTime() - firstEventTime)),
+    }));
   }
 
   const res = await authorizedFetch(`/api/events/attempts/${attemptId}`);

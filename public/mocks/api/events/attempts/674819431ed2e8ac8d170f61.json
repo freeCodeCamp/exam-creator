@@ -1,0 +1,83 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-674819430000",
+    "kind": "QUESTION_VISIT",
+    "timestamp": "2026-07-08T11:15:00.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0011"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430001",
+    "kind": "FOCUS",
+    "timestamp": "2026-07-08T11:15:15.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0021"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430002",
+    "kind": "CAPTIONS_OPENED",
+    "timestamp": "2026-07-08T11:15:30.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0041"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430003",
+    "kind": "QUESTION_VISIT",
+    "timestamp": "2026-07-08T11:15:45.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0046"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430004",
+    "kind": "QUESTION_VISIT",
+    "timestamp": "2026-07-08T11:16:00.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0011"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430005",
+    "kind": "BLUR",
+    "timestamp": "2026-07-08T11:16:15.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0021"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430006",
+    "kind": "FOCUS",
+    "timestamp": "2026-07-08T11:16:30.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0041"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430007",
+    "kind": "QUESTION_VISIT",
+    "timestamp": "2026-07-08T11:16:45.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0046"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  },
+  {
+    "id": "00000000-0000-4000-8000-674819430008",
+    "kind": "EXAM_EXIT",
+    "timestamp": "2026-07-08T11:17:00.000Z",
+    "meta": {
+      "question": "66e9a8fecac3bbedc76f0011"
+    },
+    "attempt_id": "674819431ed2e8ac8d170f61"
+  }
+]

@@ -1,0 +1,77 @@
+{
+  "_id": {
+    "$oid": "66e9a8fecac3bbedc76f0003"
+  },
+  "config": {
+    "name": "Legacy Responsive Web Design Exam",
+    "note": "Deprecated exam kept for historical attempts.",
+    "totalTimeInS": 3600,
+    "tags": [],
+    "questionSets": [
+      {
+        "type": "MultipleChoice",
+        "numberOfSet": 1,
+        "numberOfQuestions": 1,
+        "numberOfCorrectAnswers": 1,
+        "numberOfIncorrectAnswers": 3
+      }
+    ],
+    "retakeTimeInS": 86400,
+    "passingPercent": 80
+  },
+  "questionSets": [
+    {
+      "id": {
+        "$oid": "66e9a8fecac3bbedc76f0300"
+      },
+      "type": "MultipleChoice",
+      "context": null,
+      "questions": [
+        {
+          "id": {
+            "$oid": "66e9a8fecac3bbedc76f0301"
+          },
+          "deprecated": false,
+          "audio": null,
+          "tags": [
+            "css"
+          ],
+          "text": "Which CSS property controls the space between an element's border and its content?",
+          "answers": [
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0302"
+              },
+              "text": "`padding`",
+              "isCorrect": true
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0303"
+              },
+              "text": "`margin`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0304"
+              },
+              "text": "`gap`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0305"
+              },
+              "text": "`border-spacing`",
+              "isCorrect": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "prerequisites": [],
+  "deprecated": true,
+  "version": 3
+}

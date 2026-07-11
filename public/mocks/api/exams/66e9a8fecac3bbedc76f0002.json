@@ -1,0 +1,297 @@
+{
+  "_id": {
+    "$oid": "66e9a8fecac3bbedc76f0002"
+  },
+  "config": {
+    "name": "JavaScript Fundamentals Certification",
+    "note": "Covers variables, types, arrays, and functions. Seeded to both Staging and Production.",
+    "totalTimeInS": 7200,
+    "tags": [
+      {
+        "group": [
+          "javascript"
+        ],
+        "numberOfQuestions": 2
+      },
+      {
+        "group": [
+          "javascript",
+          "types"
+        ],
+        "numberOfQuestions": 1
+      }
+    ],
+    "questionSets": [
+      {
+        "type": "MultipleChoice",
+        "numberOfSet": 2,
+        "numberOfQuestions": 1,
+        "numberOfCorrectAnswers": 1,
+        "numberOfIncorrectAnswers": 3
+      },
+      {
+        "type": "Dialogue",
+        "numberOfSet": 1,
+        "numberOfQuestions": 2,
+        "numberOfCorrectAnswers": 1,
+        "numberOfIncorrectAnswers": 3
+      }
+    ],
+    "retakeTimeInS": 86400,
+    "passingPercent": 70
+  },
+  "questionSets": [
+    {
+      "id": {
+        "$oid": "66e9a8fecac3bbedc76f0010"
+      },
+      "type": "MultipleChoice",
+      "context": null,
+      "questions": [
+        {
+          "id": {
+            "$oid": "66e9a8fecac3bbedc76f0011"
+          },
+          "deprecated": false,
+          "audio": null,
+          "tags": [
+            "javascript",
+            "variables"
+          ],
+          "text": "Which keyword declares a block-scoped variable that cannot be reassigned?",
+          "answers": [
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0012"
+              },
+              "text": "`const`",
+              "isCorrect": true
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0013"
+              },
+              "text": "`let`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0014"
+              },
+              "text": "`var`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0015"
+              },
+              "text": "`static`",
+              "isCorrect": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": {
+        "$oid": "66e9a8fecac3bbedc76f0020"
+      },
+      "type": "MultipleChoice",
+      "context": null,
+      "questions": [
+        {
+          "id": {
+            "$oid": "66e9a8fecac3bbedc76f0021"
+          },
+          "deprecated": false,
+          "audio": {
+            "captions": "What does the following code log? `console.log([1, 2, 3].map(x => x * 2))`",
+            "url": "https://cdn.freecodecamp.org/curriculum/english/animation-assets/sounds/1.1-1.mp3"
+          },
+          "tags": [
+            "javascript",
+            "arrays"
+          ],
+          "text": "Listen to the audio. What does the code log?",
+          "answers": [
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0022"
+              },
+              "text": "`[2, 4, 6]`",
+              "isCorrect": true
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0023"
+              },
+              "text": "`[1, 2, 3]`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0024"
+              },
+              "text": "`[1, 4, 9]`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0025"
+              },
+              "text": "`undefined`",
+              "isCorrect": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": {
+        "$oid": "66e9a8fecac3bbedc76f0030"
+      },
+      "type": "MultipleChoice",
+      "context": null,
+      "questions": [
+        {
+          "id": {
+            "$oid": "66e9a8fecac3bbedc76f0031"
+          },
+          "deprecated": true,
+          "audio": null,
+          "tags": [
+            "javascript",
+            "functions"
+          ],
+          "text": "This question is deprecated, and should not appear in new generations. What is the arity of `function add(a, b) {}`?",
+          "answers": [
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0032"
+              },
+              "text": "2",
+              "isCorrect": true
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0033"
+              },
+              "text": "0",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0034"
+              },
+              "text": "1",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0035"
+              },
+              "text": "3",
+              "isCorrect": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": {
+        "$oid": "66e9a8fecac3bbedc76f0040"
+      },
+      "type": "Dialogue",
+      "context": "Tom: Hey Maria, I keep getting `NaN` when I add my form values.\n\nMaria: Form inputs are strings. `\"2\" + 2` is `\"22\"`, but `\"2\" - 2` is `0`. Convert with `Number()` first.\n\nTom: Ah, so `Number(\"2\") + 2` gives `4`. Thanks!",
+      "questions": [
+        {
+          "id": {
+            "$oid": "66e9a8fecac3bbedc76f0041"
+          },
+          "deprecated": false,
+          "audio": null,
+          "tags": [
+            "javascript",
+            "types"
+          ],
+          "text": "According to the dialogue, what does `\"2\" + 2` evaluate to?",
+          "answers": [
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0042"
+              },
+              "text": "`\"22\"`",
+              "isCorrect": true
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0043"
+              },
+              "text": "`4`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0044"
+              },
+              "text": "`NaN`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0045"
+              },
+              "text": "`0`",
+              "isCorrect": false
+            }
+          ]
+        },
+        {
+          "id": {
+            "$oid": "66e9a8fecac3bbedc76f0046"
+          },
+          "deprecated": false,
+          "audio": null,
+          "tags": [
+            "javascript",
+            "types"
+          ],
+          "text": "Which function does Maria recommend for converting form values?",
+          "answers": [
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0047"
+              },
+              "text": "`Number()`",
+              "isCorrect": true
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0048"
+              },
+              "text": "`parseFloat()`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f0049"
+              },
+              "text": "`String()`",
+              "isCorrect": false
+            },
+            {
+              "id": {
+                "$oid": "66e9a8fecac3bbedc76f004a"
+              },
+              "text": "`Boolean()`",
+              "isCorrect": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "prerequisites": [],
+  "deprecated": false,
+  "version": 3
+}

@@ -3,11 +3,29 @@
     "_id": {
       "$oid": "674819431ed2e8ac8d170f5f"
     },
+    "userId": {
+      "$oid": "674819431ed2e8ac8d170f6f"
+    },
+    "examId": {
+      "$oid": "674819431ed2e8ac8d170f5e"
+    },
+    "generatedExamId": {
+      "$oid": "650f4e2f4f1a256b4c8b4568"
+    },
+    "startTime": "2026-07-01T09:00:00.000Z",
+    "version": 3,
     "config": {
       "name": "Practice Exam",
       "note": "This exam is for learning the Exam Environment.",
       "totalTimeInS": 120,
-      "tags": [],
+      "tags": [
+        {
+          "group": [
+            "practice"
+          ],
+          "numberOfQuestions": 1
+        }
+      ],
       "questionSets": [
         {
           "type": "MultipleChoice",
@@ -25,19 +43,14 @@
         }
       ],
       "retakeTimeInS": 0,
-      "passingPercent": 80.0
+      "passingPercent": 80
     },
-    "startTime": "2023-06-09T12:34:56.789Z",
-    "needsRetake": false,
-    "examId": {
-      "$oid": "674819431ed2e8ac8d170f5e"
-    },
-    "generatedExamId": {
-      "$oid": "674819431ed2e8ac8d170f6e"
-    },
-    "userId": {
-      "$oid": "674819431ed2e8ac8d170f6f"
-    },
+    "prerequisites": [
+      {
+        "$oid": "67481800ad3aacfd878c22b4"
+      }
+    ],
+    "deprecated": false,
     "questionSets": [
       {
         "id": {
@@ -52,14 +65,9 @@
             },
             "deprecated": false,
             "audio": null,
-            "tags": [],
-            "generated": [],
-            "selected": [
-              {
-                "$oid": "674818271ff8b2a575a57251"
-              }
+            "tags": [
+              "practice"
             ],
-            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is an example of a multiple-choice question without audio. Which answer has the most text? Also, some code:\n\n```js\nconst a = 1;\n```",
             "answers": [
               {
@@ -90,7 +98,27 @@
                 "text": "Consectetur adipiscing elit",
                 "isCorrect": false
               }
-            ]
+            ],
+            "generated": [
+              {
+                "$oid": "674818271ff8b2a575a57251"
+              },
+              {
+                "$oid": "6748180f23e95e2e9791b08c"
+              },
+              {
+                "$oid": "67481818ce784b666ac445ca"
+              },
+              {
+                "$oid": "6748182183eaec029ea3fe37"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "674818271ff8b2a575a57251"
+              }
+            ],
+            "submissionTime": "2026-07-01T09:00:25.000Z"
           }
         ]
       },
@@ -107,17 +135,13 @@
             },
             "deprecated": false,
             "audio": {
-              "captions": null,
+              "captions": "freeCodeCamp was started in 2014.",
               "url": "https://cdn.freecodecamp.org/curriculum/english/animation-assets/sounds/1.1-1.mp3"
             },
-            "tags": [],
-            "generated": [],
-            "selected": [
-              {
-                "$oid": "674818446784013ac9152ec1"
-              }
+            "tags": [
+              "practice",
+              "audio"
             ],
-            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is an example of a multiple-choice question with audio. Listen to the audio to answer this question: When was freeCodeCamp started?",
             "answers": [
               {
@@ -148,7 +172,27 @@
                 "text": "2019",
                 "isCorrect": false
               }
-            ]
+            ],
+            "generated": [
+              {
+                "$oid": "6748183cbc00e4a0a3c2ebf8"
+              },
+              {
+                "$oid": "674818446784013ac9152ec1"
+              },
+              {
+                "$oid": "67481849a2178d78a1c33fc0"
+              },
+              {
+                "$oid": "6748184f8ec2864e9138a127"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "6748183cbc00e4a0a3c2ebf8"
+              }
+            ],
+            "submissionTime": "2026-07-01T09:00:50.000Z"
           }
         ]
       },
@@ -165,14 +209,10 @@
             },
             "deprecated": false,
             "audio": null,
-            "tags": [],
-            "generated": [],
-            "selected": [
-              {
-                "$oid": "67481867cfb879a9f90a1298"
-              }
+            "tags": [
+              "practice",
+              "dialogue"
             ],
-            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is one of the multiple-choice questions associated with the dialogue. What is the third word of the dialogue text?",
             "answers": [
               {
@@ -203,7 +243,27 @@
                 "text": "dialogue",
                 "isCorrect": false
               }
-            ]
+            ],
+            "generated": [
+              {
+                "$oid": "67481867cfb879a9f90a1298"
+              },
+              {
+                "$oid": "6748186ddefb67f67eb63fba"
+              },
+              {
+                "$oid": "67481872fac930e1d2098930"
+              },
+              {
+                "$oid": "674818798976b9a94f4192d9"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "67481867cfb879a9f90a1298"
+              }
+            ],
+            "submissionTime": "2026-07-01T09:01:15.000Z"
           },
           {
             "id": {
@@ -211,14 +271,10 @@
             },
             "deprecated": false,
             "audio": null,
-            "tags": [],
-            "generated": [],
-            "selected": [
-              {
-                "$oid": "6748188f09398c3c40fccc63"
-              }
+            "tags": [
+              "practice",
+              "dialogue"
             ],
-            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is one of the multiple-choice questions associated with the dialogue. What is the seventh word of the dialogue text?",
             "answers": [
               {
@@ -249,7 +305,27 @@
                 "text": "text",
                 "isCorrect": false
               }
-            ]
+            ],
+            "generated": [
+              {
+                "$oid": "6748188307c1c86daf765a7d"
+              },
+              {
+                "$oid": "6748188947b4f538b00adde2"
+              },
+              {
+                "$oid": "6748188f09398c3c40fccc63"
+              },
+              {
+                "$oid": "67481895719aed66749ab787"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "6748188307c1c86daf765a7d"
+              }
+            ],
+            "submissionTime": "2026-07-01T09:01:40.000Z"
           },
           {
             "id": {
@@ -257,14 +333,10 @@
             },
             "deprecated": false,
             "audio": null,
-            "tags": [],
-            "generated": [],
-            "selected": [
-              {
-                "$oid": "674818a83f795ef97e3ba99e"
-              }
+            "tags": [
+              "practice",
+              "dialogue"
             ],
-            "submissionTime": "2023-06-09T12:34:56.789Z",
             "text": "This is one of the multiple-choice questions associated with the dialogue. What is the last word of the dialogue text?",
             "answers": [
               {
@@ -295,16 +367,756 @@
                 "text": "common",
                 "isCorrect": false
               }
-            ]
+            ],
+            "generated": [
+              {
+                "$oid": "674818a330c7795df45929b6"
+              },
+              {
+                "$oid": "674818a83f795ef97e3ba99e"
+              },
+              {
+                "$oid": "674818ae35234d22bfe8235e"
+              },
+              {
+                "$oid": "674818b4e78a117d120a0682"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "674818a330c7795df45929b6"
+              },
+              {
+                "$oid": "674818ae35234d22bfe8235e"
+              }
+            ],
+            "submissionTime": "2026-07-01T09:02:05.000Z"
           }
         ]
       }
-    ],
+    ]
+  },
+  {
+    "_id": {
+      "$oid": "674819431ed2e8ac8d170f60"
+    },
+    "userId": {
+      "$oid": "674819431ed2e8ac8d170f6f"
+    },
+    "examId": {
+      "$oid": "674819431ed2e8ac8d170f5e"
+    },
+    "generatedExamId": {
+      "$oid": "650f4e2f4f1a256b4c8b4569"
+    },
+    "startTime": "2026-07-05T14:30:00.000Z",
+    "version": 3,
+    "config": {
+      "name": "Practice Exam",
+      "note": "This exam is for learning the Exam Environment.",
+      "totalTimeInS": 120,
+      "tags": [
+        {
+          "group": [
+            "practice"
+          ],
+          "numberOfQuestions": 1
+        }
+      ],
+      "questionSets": [
+        {
+          "type": "MultipleChoice",
+          "numberOfSet": 2,
+          "numberOfQuestions": 1,
+          "numberOfCorrectAnswers": 1,
+          "numberOfIncorrectAnswers": 3
+        },
+        {
+          "type": "Dialogue",
+          "numberOfSet": 1,
+          "numberOfQuestions": 3,
+          "numberOfCorrectAnswers": 1,
+          "numberOfIncorrectAnswers": 3
+        }
+      ],
+      "retakeTimeInS": 0,
+      "passingPercent": 80
+    },
     "prerequisites": [
       {
         "$oid": "67481800ad3aacfd878c22b4"
       }
     ],
-    "deprecated": false
+    "deprecated": false,
+    "questionSets": [
+      {
+        "id": {
+          "$oid": "67481800ad3aacfd878c22b4"
+        },
+        "type": "MultipleChoice",
+        "context": null,
+        "questions": [
+          {
+            "id": {
+              "$oid": "67481809a43e536190e3eb6f"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "practice"
+            ],
+            "text": "This is an example of a multiple-choice question without audio. Which answer has the most text? Also, some code:\n\n```js\nconst a = 1;\n```",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "674818271ff8b2a575a57251"
+                },
+                "text": "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "6748180f23e95e2e9791b08c"
+                },
+                "text": "`Lorem ipsum`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "67481818ce784b666ac445ca"
+                },
+                "text": "Dolor `sit` amet",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "6748182183eaec029ea3fe37"
+                },
+                "text": "Consectetur adipiscing elit",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "674818271ff8b2a575a57251"
+              },
+              {
+                "$oid": "6748180f23e95e2e9791b08c"
+              },
+              {
+                "$oid": "67481818ce784b666ac445ca"
+              },
+              {
+                "$oid": "6748182183eaec029ea3fe37"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "6748180f23e95e2e9791b08c"
+              }
+            ],
+            "submissionTime": "2026-07-05T14:30:03.000Z"
+          }
+        ]
+      },
+      {
+        "id": {
+          "$oid": "6748182f0f9d6e80fa2eb04d"
+        },
+        "type": "MultipleChoice",
+        "context": null,
+        "questions": [
+          {
+            "id": {
+              "$oid": "674818354cd5f347eb35df91"
+            },
+            "deprecated": false,
+            "audio": {
+              "captions": "freeCodeCamp was started in 2014.",
+              "url": "https://cdn.freecodecamp.org/curriculum/english/animation-assets/sounds/1.1-1.mp3"
+            },
+            "tags": [
+              "practice",
+              "audio"
+            ],
+            "text": "This is an example of a multiple-choice question with audio. Listen to the audio to answer this question: When was freeCodeCamp started?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "6748183cbc00e4a0a3c2ebf8"
+                },
+                "text": "2014",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "674818446784013ac9152ec1"
+                },
+                "text": "2010",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "67481849a2178d78a1c33fc0"
+                },
+                "text": "2016",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "6748184f8ec2864e9138a127"
+                },
+                "text": "2019",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "6748183cbc00e4a0a3c2ebf8"
+              },
+              {
+                "$oid": "674818446784013ac9152ec1"
+              },
+              {
+                "$oid": "67481849a2178d78a1c33fc0"
+              },
+              {
+                "$oid": "6748184f8ec2864e9138a127"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "674818446784013ac9152ec1"
+              }
+            ],
+            "submissionTime": "2026-07-05T14:30:06.000Z"
+          }
+        ]
+      },
+      {
+        "id": {
+          "$oid": "6748185695ebfe93a2334ffd"
+        },
+        "type": "Dialogue",
+        "context": "This is part of a dialogue question. This paragraph of text is the content of the dialogue, and is common for multiple, associated multiple-choice questions. Here is some code:\n\n```js\nconst a = 1;\n```",
+        "questions": [
+          {
+            "id": {
+              "$oid": "6748185feb760604d3e1012d"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "practice",
+              "dialogue"
+            ],
+            "text": "This is one of the multiple-choice questions associated with the dialogue. What is the third word of the dialogue text?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "67481867cfb879a9f90a1298"
+                },
+                "text": "part",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "6748186ddefb67f67eb63fba"
+                },
+                "text": "This",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "67481872fac930e1d2098930"
+                },
+                "text": "is",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "674818798976b9a94f4192d9"
+                },
+                "text": "dialogue",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "67481867cfb879a9f90a1298"
+              },
+              {
+                "$oid": "6748186ddefb67f67eb63fba"
+              },
+              {
+                "$oid": "67481872fac930e1d2098930"
+              },
+              {
+                "$oid": "674818798976b9a94f4192d9"
+              }
+            ],
+            "selected": []
+          },
+          {
+            "id": {
+              "$oid": "6748187e309291000b26e9f4"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "practice",
+              "dialogue"
+            ],
+            "text": "This is one of the multiple-choice questions associated with the dialogue. What is the seventh word of the dialogue text?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "6748188307c1c86daf765a7d"
+                },
+                "text": "question",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "6748188947b4f538b00adde2"
+                },
+                "text": "paragraph",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "6748188f09398c3c40fccc63"
+                },
+                "text": "of",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "67481895719aed66749ab787"
+                },
+                "text": "text",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "6748188307c1c86daf765a7d"
+              },
+              {
+                "$oid": "6748188947b4f538b00adde2"
+              },
+              {
+                "$oid": "6748188f09398c3c40fccc63"
+              },
+              {
+                "$oid": "67481895719aed66749ab787"
+              }
+            ],
+            "selected": []
+          },
+          {
+            "id": {
+              "$oid": "6748189c305ad55e44a7fda3"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "practice",
+              "dialogue"
+            ],
+            "text": "This is one of the multiple-choice questions associated with the dialogue. What is the last word of the dialogue text?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "674818a330c7795df45929b6"
+                },
+                "text": "questions",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "674818a83f795ef97e3ba99e"
+                },
+                "text": "associated",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "674818ae35234d22bfe8235e"
+                },
+                "text": "multiple",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "674818b4e78a117d120a0682"
+                },
+                "text": "common",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "674818a330c7795df45929b6"
+              },
+              {
+                "$oid": "674818a83f795ef97e3ba99e"
+              },
+              {
+                "$oid": "674818ae35234d22bfe8235e"
+              },
+              {
+                "$oid": "674818b4e78a117d120a0682"
+              }
+            ],
+            "selected": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": {
+      "$oid": "674819431ed2e8ac8d170f61"
+    },
+    "userId": {
+      "$oid": "674819431ed2e8ac8d170f6f"
+    },
+    "examId": {
+      "$oid": "66e9a8fecac3bbedc76f0002"
+    },
+    "generatedExamId": {
+      "$oid": "66e9a8fecac3bbedc76f0100"
+    },
+    "startTime": "2026-07-08T11:15:00.000Z",
+    "version": 3,
+    "config": {
+      "name": "JavaScript Fundamentals Certification",
+      "note": "Covers variables, types, arrays, and functions. Seeded to both Staging and Production.",
+      "totalTimeInS": 7200,
+      "tags": [
+        {
+          "group": [
+            "javascript"
+          ],
+          "numberOfQuestions": 2
+        },
+        {
+          "group": [
+            "javascript",
+            "types"
+          ],
+          "numberOfQuestions": 1
+        }
+      ],
+      "questionSets": [
+        {
+          "type": "MultipleChoice",
+          "numberOfSet": 2,
+          "numberOfQuestions": 1,
+          "numberOfCorrectAnswers": 1,
+          "numberOfIncorrectAnswers": 3
+        },
+        {
+          "type": "Dialogue",
+          "numberOfSet": 1,
+          "numberOfQuestions": 2,
+          "numberOfCorrectAnswers": 1,
+          "numberOfIncorrectAnswers": 3
+        }
+      ],
+      "retakeTimeInS": 86400,
+      "passingPercent": 70
+    },
+    "prerequisites": [],
+    "deprecated": false,
+    "questionSets": [
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0010"
+        },
+        "type": "MultipleChoice",
+        "context": null,
+        "questions": [
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0011"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "javascript",
+              "variables"
+            ],
+            "text": "Which keyword declares a block-scoped variable that cannot be reassigned?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0012"
+                },
+                "text": "`const`",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0013"
+                },
+                "text": "`let`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0014"
+                },
+                "text": "`var`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0015"
+                },
+                "text": "`static`",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0012"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0013"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0014"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0015"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0012"
+              }
+            ],
+            "submissionTime": "2026-07-08T11:15:40.000Z"
+          }
+        ]
+      },
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0020"
+        },
+        "type": "MultipleChoice",
+        "context": null,
+        "questions": [
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0021"
+            },
+            "deprecated": false,
+            "audio": {
+              "captions": "What does the following code log? `console.log([1, 2, 3].map(x => x * 2))`",
+              "url": "https://cdn.freecodecamp.org/curriculum/english/animation-assets/sounds/1.1-1.mp3"
+            },
+            "tags": [
+              "javascript",
+              "arrays"
+            ],
+            "text": "Listen to the audio. What does the code log?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0022"
+                },
+                "text": "`[2, 4, 6]`",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0023"
+                },
+                "text": "`[1, 2, 3]`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0024"
+                },
+                "text": "`[1, 4, 9]`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0025"
+                },
+                "text": "`undefined`",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0022"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0023"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0024"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0025"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0023"
+              }
+            ],
+            "submissionTime": "2026-07-08T11:16:20.000Z"
+          }
+        ]
+      },
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0030"
+        },
+        "type": "MultipleChoice",
+        "context": null,
+        "questions": []
+      },
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0040"
+        },
+        "type": "Dialogue",
+        "context": "Tom: Hey Maria, I keep getting `NaN` when I add my form values.\n\nMaria: Form inputs are strings. `\"2\" + 2` is `\"22\"`, but `\"2\" - 2` is `0`. Convert with `Number()` first.\n\nTom: Ah, so `Number(\"2\") + 2` gives `4`. Thanks!",
+        "questions": [
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0041"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "javascript",
+              "types"
+            ],
+            "text": "According to the dialogue, what does `\"2\" + 2` evaluate to?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0042"
+                },
+                "text": "`\"22\"`",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0043"
+                },
+                "text": "`4`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0044"
+                },
+                "text": "`NaN`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0045"
+                },
+                "text": "`0`",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0042"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0043"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0044"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0045"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0042"
+              }
+            ],
+            "submissionTime": "2026-07-08T11:17:00.000Z"
+          },
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0046"
+            },
+            "deprecated": false,
+            "audio": null,
+            "tags": [
+              "javascript",
+              "types"
+            ],
+            "text": "Which function does Maria recommend for converting form values?",
+            "answers": [
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0047"
+                },
+                "text": "`Number()`",
+                "isCorrect": true
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0048"
+                },
+                "text": "`parseFloat()`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f0049"
+                },
+                "text": "`String()`",
+                "isCorrect": false
+              },
+              {
+                "id": {
+                  "$oid": "66e9a8fecac3bbedc76f004a"
+                },
+                "text": "`Boolean()`",
+                "isCorrect": false
+              }
+            ],
+            "generated": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0047"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0048"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0049"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f004a"
+              }
+            ],
+            "selected": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0047"
+              }
+            ],
+            "submissionTime": "2026-07-08T11:17:40.000Z"
+          }
+        ]
+      }
+    ]
   }
 ]

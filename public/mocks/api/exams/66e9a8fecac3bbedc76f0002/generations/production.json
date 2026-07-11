@@ -1,0 +1,111 @@
+[
+  {
+    "_id": {
+      "$oid": "66e9a8fecac3bbedc76f0102"
+    },
+    "examId": {
+      "$oid": "66e9a8fecac3bbedc76f0002"
+    },
+    "deprecated": false,
+    "version": 1,
+    "questionSets": [
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0010"
+        },
+        "questions": [
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0011"
+            },
+            "answers": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0012"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0013"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0014"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0015"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0020"
+        },
+        "questions": [
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0021"
+            },
+            "answers": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0022"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0023"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0024"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0025"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": {
+          "$oid": "66e9a8fecac3bbedc76f0040"
+        },
+        "questions": [
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0041"
+            },
+            "answers": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0042"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0043"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0044"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0045"
+              }
+            ]
+          },
+          {
+            "id": {
+              "$oid": "66e9a8fecac3bbedc76f0046"
+            },
+            "answers": [
+              {
+                "$oid": "66e9a8fecac3bbedc76f0047"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0048"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f0049"
+              },
+              {
+                "$oid": "66e9a8fecac3bbedc76f004a"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

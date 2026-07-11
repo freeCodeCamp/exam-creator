@@ -6,7 +6,14 @@
     "name": "Practice Exam",
     "note": "This exam is for learning the Exam Environment.",
     "totalTimeInS": 120,
-    "tags": [],
+    "tags": [
+      {
+        "group": [
+          "practice"
+        ],
+        "numberOfQuestions": 1
+      }
+    ],
     "questionSets": [
       {
         "type": "MultipleChoice",
@@ -24,7 +31,7 @@
       }
     ],
     "retakeTimeInS": 0,
-    "passingPercent": 80.0
+    "passingPercent": 80
   },
   "questionSets": [
     {
@@ -40,7 +47,9 @@
           },
           "deprecated": false,
           "audio": null,
-          "tags": [],
+          "tags": [
+            "practice"
+          ],
           "text": "This is an example of a multiple-choice question without audio. Which answer has the most text? Also, some code:\n\n```js\nconst a = 1;\n```",
           "answers": [
             {
@@ -88,10 +97,13 @@
           },
           "deprecated": false,
           "audio": {
-            "captions": null,
+            "captions": "freeCodeCamp was started in 2014.",
             "url": "https://cdn.freecodecamp.org/curriculum/english/animation-assets/sounds/1.1-1.mp3"
           },
-          "tags": [],
+          "tags": [
+            "practice",
+            "audio"
+          ],
           "text": "This is an example of a multiple-choice question with audio. Listen to the audio to answer this question: When was freeCodeCamp started?",
           "answers": [
             {
@@ -139,7 +151,10 @@
           },
           "deprecated": false,
           "audio": null,
-          "tags": [],
+          "tags": [
+            "practice",
+            "dialogue"
+          ],
           "text": "This is one of the multiple-choice questions associated with the dialogue. What is the third word of the dialogue text?",
           "answers": [
             {
@@ -178,7 +193,10 @@
           },
           "deprecated": false,
           "audio": null,
-          "tags": [],
+          "tags": [
+            "practice",
+            "dialogue"
+          ],
           "text": "This is one of the multiple-choice questions associated with the dialogue. What is the seventh word of the dialogue text?",
           "answers": [
             {
@@ -217,7 +235,10 @@
           },
           "deprecated": false,
           "audio": null,
-          "tags": [],
+          "tags": [
+            "practice",
+            "dialogue"
+          ],
           "text": "This is one of the multiple-choice questions associated with the dialogue. What is the last word of the dialogue text?",
           "answers": [
             {
@@ -258,5 +279,6 @@
       "$oid": "67481800ad3aacfd878c22b4"
     }
   ],
-  "deprecated": false
+  "deprecated": false,
+  "version": 3
 }
