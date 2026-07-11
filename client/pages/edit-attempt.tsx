@@ -355,10 +355,10 @@ function EditAttempt({
         const focusTime = (e.timestamp.getTime() - attemptStartTime) / 1000;
 
         // Map to the question active during the blur, if possible
-        const questionId = lastBlurEvent.meta?.question || e.meta?.question;
+        const questionId = (lastBlurEvent.meta?.question ||
+          e.meta?.question) as string;
         const idx = questionId
-          ? // @ts-expect-error Types \_O_/
-            questionIdToIndexMap.get(questionId)
+          ? questionIdToIndexMap.get(questionId)
           : undefined;
 
         if (idx !== undefined) {
@@ -550,7 +550,7 @@ function EditAttempt({
                               height={props.height}
                               fill="gray"
                               fillOpacity={0.3}
-                              stroke="red"
+                              stroke="rgba(255, 0, 0, 0.6)"
                               style={{ cursor: "help" }}
                             >
                               <title>{time}s unfocused</title>
