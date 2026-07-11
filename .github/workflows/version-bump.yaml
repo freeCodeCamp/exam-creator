@@ -90,7 +90,7 @@ jobs:
               .map((c) => c.trim())
               .filter(Boolean)
 
-            const sections = { Added: [], Changed: [], Fixed: [], Removed: [] }
+            const sections = { Added: [], Changed: [], Fixed: [], Removed: [], Internal: [] }
             const sectionForType = (type) => {
               if (type === 'feat') return 'Added'
               if (type === 'fix') return 'Fixed'
