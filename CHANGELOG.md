@@ -21,6 +21,22 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.6.0] - 2026-07-11
+
+### Added
+
+- client: add y-axis zoom to attempt moderation
+
+### Fixed
+
+- client: reduce opacity of focus edges
+
+### Internal
+
+- .github: fix version bump types
+- .github: add internal changelog header
+- add mock data
+
 ## [6.5.2] - 2026-07-10
 
 ### Changed
