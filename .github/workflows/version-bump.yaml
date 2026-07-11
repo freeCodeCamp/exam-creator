@@ -95,6 +95,7 @@ jobs:
               if (type === 'feat') return 'Added'
               if (type === 'fix') return 'Fixed'
               if (type === 'revert') return 'Removed'
+              if (type === 'chore' || type === 'dev') return 'Internal'
               return 'Changed'
             }
 
