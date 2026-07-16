@@ -61,10 +61,7 @@ import {
   Line,
   XAxis,
   YAxis,
-  Legend,
   Scatter,
-  DefaultLegendContent,
-  DefaultLegendContentProps,
   useYAxisInverseScale,
   usePlotArea,
 } from "recharts";
@@ -564,7 +561,34 @@ function EditAttempt({
                 </Switch.Root>
               </Field.Root>
             </SimpleGrid>
-            <HStack justifyContent={"flex-end"} minH={8}>
+            <Flex
+              justifyContent="space-between"
+              alignItems="center"
+              minH={8}
+              wrap="wrap"
+              gap={2}
+            >
+              <HStack gap={4}>
+                <LegendKey glyph="dot" color={CHART.correct} label="Correct" />
+                <LegendKey
+                  glyph="cross"
+                  color={CHART.incorrect}
+                  label="Incorrect"
+                />
+                {isEventsToggled && (
+                  <LegendKey glyph="ring" color={CHART.visit} label="Visit" />
+                )}
+                {isEventsToggled && (
+                  <LegendKey
+                    glyph="band"
+                    color={CHART.unfocussed}
+                    label="Unfocussed"
+                  />
+                )}
+                {isSubmissionTimelineToggled && (
+                  <LegendKey glyph="line" color={CHART.diff} label="Diff" />
+                )}
+              </HStack>
               {yZoomDomain ? (
                 <Button
                   size="xs"
@@ -580,7 +604,7 @@ function EditAttempt({
                   Drag vertically on chart to zoom y-axis
                 </Text>
               )}
-            </HStack>
+            </Flex>
             <Box resize={"vertical"} overflowY={"auto"}>
               <ResponsiveContainer width="100%" minHeight={450}>
                 <ComposedChart
@@ -617,12 +641,13 @@ function EditAttempt({
                     dragPixels={yDrag}
                     inverseScaleRef={yInverseScaleRef}
                   />
-                  <CartesianGrid opacity={0.2} />
+                  <CartesianGrid stroke={CHART.grid} vertical={false} />
                   {isEventsToggled &&
                     focusGaps.map((f, i) => {
                       const y1 = f.blurTime;
                       const y2 = f.focusTime;
                       const time = (y2 - y1).toFixed(2);
+                      const isPreFinal = f.focusTime <= timeToComplete;
                       return (
                         <ReferenceArea
                           key={`focus-gap-${i}`}
@@ -636,12 +661,14 @@ function EditAttempt({
                               y={props.y}
                               width={props.width}
                               height={props.height}
-                              fill="gray"
-                              fillOpacity={0.3}
+                              fill={CHART.post}
+                              fillOpacity={0.11}
                               stroke="rgba(255, 0, 0, 0.6)"
                               style={{ cursor: "help" }}
                             >
-                              <title>{time}s unfocused</title>
+                              <title>
+                                {`${time}s unfocused${isPreFinal ? "" : " (after final submission)"}`}
+                              </title>
                             </rect>
                           )}
                         />
@@ -650,12 +677,14 @@ function EditAttempt({
 
                   {isSubmissionTimelineToggled && (
                     <Line
+                      name="Diff"
                       data={questions.filter((q) => !!q.questionTimeDiff)}
                       yAxisId="right"
                       type="monotone"
                       dataKey={"questionTimeDiff"}
-                      stroke="#ff7300"
+                      stroke={CHART.diff}
                       strokeWidth={2}
+                      strokeLinecap="round"
                       dot={false}
                     />
                   )}
@@ -666,20 +695,28 @@ function EditAttempt({
                     domain={["dataMin", "dataMax"]}
                     tickCount={totalQuestions}
                     allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: CHART.muted, fontSize: 12 }}
                     label={{
                       value: "question number",
                       position: "insideBottom",
                       offset: 0,
+                      fill: CHART.muted,
+                      fontSize: 12,
                     }}
                   />
                   <YAxis
                     width={60}
                     dataKey={"timeSinceStartInS"}
-                    tickCount={30}
+                    tickCount={12}
                     yAxisId={"left"}
                     type="number"
                     domain={yZoomDomain ?? [0, "auto"]}
                     allowDataOverflow={!!yZoomDomain}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: CHART.muted, fontSize: 12 }}
                     tickFormatter={(v: number) =>
                       String(Math.round(v * 10) / 10)
                     }
@@ -688,40 +725,49 @@ function EditAttempt({
                       position: "insideBottomLeft",
                       angle: -90,
                       offset: 10,
+                      fill: CHART.muted,
+                      fontSize: 12,
                     }}
                   />
-                  <YAxis
-                    width={40}
-                    yAxisId={"right"}
-                    orientation="right"
-                    label={{
-                      value: "diff [s]",
-                      position: "insideTopRight",
-                      angle: -90,
-                      offset: 10,
-                    }}
-                  />
-
-                  <Legend
-                    verticalAlign="top"
-                    height={36}
-                    content={legendFill}
-                  />
+                  {isSubmissionTimelineToggled && (
+                    <YAxis
+                      width={40}
+                      yAxisId={"right"}
+                      orientation="right"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: CHART.muted, fontSize: 12 }}
+                      label={{
+                        value: "diff [s]",
+                        position: "insideTopRight",
+                        angle: -90,
+                        offset: 10,
+                        fill: CHART.muted,
+                        fontSize: 12,
+                      }}
+                    />
+                  )}
 
                   <Scatter
                     name="Correct"
                     data={correctAnswers}
                     dataKey="timeSinceStartInS"
-                    fill="green"
+                    fill={CHART.correct}
                     yAxisId="left"
+                    shape={(props: any) => (
+                      <CorrectDot cx={props.cx} cy={props.cy} />
+                    )}
                   />
 
                   <Scatter
                     name="Incorrect"
                     data={incorrectAnswers}
                     dataKey="timeSinceStartInS"
-                    fill="red"
+                    fill={CHART.incorrect}
                     yAxisId="left"
+                    shape={(props: any) => (
+                      <IncorrectCross cx={props.cx} cy={props.cy} />
+                    )}
                   />
 
                   {isEventsToggled && (
@@ -730,9 +776,11 @@ function EditAttempt({
                       data={visitEvents}
                       dataKey="timeSinceStartInS"
                       fill="transparent"
-                      stroke="purple"
-                      shape="circle"
+                      stroke={CHART.visit}
                       yAxisId="left"
+                      shape={(props: any) => (
+                        <VisitRing cx={props.cx} cy={props.cy} />
+                      )}
                     />
                   )}
 
@@ -945,17 +993,131 @@ function StatTile({
   );
 }
 
-function legendFill({ payload, ref, ...rest }: DefaultLegendContentProps) {
-  const payloadWithFill = payload?.map((p) => {
-    const color =
-      // @ts-ignore
-      p.color === "transparent" ? (p.payload?.stroke ?? "white") : p.color;
-    return {
-      ...p,
-      color,
-    };
-  });
-  return <DefaultLegendContent payload={payloadWithFill} {...rest} />;
+// Chakra semantic tokens as CSS vars so marks track light/dark mode.
+const CHART = {
+  correct: "var(--chakra-colors-green-solid)",
+  incorrect: "var(--chakra-colors-red-solid)",
+  visit: "var(--chakra-colors-purple-solid)",
+  diff: "var(--chakra-colors-orange-solid)",
+  unfocussed: "var(--chakra-colors-red-solid)",
+  post: "var(--chakra-colors-gray-solid)",
+  surface: "var(--chakra-colors-bg)",
+  grid: "var(--chakra-colors-border)",
+  muted: "var(--chakra-colors-fg-muted)",
+};
+
+function CorrectDot({ cx, cy }: { cx?: number; cy?: number }) {
+  if (cx == null || cy == null) return <g />;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={5}
+      fill={CHART.correct}
+      stroke={CHART.surface}
+      strokeWidth={2}
+    />
+  );
+}
+
+function IncorrectCross({ cx, cy }: { cx?: number; cy?: number }) {
+  if (cx == null || cy == null) return <g />;
+  const d = `M${cx - 4} ${cy - 4} L${cx + 4} ${cy + 4} M${cx - 4} ${cy + 4} L${cx + 4} ${cy - 4}`;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={8} fill="transparent" />
+      <path
+        d={d}
+        stroke={CHART.surface}
+        strokeWidth={5}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d={d}
+        stroke={CHART.incorrect}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        fill="none"
+      />
+    </g>
+  );
+}
+
+function VisitRing({ cx, cy }: { cx?: number; cy?: number }) {
+  if (cx == null || cy == null) return <g />;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={7} fill="transparent" />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={3.5}
+        fill="none"
+        stroke={CHART.visit}
+        strokeWidth={1.5}
+        opacity={0.85}
+      />
+    </g>
+  );
+}
+
+function LegendKey({
+  glyph,
+  color,
+  label,
+}: {
+  glyph: "dot" | "cross" | "ring" | "band" | "line";
+  color: string;
+  label: string;
+}) {
+  return (
+    <HStack gap={1.5}>
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        {glyph === "dot" && <circle cx="7" cy="7" r="4.5" fill={color} />}
+        {glyph === "cross" && (
+          <path
+            d="M3.5 3.5 L10.5 10.5 M3.5 10.5 L10.5 3.5"
+            stroke={color}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        )}
+        {glyph === "ring" && (
+          <circle
+            cx="7"
+            cy="7"
+            r="4"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.5"
+          />
+        )}
+        {glyph === "band" && (
+          <rect
+            x="1"
+            y="3"
+            width="12"
+            height="8"
+            rx="1"
+            fill={color}
+            opacity="0.25"
+          />
+        )}
+        {glyph === "line" && (
+          <path
+            d="M1 7 H13"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        )}
+      </svg>
+      <Text as="span" fontSize="xs" color="fg.muted">
+        {label}
+      </Text>
+    </HStack>
+  );
 }
 
 function AllUserAttemptsContainer({
@@ -1232,9 +1394,7 @@ function median(values: number[]): number {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2
-    ? sorted[mid]
-    : (sorted[mid - 1] + sorted[mid]) / 2;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 export const editAttemptRoute = createRoute({
