@@ -307,6 +307,7 @@ function EditAttempt({
         correct,
         timeToComplete,
         averageTimePerQuestion,
+        medianTimePerQuestion,
       } = getAttemptStats(attempt, {
         isSubmissionTimeToggled,
         isSubmissionTimelineToggled,
@@ -319,6 +320,7 @@ function EditAttempt({
         correct,
         timeToComplete,
         averageTimePerQuestion,
+        medianTimePerQuestion,
       };
     },
   });
@@ -417,14 +419,33 @@ function EditAttempt({
   const {
     questions,
     totalQuestions,
-    answered,
     correct,
     timeToComplete,
     averageTimePerQuestion,
+    medianTimePerQuestion,
   } = attemptStatsQuery.data;
 
   const { correctAnswers, incorrectAnswers, visitEvents, focusGaps } =
     chartData;
+
+  const totalUnfocussedTime = focusGaps.reduce(
+    (acc, curr) => acc + (curr.focusTime - curr.blurTime),
+    0,
+  );
+  const preFinalGapDurations = focusGaps
+    .filter(
+      (f) => f.blurTime <= timeToComplete && f.focusTime <= timeToComplete,
+    )
+    .map((f) => f.focusTime - f.blurTime);
+  const unfocussedTimeBeforeFinal = preFinalGapDurations.reduce(
+    (acc, curr) => acc + curr,
+    0,
+  );
+  const medianUnfocussedTimeBeforeFinal = median(preFinalGapDurations);
+  const averageUnfocussedTimeBeforeFinal =
+    preFinalGapDurations.length > 0
+      ? unfocussedTimeBeforeFinal / preFinalGapDurations.length
+      : 0;
 
   return (
     <>
@@ -754,42 +775,13 @@ function EditAttempt({
                 p={2}
                 borderRadius="md"
                 borderLeft="4px solid"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Total Questions
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {totalQuestions}
-                </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Answered
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {answered}
-                  <Text as="span" fontSize="sm" color="gray.fg" ml={2}>
-                    {((answered / totalQuestions) * 100).toFixed(1)}%
-                  </Text>
-                </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
                 borderColor="green.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
-                  Correct Answers
+                  Questions
                 </Text>
                 <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {correct}
+                  {correct} / {totalQuestions}
                   <Text as="span" fontSize="sm" color="gray.fg" ml={2}>
                     (
                     {totalQuestions > 0
@@ -797,20 +789,6 @@ function EditAttempt({
                       : 0}
                     %)
                   </Text>
-                </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="green.400"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Accuracy
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {answered > 0 ? ((correct / answered) * 100).toFixed(1) : 0}%
                 </Text>
               </Box>
               <Box
@@ -838,11 +816,22 @@ function EditAttempt({
                 borderColor="teal.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
-                  Avg Time / Question
+                  Time / Question
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {averageTimePerQuestion}s
-                </Text>
+                <HStack gap={4}>
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
+                    {medianTimePerQuestion}s
+                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
+                      μ½
+                    </Text>
+                  </Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
+                    {averageTimePerQuestion}s
+                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
+                      μ
+                    </Text>
+                  </Text>
+                </HStack>
               </Box>
               <Box
                 bg="gray.muted"
@@ -857,25 +846,8 @@ function EditAttempt({
                 <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
                   {events.length}
                 </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="blue.400"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Total Unfocussed Time
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {focusGaps
-                    .reduce(
-                      (acc, curr) => acc + (curr.focusTime - curr.blurTime),
-                      0,
-                    )
-                    .toFixed(2)}
-                  s
+                <Text fontSize="xs" color="gray.500">
+                  # periods: {preFinalGapDurations.length}
                 </Text>
               </Box>
               <Box
@@ -886,22 +858,30 @@ function EditAttempt({
                 borderColor="blue.400"
               >
                 <Text fontSize="sm" color="fg" mb={1}>
-                  Unfocussed Time Before Final Submission
+                  Unfocussed Time
                 </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {focusGaps
-                    .reduce((acc, curr) => {
-                      if (
-                        curr.blurTime > timeToComplete ||
-                        curr.focusTime > timeToComplete
-                      ) {
-                        return acc;
-                      }
-                      return acc + (curr.focusTime - curr.blurTime);
-                    }, 0)
-                    .toFixed(2)}
-                  s
-                </Text>
+                <HStack gap={4}>
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
+                    {totalUnfocussedTime.toFixed(2)}s
+                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
+                      Σ
+                    </Text>
+                  </Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
+                    {unfocussedTimeBeforeFinal.toFixed(2)}s
+                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
+                      pre-final
+                    </Text>
+                  </Text>
+                </HStack>
+                <HStack gap={3}>
+                  <Text fontSize="xs" color="gray.500">
+                    μ½ {medianUnfocussedTimeBeforeFinal.toFixed(2)}s
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    μ {averageUnfocussedTimeBeforeFinal.toFixed(2)}s
+                  </Text>
+                </HStack>
               </Box>
             </SimpleGrid>
             {moderationQuery.data?.feedback && (
@@ -1234,6 +1214,16 @@ function getAttemptStats(attempt: Attempt, options: AttemptOptions) {
   const averageTimePerQuestion =
     answered > 0 ? (timeToComplete / answered).toFixed(2) : "0";
 
+  const submissionTimes = questions
+    .map((q) => q.timeSinceStartInS)
+    .filter((t): t is number => t !== null)
+    .sort((a, b) => a - b);
+  const perQuestionTimes = submissionTimes.map((t, i) =>
+    i === 0 ? t : t - submissionTimes[i - 1],
+  );
+  const medianTimePerQuestion =
+    perQuestionTimes.length > 0 ? median(perQuestionTimes).toFixed(2) : "0";
+
   return {
     questions,
     totalQuestions,
@@ -1241,7 +1231,17 @@ function getAttemptStats(attempt: Attempt, options: AttemptOptions) {
     correct,
     timeToComplete,
     averageTimePerQuestion,
+    medianTimePerQuestion,
   };
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 export const editAttemptRoute = createRoute({
