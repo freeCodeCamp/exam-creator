@@ -6,6 +6,7 @@ import {
   useMemo,
   type MouseEvent as ReactMouseEvent,
   type MutableRefObject,
+  type ReactNode,
 } from "react";
 import { InfiniteData, useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -419,6 +420,7 @@ function EditAttempt({
   const {
     questions,
     totalQuestions,
+    answered,
     correct,
     timeToComplete,
     averageTimePerQuestion,
@@ -442,10 +444,9 @@ function EditAttempt({
     0,
   );
   const medianUnfocussedTimeBeforeFinal = median(preFinalGapDurations);
-  const averageUnfocussedTimeBeforeFinal =
-    preFinalGapDurations.length > 0
-      ? unfocussedTimeBeforeFinal / preFinalGapDurations.length
-      : 0;
+  const scorePct = totalQuestions > 0 ? (correct / totalQuestions) * 100 : 0;
+  const unfocussedPct =
+    timeToComplete > 0 ? (unfocussedTimeBeforeFinal / timeToComplete) * 100 : 0;
 
   return (
     <>
@@ -769,121 +770,64 @@ function EditAttempt({
                 </ComposedChart>
               </ResponsiveContainer>
             </Box>
-            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="green.400"
+            <Flex
+              wrap="wrap"
+              rowGap={6}
+              mt={2}
+              py={4}
+              borderTop="1px solid"
+              borderBottom="1px solid"
+              borderColor="border"
+            >
+              <StatTile
+                label="Score"
+                value={`${correct} / ${totalQuestions}`}
+                sub={`${answered} answered`}
               >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Questions
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {correct} / {totalQuestions}
-                  <Text as="span" fontSize="sm" color="gray.fg" ml={2}>
-                    (
-                    {totalQuestions > 0
-                      ? ((correct / totalQuestions) * 100).toFixed(1)
-                      : 0}
-                    %)
-                  </Text>
-                </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="teal.400"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Total Time
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {secondsToHumanReadable(timeToComplete)}
-                </Text>
-                <Text fontSize="xs" color="gray.500">
-                  {timeToComplete.toFixed(0)}s
-                </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="teal.400"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Time / Question
-                </Text>
-                <HStack gap={4}>
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                    {medianTimePerQuestion}s
-                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
-                      μ½
-                    </Text>
-                  </Text>
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                    {averageTimePerQuestion}s
-                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
-                      μ
-                    </Text>
+                <HStack mt={2} gap={2}>
+                  <Box
+                    flex="1"
+                    maxW="110px"
+                    h="5px"
+                    bg="green.subtle"
+                    borderRadius="full"
+                    overflow="hidden"
+                  >
+                    <Box
+                      h="full"
+                      w={`${scorePct}%`}
+                      bg="green.solid"
+                      borderRadius="full"
+                    />
+                  </Box>
+                  <Text fontSize="xs" color="fg.muted">
+                    {scorePct.toFixed(1)}%
                   </Text>
                 </HStack>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="purple.400"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Events
-                </Text>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                  {events.length}
-                </Text>
-                <Text fontSize="xs" color="gray.500">
-                  # periods: {preFinalGapDurations.length}
-                </Text>
-              </Box>
-              <Box
-                bg="gray.muted"
-                p={2}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderColor="blue.400"
-              >
-                <Text fontSize="sm" color="fg" mb={1}>
-                  Unfocussed Time
-                </Text>
-                <HStack gap={4}>
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                    {totalUnfocussedTime.toFixed(2)}s
-                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
-                      Σ
-                    </Text>
-                  </Text>
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.fg">
-                    {unfocussedTimeBeforeFinal.toFixed(2)}s
-                    <Text as="span" fontSize="sm" color="gray.fg" ml={1}>
-                      pre-final
-                    </Text>
-                  </Text>
-                </HStack>
-                <HStack gap={3}>
-                  <Text fontSize="xs" color="gray.500">
-                    μ½ {medianUnfocussedTimeBeforeFinal.toFixed(2)}s
-                  </Text>
-                  <Text fontSize="xs" color="gray.500">
-                    μ {averageUnfocussedTimeBeforeFinal.toFixed(2)}s
-                  </Text>
-                </HStack>
-              </Box>
-            </SimpleGrid>
+              </StatTile>
+              <StatTile
+                label="Duration"
+                value={secondsToHumanReadable(timeToComplete)}
+                sub={`${timeToComplete.toFixed(0)}s`}
+              />
+              <StatTile
+                label="Time / question"
+                value={`${medianTimePerQuestion}s`}
+                unit="μ½"
+                sub={`μ ${averageTimePerQuestion}s`}
+              />
+              <StatTile
+                label="Unfocussed pre-final"
+                value={`${unfocussedTimeBeforeFinal.toFixed(1)}s`}
+                unit={`${unfocussedPct.toFixed(1)}%`}
+                sub={`Σ ${totalUnfocussedTime.toFixed(1)}s total · μ½ ${medianUnfocussedTimeBeforeFinal.toFixed(1)}s`}
+              />
+              <StatTile
+                label="Events"
+                value={String(events.length)}
+                sub={`# periods: ${preFinalGapDurations.length}`}
+              />
+            </Flex>
             {moderationQuery.data?.feedback && (
               <Text color="fg" py={3}>
                 <b>Feedback</b>: {moderationQuery.data?.feedback}
@@ -949,6 +893,55 @@ function YAxisZoomHelper({
       strokeDasharray="4 2"
       pointerEvents="none"
     />
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  unit,
+  sub,
+  children,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  sub?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <Box
+      flex="1 1 0"
+      minW="150px"
+      px={5}
+      borderLeft="1px solid"
+      borderColor="border"
+      _first={{ borderLeft: "none", pl: 0 }}
+    >
+      <Text fontSize="sm" color="fg.muted" mb={1}>
+        {label}
+      </Text>
+      <Text fontSize="2xl" fontWeight="semibold" color="fg" lineHeight="short">
+        {value}
+        {unit && (
+          <Text
+            as="span"
+            fontSize="sm"
+            fontWeight="normal"
+            color="fg.muted"
+            ml={1.5}
+          >
+            {unit}
+          </Text>
+        )}
+      </Text>
+      {sub && (
+        <Text fontSize="xs" color="fg.muted" mt={1}>
+          {sub}
+        </Text>
+      )}
+      {children}
+    </Box>
   );
 }
 
