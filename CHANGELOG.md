@@ -21,6 +21,16 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.7.1] - 2026-07-16
+
+### Fixed
+
+- server: no sentry error on unauthorized user login attempt
+
+### Internal
+
+- server: add sentry request/response tracing per request
+
 ## [6.7.0] - 2026-07-16
 
 ### Added
