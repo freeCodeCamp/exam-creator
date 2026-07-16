@@ -21,6 +21,17 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.7.0] - 2026-07-16
+
+### Added
+
+- client: adjust edit-attempt stats to prioritize useful data
+- client: add median, refactor stats for edit-attempt
+
+### Fixed
+
+- client: improve edit-attempt chart visuals
+
 ## [6.6.0] - 2026-07-11
 
 ### Added
