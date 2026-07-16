@@ -16,6 +16,7 @@ use http::header::X_CONTENT_TYPE_OPTIONS;
 use mongodb::options::ClientOptions;
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl, basic::BasicClient};
 use reqwest::Method;
+use sentry::integrations::tower::{NewSentryLayer, SentryHttpLayer};
 use std::sync::{Arc, Mutex};
 use supabase_rs::SupabaseClient;
 use tower_http::limit::RequestBodyLimitLayer;
@@ -310,6 +311,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
                 // By default `TraceLayer` will log 5xx
                 .on_failure(()),
         )
+        .layer(SentryHttpLayer::new().enable_transaction())
+        // Outermost: fresh Sentry hub per request so scope data does not leak
+        // across concurrent requests.
+        .layer(NewSentryLayer::<Request>::new_from_top())
         .with_state(server_state);
 
     info!("Successfully created app.");

@@ -34,33 +34,30 @@ async fn main() {
 
     let _guard = if let Some(sentry_dsn) = env_vars.sentry_dsn.clone() {
         info!("initializing Sentry");
-        // NOTE: Events are only emitted, once the guard goes out of scope.
-        Some(sentry::init((
-            sentry_dsn,
-            sentry::ClientOptions {
-                release: sentry::release_name!(),
-                traces_sample_rate: 1.0,
-                before_send: Some(std::sync::Arc::new(|event| {
-                    // Filter out InvalidConfig errors - check message and exceptions
-                    let msg = event.message.as_ref().map(|m| m.as_str()).unwrap_or("");
-                    if msg.contains("InvalidConfig") {
-                        return None;
-                    }
+        let mut options = sentry::ClientOptions::new()
+            .traces_sample_rate(0.2)
+            .before_send(|event: sentry::protocol::Event<'static>| {
+                // Filter out InvalidConfig errors - check message and exceptions
+                let msg = event.message.as_ref().map(|m| m.as_str()).unwrap_or("");
+                if msg.contains("InvalidConfig") {
+                    return None;
+                }
 
-                    // Also check exception values
-                    for exception in &event.exception {
-                        if let Some(value) = &exception.value {
-                            if value.contains("InvalidConfig") {
-                                return None;
-                            }
+                // Also check exception values
+                for exception in &event.exception {
+                    if let Some(value) = &exception.value {
+                        if value.contains("InvalidConfig") {
+                            return None;
                         }
                     }
+                }
 
-                    Some(event)
-                })),
-                ..Default::default()
-            },
-        )))
+                Some(event)
+            });
+        options.release = sentry::release_name!();
+
+        // NOTE: Events are only emitted, once the guard goes out of scope.
+        Some(sentry::init((sentry_dsn, options)))
     } else {
         None
     };
