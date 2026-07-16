@@ -18,7 +18,7 @@ use oauth2::{
 };
 use reqwest::Client;
 use tower_sessions::Session;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use url::Url;
 
 use crate::{database::prisma, errors::Error, state::ServerState};
@@ -150,11 +150,15 @@ pub async fn github_handler(
         .production_database
         .exam_creator_user
         .find_one(doc! {"email": &email})
-        .await?
-        .ok_or(Error::Server(
+        .await?;
+
+    let Some(user) = user else {
+        warn!({ email }, "login attempt for non-existent user");
+        return Err(Error::Server(
             StatusCode::UNAUTHORIZED,
             format!("user non-existent: {email}"),
-        ))?;
+        ));
+    };
 
     // Update user picture
     server_state
