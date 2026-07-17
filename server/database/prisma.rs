@@ -110,3 +110,24 @@ impl TryFrom<bson::Document> for ExamCreatorExam {
         Ok(exam_creator_exam)
     }
 }
+
+impl ToString for ExamEnvironmentExamModerationStatus {
+    fn to_string(&self) -> String {
+        match self {
+            ExamEnvironmentExamModerationStatus::Approved => "approved",
+            ExamEnvironmentExamModerationStatus::Denied => "denied",
+            ExamEnvironmentExamModerationStatus::Pending => "pending",
+        }
+        .to_string()
+    }
+}
+
+impl ToString for ExamCreatorDatabaseEnvironment {
+    fn to_string(&self) -> String {
+        match self {
+            ExamCreatorDatabaseEnvironment::Production => "production",
+            ExamCreatorDatabaseEnvironment::Staging => "staging",
+        }
+        .to_string()
+    }
+}

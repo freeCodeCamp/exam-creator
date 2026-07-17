@@ -219,6 +219,10 @@ pub async fn put_exam_by_id_to_staging(
             .await?;
     }
 
+    sentry::metrics::counter("exam.deploy", 1)
+        .attribute("database_environment", "staging")
+        .capture();
+
     Ok(())
 }
 
@@ -252,6 +256,10 @@ pub async fn put_exam_by_id_to_production(
         )
         .upsert(true)
         .await?;
+
+    sentry::metrics::counter("exam.deploy", 1)
+        .attribute("database_environment", "production")
+        .capture();
 
     Ok(())
 }

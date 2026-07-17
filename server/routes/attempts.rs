@@ -128,20 +128,34 @@ pub async fn patch_moderation_status_by_attempt_id(
     let database = database_environment(&server_state, &exam_creator_user);
 
     let now = DateTime::now();
-    let update_result = database
+    // Returns the pre-update document, providing the previous status and submission date
+    let old_moderation = database
         .exam_environment_exam_moderation
-        .update_one(
+        .find_one_and_update(
             doc! { "examAttemptId": body.attempt_id },
             doc! { "$set": { "status": bson::serialize_to_bson(&body.status)?, "moderationDate": now } },
         )
-        .await?;
-
-    if update_result.matched_count == 0 {
-        return Err(Error::Server(
+        .await?
+        .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
             format!("Moderation record non-existent for attempt: {}", attempt_id),
-        ));
-    }
+        ))?;
+
+    let database_environment = exam_creator_user.settings.database_environment.to_string();
+    sentry::metrics::counter("exam.moderation.decision", 1)
+        .attribute("status", body.status.to_string())
+        .attribute("previous_status", old_moderation.status.to_string())
+        .attribute("database_environment", database_environment.clone())
+        .capture();
+
+    let time_to_decision_s = (now.timestamp_millis()
+        - old_moderation.submission_date.timestamp_millis()) as f64
+        / 1000.0;
+    sentry::metrics::distribution("exam.moderation.time_to_decision", time_to_decision_s)
+        .unit(sentry::protocol::Unit::Second)
+        .attribute("status", body.status.to_string())
+        .attribute("database_environment", database_environment)
+        .capture();
 
     Ok(())
 }
@@ -175,13 +189,27 @@ pub async fn put_pending_deletion(
         .unwrap()
         .insert(attempt_id, (generation, tx));
 
+    let database_environment = exam_creator_user.settings.database_environment.to_string();
+    sentry::metrics::counter("exam.attempt.deletion", 1)
+        .attribute("outcome", "scheduled")
+        .attribute("database_environment", database_environment.clone())
+        .capture();
+
     let pending_deletes = server_state.pending_deletes.clone();
     tokio::spawn(async move {
         tokio::select! {
             _ = tokio::time::sleep(std::time::Duration::from_secs(DELETE_GRACE_SECONDS)) => {
-                if let Err(e) = perform_delete_attempt(&database, attempt_id).await {
-                    tracing::error!("scheduled delete failed for attempt {attempt_id}: {e}");
-                }
+                let outcome = match perform_delete_attempt(&database, attempt_id).await {
+                    Ok(()) => "executed",
+                    Err(e) => {
+                        tracing::error!("scheduled delete failed for attempt {attempt_id}: {e}");
+                        "failed"
+                    }
+                };
+                sentry::metrics::counter("exam.attempt.deletion", 1)
+                    .attribute("outcome", outcome)
+                    .attribute("database_environment", database_environment.clone())
+                    .capture();
                 // Only drop our own entry, not a newer reschedule that replaced it.
                 let mut pending = pending_deletes.lock().unwrap();
                 if pending.get(&attempt_id).is_some_and(|(g, _)| *g == generation) {
@@ -191,6 +219,10 @@ pub async fn put_pending_deletion(
             _ = rx => {
                 // Cancelled: the sender was dropped/removed by delete_pending_deletion.
                 tracing::info!(%attempt_id, "scheduled delete cancelled");
+                sentry::metrics::counter("exam.attempt.deletion", 1)
+                    .attribute("outcome", "cancelled")
+                    .attribute("database_environment", database_environment.clone())
+                    .capture();
             }
         }
     });

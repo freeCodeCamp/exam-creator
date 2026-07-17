@@ -154,6 +154,9 @@ pub async fn github_handler(
 
     let Some(user) = user else {
         warn!({ email }, "login attempt for non-existent user");
+        sentry::metrics::counter("auth.login", 1)
+            .attribute("outcome", "unauthorized")
+            .capture();
         return Err(Error::Server(
             StatusCode::UNAUTHORIZED,
             format!("user non-existent: {email}"),
@@ -190,6 +193,10 @@ pub async fn github_handler(
         .exam_creator_session
         .insert_one(&session)
         .await?;
+
+    sentry::metrics::counter("auth.login", 1)
+        .attribute("outcome", "success")
+        .capture();
 
     let cookie = Cookie::build(("sid", session.session_id))
         // .domain("http://127.0.0.1:3001")

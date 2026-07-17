@@ -80,10 +80,19 @@ pub async fn get_exam_metrics_by_exam_id(
                 // Remove expired cached response
                 cache.retain(|c| c.exam.id != exam_id);
             } else {
+                sentry::metrics::counter("cache.access", 1)
+                    .attribute("cache", "exam_metrics_by_id")
+                    .attribute("outcome", "hit")
+                    .capture();
                 return Ok(Json(cached_response.clone()));
             }
         }
     }
+
+    sentry::metrics::counter("cache.access", 1)
+        .attribute("cache", "exam_metrics_by_id")
+        .attribute("outcome", "miss")
+        .capture();
 
     let database = database_environment(&state, &user);
     let exam = database
@@ -191,10 +200,19 @@ pub async fn get_attempts_metrics(
         } else {
             if !cache.data.is_empty() {
                 tracing::debug!(len = cache.data.len(), "using cache");
+                sentry::metrics::counter("cache.access", 1)
+                    .attribute("cache", "attempt_metrics")
+                    .attribute("outcome", "hit")
+                    .capture();
                 return Ok(Json(cache.data.clone()));
             }
         }
     }
+
+    sentry::metrics::counter("cache.access", 1)
+        .attribute("cache", "attempt_metrics")
+        .attribute("outcome", "miss")
+        .capture();
 
     let database = database_environment(&state, &user);
 

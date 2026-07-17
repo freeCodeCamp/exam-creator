@@ -109,6 +109,13 @@ pub async fn get_moderations_count(
 .count_documents(doc! { "status": bson::serialize_to_bson(&prisma::ExamEnvironmentExamModerationStatus::Denied)? })
 .await?;
 
+    sentry::metrics::gauge("exam.moderation.pending", production_pending_count as f64)
+        .attribute("database_environment", "production")
+        .capture();
+    sentry::metrics::gauge("exam.moderation.pending", staging_pending_count as f64)
+        .attribute("database_environment", "staging")
+        .capture();
+
     let counts = GetModerationsCountResponse {
         staging: ModerationCount {
             pending: staging_pending_count,
