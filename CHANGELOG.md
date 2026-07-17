@@ -21,6 +21,12 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.7.2] - 2026-07-17
+
+### Fixed
+
+- server: add sentry metrics
+
 ## [6.7.1] - 2026-07-16
 
 ### Fixed
