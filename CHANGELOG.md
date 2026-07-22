@@ -21,6 +21,12 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.7.3] - 2026-07-22
+
+### Fixed
+
+- add sentry metric for attempt moderation time
+
 ## [6.7.2] - 2026-07-17
 
 ### Fixed
