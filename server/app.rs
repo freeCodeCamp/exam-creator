@@ -102,6 +102,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     let exam_metrics_by_id_cache = Arc::new(Mutex::new(vec![]));
     let attempt_metrics_cache = Arc::new(Mutex::new(Cache::new()));
     let pending_deletes = Arc::new(Mutex::new(std::collections::HashMap::new()));
+    let attempt_page_views = Arc::new(Mutex::new(std::collections::HashMap::new()));
 
     let supabase_url = &env_vars.supabase_url;
     let supabase_key = &env_vars.supabase_key;
@@ -117,6 +118,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         exam_metrics_by_id_cache,
         attempt_metrics_cache,
         pending_deletes,
+        attempt_page_views,
     };
 
     tokio::spawn(state::cleanup_online_users(
@@ -217,6 +219,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             "/api/attempts/{attempt_id}/moderation",
             patch(routes::attempts::patch_moderation_status_by_attempt_id)
                 .get(routes::moderations::get_moderation_by_attempt_id),
+        )
+        .route(
+            "/api/attempts/{attempt_id}/moderation/view",
+            put(routes::attempts::put_moderation_view_start),
         )
         .route("/api/attempts", get(routes::moderations::get_moderations))
         .route(

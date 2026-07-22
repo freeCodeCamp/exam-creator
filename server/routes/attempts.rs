@@ -154,8 +154,35 @@ pub async fn patch_moderation_status_by_attempt_id(
     sentry::metrics::distribution("exam.moderation.time_to_decision", time_to_decision_s)
         .unit(sentry::protocol::Unit::Second)
         .attribute("status", body.status.to_string())
-        .attribute("database_environment", database_environment)
+        .attribute("database_environment", database_environment.clone())
         .capture();
+
+    if let Ok(mut lock) = server_state.attempt_page_views.lock() {
+        let view_started_at = lock.remove(&(exam_creator_user.id, attempt_id));
+        if let Some(view_started_at) = view_started_at {
+            let time_on_page_ms = now.timestamp_millis() - view_started_at.timestamp_millis();
+            sentry::metrics::distribution("exam.moderation.time_on_page", time_on_page_ms as f64)
+                .unit(sentry::protocol::Unit::Millisecond)
+                .attribute("moderator", exam_creator_user.name.clone())
+                .attribute("database_environment", database_environment)
+                .capture();
+        }
+    }
+
+    Ok(())
+}
+
+/// Records that the moderator opened this attempt's moderation page, so the
+/// subsequent moderation decision can compute time spent reviewing it.
+#[instrument(skip_all, err(Debug), level = "debug")]
+pub async fn put_moderation_view_start(
+    exam_creator_user: prisma::ExamCreatorUser,
+    State(server_state): State<ServerState>,
+    Path(attempt_id): Path<ObjectId>,
+) -> Result<(), Error> {
+    if let Ok(mut lock) = server_state.attempt_page_views.lock() {
+        lock.insert((exam_creator_user.id, attempt_id), DateTime::now());
+    }
 
     Ok(())
 }

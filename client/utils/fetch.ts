@@ -524,6 +524,16 @@ export async function patchModerationStatusByAttemptId({
   });
 }
 
+export async function putModerationViewStart(attemptId: string) {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    return;
+  }
+
+  return await authorizedFetch(`/api/attempts/${attemptId}/moderation/view`, {
+    method: "PUT",
+  });
+}
+
 interface GetModerationsCountResponse {
   staging: {
     pending: number;

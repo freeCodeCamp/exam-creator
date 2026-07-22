@@ -47,6 +47,7 @@ import {
   getModerations,
   getNumberOfAttemptsByUserId,
   patchModerationStatusByAttemptId,
+  putModerationViewStart,
 } from "../utils/fetch";
 import { attemptsRoute } from "./attempts";
 import { usersRoute } from "./users";
@@ -210,6 +211,11 @@ function EditAttempt({
       lastActive: Date.now(),
     });
   }, [attempt]);
+
+  useEffect(() => {
+    // This is purely for metrics - not critical
+    putModerationViewStart(attempt.id).catch(console.error);
+  }, [attempt.id]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
