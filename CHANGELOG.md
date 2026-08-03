@@ -21,6 +21,12 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.8.0] - 2026-08-03
+
+### Added
+
+- client: add moderation score
+
 ## [6.7.3] - 2026-07-22
 
 ### Fixed
