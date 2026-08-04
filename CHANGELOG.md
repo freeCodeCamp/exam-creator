@@ -21,6 +21,16 @@
     - vertical lines overlayed on answer graph
 - client: show all events on graph
 
+## [6.9.0] - 2026-08-04
+
+### Added
+
+- add deduplicate user page and rest
+
+### Fixed
+
+- client: fetch mock type error
+
 ## [6.8.0] - 2026-08-03
 
 ### Added
